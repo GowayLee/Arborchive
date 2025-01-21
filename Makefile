@@ -30,5 +30,5 @@ run: $(TARGET)
 help:
 	@echo "Usage:"
 	@echo "  make        # Build"
-	@echo "  make run    # Build and run test on moderate-case"
+	@echo "  make run    # Build and run test on moderate-case, redirect output to tests/output"
 	@echo "  make clean  # Clean up all build files"
