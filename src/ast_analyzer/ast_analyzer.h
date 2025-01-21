@@ -2,7 +2,7 @@
 #define _AST_ANALYZER_H_
 
 #pragma once
-#include "ASTNodeInfo.h"
+#include "ast_node_info.h"
 #include <clang-c/Index.h>
 #include <string>
 #include <vector>

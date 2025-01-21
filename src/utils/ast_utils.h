@@ -3,7 +3,7 @@
 
 #include <clang-c/Index.h>
 #include <string>
-#include "ASTNodeInfo.h"
+#include "ast_node_info.h"
 
 // Get the source location (file, line, column) of a cursor
 Location getCursorLocation(CXCursor cursor);

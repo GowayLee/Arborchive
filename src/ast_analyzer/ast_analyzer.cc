@@ -1,5 +1,5 @@
 #include "ast_analyzer.h"
-#include "ASTNodeInfo.h"
+#include "ast_node_info.h"
 #include "utils/ast_utils.h"
 
 std::string Location::toString() const {
