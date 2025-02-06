@@ -3,19 +3,13 @@
 #include <iomanip>
 #include <iostream>
 
-CliEntryPoint::CliEntryPoint(int argc, char *argv[]) {
+void Cli::init(int argc, char *argv[]) {
   for (int i = 1; i < argc; ++i) {
     args.push_back(argv[i]);
   }
-  initializeArgDefinitions();
-}
-
-void CliEntryPoint::initializeArgDefinitions() {
   arg_definitions = {
-      {"-c", "--compile-commands", "Specify compile_commands.json path", true,
-       [this](const std::string &value) {
-         options.compile_commands_path = value;
-       }},
+      {"-c", "--config-path", "Specify config.toml path", true,
+       [this](const std::string &value) { options.config_path = value; }},
 
       {"-s", "--source", "Specify source file or directory path", true,
        [this](const std::string &value) { options.source_path = value; }},
@@ -30,13 +24,13 @@ void CliEntryPoint::initializeArgDefinitions() {
        [this](const std::string &) { options.show_version = true; }}};
 }
 
-void CliEntryPoint::parseArguments() {
+void Cli::parseArgs() {
   for (size_t i = 0; i < args.size(); ++i) {
     const std::string &arg = args[i];
 
     auto it =
         std::find_if(arg_definitions.begin(), arg_definitions.end(),
-                     [&arg](const ArgDefinition &def) {
+                     [&arg](const CLArgDef &def) {
                        return arg == def.short_name || arg == def.long_name;
                      });
 
@@ -55,7 +49,7 @@ void CliEntryPoint::parseArguments() {
   }
 }
 
-void CliEntryPoint::showHelp() const {
+void Cli::showHelp() const {
   std::cout << "Usage: ast_parser [options]\n\n";
   std::cout << "Options:\n";
 
@@ -66,35 +60,34 @@ void CliEntryPoint::showHelp() const {
   }
 }
 
-void CliEntryPoint::showVersion() const {
-  std::cout << "AST Parser version " << VERSION << std::endl;
+void Cli::showVersion() const {
+  std::cout << "Code2SQL version " << VERSION << std::endl;
 }
 
-int CliEntryPoint::run() {
+bool Cli::process() {
   try {
-    parseArguments();
+    parseArgs();
 
     if (options.show_help) {
       showHelp();
-      return 0;
+      return true;
     }
 
     if (options.show_version) {
       showVersion();
-      return 0;
+      return true;
     }
 
     if (!options.isValid()) {
       std::cerr << "Error: Missing required arguments\n";
       showHelp();
-      return 1;
+      return false;
     }
-
-    // TODO: 继续处理，调用ConfigLoader等
-    return 0;
 
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    return 1;
+    return false;
   }
+
+  return true;
 }

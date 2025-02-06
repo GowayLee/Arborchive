@@ -1,6 +1,7 @@
 #ifndef _CONFIG_LOADER_H_
 #define _CONFIG_LOADER_H_
 
+#include "model/config/cl_args.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,8 +56,7 @@ public:
   bool loadFromFile(const std::string &config_file);
 
   // 加载CLI参数
-  void loadFromCli(const std::string &compile_commands,
-                   const std::string &source, const std::string &output);
+  void loadFromCli(const CLArgs &args);
 
   // 获取配置信息
   const Configuration &getConfig() const { return config; }

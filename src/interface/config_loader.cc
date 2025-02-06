@@ -1,4 +1,5 @@
 #include "interface/config_loader.h"
+#include "model/config/cl_args.h"
 
 #include <iostream>
 #include <toml.hpp>
@@ -42,10 +43,8 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
   }
 }
 
-void ConfigLoader::loadFromCli(const std::string &config_path,
-                               const std::string &source,
-                               const std::string &output) {
-  config.config_path = config_path;
-  config.source_path = source;
-  config.output_path = output;
+void ConfigLoader::loadFromCli(const CLArgs &args) {
+  config.config_path = args.config_path;
+  config.source_path = args.source_path;
+  config.output_path = args.output_path;
 }

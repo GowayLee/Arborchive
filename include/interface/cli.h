@@ -1,41 +1,38 @@
 #ifndef _CLI_H_
 #define _CLI_H_
 
+#include "model/config/cl_args.h"
 #include <functional>
 #include <map>
 #include <optional>
 #include <string>
 
-class CliEntryPoint {
+
+class Cli {
 public:
-  // 参数配置结构体
-  struct ProgramOptions {
-    std::string compile_commands_path;
-    std::string source_path;
-    std::string output_path;
-    bool show_help{false};
-    bool show_version{false};
+  Cli(const Cli &) = delete;
+  Cli &operator=(const Cli &) = delete;
 
-    bool isValid() const {
-      return !compile_commands_path.empty() && !source_path.empty() &&
-             !output_path.empty();
-    }
-  };
+  static Cli &getInstance() {
+    static Cli instance;
+    return instance;
+  }
 
-  explicit CliEntryPoint(int argc, char *argv[]);
-
-  // 运行CLI程序
-  int run();
+  void init(int argc, char *argv[]);
+  bool process();
 
   // 获取解析后的配置
-  const ProgramOptions &getOptions() const { return options; }
+  const CLArgs &getOptions() const { return options; }
 
 private:
   std::vector<std::string> args;
-  ProgramOptions options;
+  CLArgs options;
+
+  Cli() = default;
+  ~Cli() = default;
 
   // 参数定义结构
-  struct ArgDefinition {
+  struct CLArgDef {
     std::string short_name;
     std::string long_name;
     std::string description;
@@ -43,10 +40,9 @@ private:
     std::function<void(const std::string &)> handler;
   };
 
-  std::vector<ArgDefinition> arg_definitions;
+  std::vector<CLArgDef> arg_definitions;
 
-  void initializeArgDefinitions();
-  void parseArguments();
+  void parseArgs();
   void showHelp() const;
   void showVersion() const;
   static constexpr const char *VERSION = "1.0.0";

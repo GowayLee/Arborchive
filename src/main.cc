@@ -1,25 +1,27 @@
 #include "interface/clang_initializer.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
+#include "model/config/cl_args.h"
 #include <iostream>
 
 int main(int argc, char *argv[]) {
   try {
-    CliEntryPoint cli(argc, argv);
-    int result = cli.run();
-    if (result != 0) {
-      return result;
-    }
+    auto &cli = Cli::getInstance();
+    cli.init(argc, argv);
 
-    // 获取解析后的配置
-    const auto &options = cli.getOptions();
+    if (!cli.process())
+      return 1;
 
-    // 初始化配置加载器
-    ConfigLoader configLoader;
-    if (!configLoader.load(options.compile_commands_path)) {
+    const CLArgs &clargs = cli.getOptions();
+
+    auto &configLoader = ConfigLoader::getInstance();
+    if (!configLoader.loadFromFile(clargs.config_path)) {
       std::cerr << "Failed to load compilation database" << std::endl;
       return 1;
     }
+    configLoader.loadFromCli(clargs); // 从命令行参数加载配置
+
+    // 初始化Logger
 
     // 初始化libclang
     LibclangInitializer libclangInit;
