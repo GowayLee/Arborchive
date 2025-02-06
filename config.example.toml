@@ -1,0 +1,36 @@
+[compilation]
+# 包含路径配置
+include_paths = [
+    "/usr/local/include",     # 系统级头文件路径
+    "third_party/boost_1.83", # 项目依赖路径
+    "src/core/include",       # 项目内部路径
+]
+
+# 预定义宏
+defines = [
+    "DEBUG_MODE=1",   # 带值的宏
+    "USE_FAST_ALGO",  # 无值宏
+    "MAX_ITEMS=1000", # 数值宏
+]
+
+# 编译器标志
+cxx_standard = "c++17" # C++标准版本
+
+flags = [
+    "-fexceptions",    # 异常处理
+    "-Wno-deprecated", # 警告抑制
+]
+
+[database]
+# 数据库连接参数
+path = "ast_database.db" # 数据库文件路径
+batch_size = 1000        # 批量写入记录数
+cache_size_mb = 64       # SQLite缓存大小（MB）
+journal_mode = "WAL"     # 日志模式（WAL性能更好）
+synchronous = "NORMAL"   # 同步模式
+
+[logging]
+# 日志设置
+level = "info"              # 日志级别（debug/info/warn/error）
+file = "logs/log"           # 日志文件路径
+enable_perf_logging = false # 是否记录性能日志
