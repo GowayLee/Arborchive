@@ -19,7 +19,7 @@ public:
   }
 
   void init(int argc, char *argv[]);
-  bool process();
+  int process();
 
   // 获取解析后的配置
   const CLArgs &getOptions() const { return options; }
@@ -32,12 +32,12 @@ private:
   ~Cli() = default;
 
   // 参数定义结构
-  struct CLArgDef {
+  struct CLArgDef { // TODO: Default values
     std::string short_name;
     std::string long_name;
     std::string description;
     bool requires_value;
-    std::function<void(const std::string &)> handler;
+    std::function<void(const std::string &)> handler; // handler to store the value
   };
 
   std::vector<CLArgDef> arg_definitions;

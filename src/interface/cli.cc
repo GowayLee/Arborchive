@@ -4,17 +4,17 @@
 #include <iostream>
 
 void Cli::init(int argc, char *argv[]) {
-  for (int i = 1; i < argc; ++i) {
+  for (int i = 1; i < argc; ++i)
     args.push_back(argv[i]);
-  }
+
   arg_definitions = {
-      {"-c", "--config-path", "Specify config.toml path", true,
+      {"-c", "--config-path", "Specify config.toml path (required)", true,
        [this](const std::string &value) { options.config_path = value; }},
 
-      {"-s", "--source", "Specify source file or directory path", true,
-       [this](const std::string &value) { options.source_path = value; }},
+      {"-s", "--source", "Specify source file or directory path (required)",
+       true, [this](const std::string &value) { options.source_path = value; }},
 
-      {"-o", "--output", "Specify output database file path", true,
+      {"-o", "--output", "Specify output database file path (required)", true,
        [this](const std::string &value) { options.output_path = value; }},
 
       {"-h", "--help", "Show help information", false,
@@ -36,16 +36,13 @@ void Cli::parseArgs() {
 
     if (it != arg_definitions.end()) {
       if (it->requires_value) {
-        if (i + 1 >= args.size()) {
+        if (i + 1 >= args.size()) // check if next argument exists
           throw std::runtime_error("Missing value for argument: " + arg);
-        }
         it->handler(args[++i]);
-      } else {
+      } else
         it->handler("");
-      }
-    } else {
+    } else
       throw std::runtime_error("Unknown argument: " + arg);
-    }
   }
 }
 
@@ -64,30 +61,30 @@ void Cli::showVersion() const {
   std::cout << "Code2SQL version " << VERSION << std::endl;
 }
 
-bool Cli::process() {
+int Cli::process() {
   try {
     parseArgs();
 
     if (options.show_help) {
       showHelp();
-      return true;
+      return 0;
     }
 
     if (options.show_version) {
       showVersion();
-      return true;
+      return 0;
     }
 
-    if (!options.isValid()) {
+    if (!options.isValid()) { // check if all required arguments are provided
       std::cerr << "Error: Missing required arguments\n";
       showHelp();
-      return false;
+      return 1;
     }
 
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    return false;
+    return 1;
   }
 
-  return true;
+  return 2;
 }

@@ -9,17 +9,20 @@ int main(int argc, char *argv[]) {
     auto &cli = Cli::getInstance();
     cli.init(argc, argv);
 
-    if (!cli.process())
-      return 1;
+    int ret = cli.process();
+    if (ret != 2)
+      return ret;
 
     const CLArgs &clargs = cli.getOptions();
 
     auto &configLoader = ConfigLoader::getInstance();
-    if (!configLoader.loadFromFile(clargs.config_path)) {
-      std::cerr << "Failed to load compilation database" << std::endl;
-      return 1;
-    }
     configLoader.loadFromCli(clargs); // 从命令行参数加载配置
+    if (!configLoader.loadFromFile(clargs.config_path)) {
+      std::cerr << "Failed to load config file" << std::endl;
+      return 1;
+    } else
+      std::cout << "Config file: " << clargs.config_path
+                << " loaded successfully" << std::endl;
 
     // 初始化Logger
 
