@@ -1,12 +1,12 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Iinclude -Isrc
+CXXFLAGS = -std=c++17 -Wall -Iinclude
 LDFLAGS = -lclang
 
 TARGET = build/demo
 SRC_DIR = src
 OBJ_DIR = build/obj
 INCLUDE_DIR = include
-SRCS = $(wildcard $(SRC_DIR)/*.cc $(SRC_DIR)/ast_analyzer/*.cc $(SRC_DIR)/utils/*.cc)
+SRCS = $(wildcard $(SRC_DIR)/*.cc $(SRC_DIR)/interface/*.cc $(SRC_DIR)/utils/*.cc)
 OBJS = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(SRCS))
 
 all: $(TARGET)
@@ -32,3 +32,5 @@ help:
 	@echo "  make        # Build"
 	@echo "  make run    # Build and run test on moderate-case, redirect output to tests/output"
 	@echo "  make clean  # Clean up all build files"
+
+.PHONY: all clean help run
