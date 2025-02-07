@@ -17,6 +17,9 @@ void Cli::init(int argc, char *argv[]) {
       {"-o", "--output", "Specify output database file path (required)", true,
        [this](const std::string &value) { options.output_path = value; }},
 
+      {"-q", "--quiet", "Suppress logger's output to console", false,
+       [this](const std::string &) { options.quiet = true; }},
+
       {"-h", "--help", "Show help information", false,
        [this](const std::string &) { options.show_help = true; }},
 
@@ -47,7 +50,7 @@ void Cli::parseArgs() {
 }
 
 void Cli::showHelp() const {
-  std::cout << "Usage: ast_parser [options]\n\n";
+  std::cout << "Usage: arborchive [options]\n\n";
   std::cout << "Options:\n";
 
   for (const auto &arg : arg_definitions) {
@@ -58,7 +61,7 @@ void Cli::showHelp() const {
 }
 
 void Cli::showVersion() const {
-  std::cout << "Code2SQL version " << VERSION << std::endl;
+  std::cout << "Arborchive version " << VERSION << std::endl;
 }
 
 int Cli::process() {
@@ -80,6 +83,8 @@ int Cli::process() {
       showHelp();
       return 1;
     }
+
+    // output file ./banner to console
 
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;

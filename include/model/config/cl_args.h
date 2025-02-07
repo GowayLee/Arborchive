@@ -7,6 +7,7 @@ struct CLArgs {
   std::string config_path;
   std::string source_path;
   std::string output_path;
+  bool quiet{false};
   bool show_help{false};
   bool show_version{false};
 

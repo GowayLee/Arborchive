@@ -1,3 +1,7 @@
+[general]
+source_path = "src/"              # 需要扫描的源码路径
+output_path = "ast.db"        # 默认输出路径
+
 [compilation]
 # 包含路径配置
 include_paths = [
@@ -32,5 +36,7 @@ synchronous = "NORMAL"   # 同步模式
 [logging]
 # 日志设置
 level = "info"              # 日志级别（debug/info/warn/error）
-file = "logs/log"           # 日志文件路径
+file = "log"           # 日志文件路径
+is_to_console = true        # 是否输出到控制台
+batch_size = 60             # 日志批量写入记录数
 enable_perf_logging = false # 是否记录性能日志

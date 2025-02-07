@@ -8,6 +8,13 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
   try {
     auto data = toml::parse(config_file);
 
+    // 解析general部分
+    auto &general = toml::find(data, "general");
+    config.general.source_path =
+        toml::find<std::string>(general, "source_path");
+    config.general.output_path =
+        toml::find<std::string>(general, "output_path");
+
     // 解析compilation部分
     auto &compilation = toml::find(data, "compilation");
     config.compilation.include_paths =
@@ -31,9 +38,11 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
 
     // 解析logging部分
     auto &logging = toml::find(data, "logging");
-    config.logging.level = toml::find<std::string>(logging, "level");
-    config.logging.file = toml::find<std::string>(logging, "file");
-    config.logging.enable_perf_logging =
+    config.logger.level = toml::find<std::string>(logging, "level");
+    config.logger.file = toml::find<std::string>(logging, "file");
+    config.logger.is_to_console = toml::find<bool>(logging, "is_to_console");
+    config.logger.batch_size = toml::find<int>(logging, "batch_size");
+    config.logger.enable_perf_logging =
         toml::find<bool>(logging, "enable_perf_logging");
 
     return true;
@@ -43,8 +52,12 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
   }
 }
 
-void ConfigLoader::loadFromCli(const CLArgs &args) {
-  config.config_path = args.config_path;
-  config.source_path = args.source_path;
-  config.output_path = args.output_path;
+/*
+ * 从命令行参数中加载配置信息, 如果命令行参数中存在与配置文件中相同的配置项,
+ * 则覆盖配置文件中的配置项
+ */
+void ConfigLoader::mergeFromCli(const CLArgs &args) {
+  config.general.source_path = args.source_path;
+  config.general.output_path = args.output_path;
+  config.logger.is_to_console = !args.quiet;
 }
