@@ -1,6 +1,8 @@
-# Code2SQL
+# Arborchive
 
-Code2SQL 使用 `clang` 解析 C/C++ 代码, 并将AST节点信息存入 `SQLite` 数据库中.
+> _Arborchive_ is derived from the Latin word "Arbor" (meaning "tree") and "Archive" , symbolizing the project's core mission of parsing and storing code structure as a tree(AST).
+
+Arborchive 使用 `clang` 解析 C/C++ 代码, 并将AST节点信息存入 `SQLite` 数据库中.
 
 ## Dependencies
 - [clang](https://clang.llvm.org/)
