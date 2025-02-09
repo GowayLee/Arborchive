@@ -2,10 +2,15 @@
 #include "interface/cli.h"
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
+#include "util/logger/logger.h"
+#include "util/logger/logger_macros.h"
+#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char *argv[]) {
   try {
+    Logger::getInstance().init(); // 初始化Logger
+
     auto &cli = Cli::getInstance();
     cli.init(argc, argv);
 
@@ -16,15 +21,18 @@ int main(int argc, char *argv[]) {
     const CLArgs &clargs = cli.getOptions();
 
     auto &configLoader = ConfigLoader::getInstance();
-    configLoader.loadFromCli(clargs); // 从命令行参数加载配置
+    configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
     if (!configLoader.loadFromFile(clargs.config_path)) {
-      std::cerr << "Failed to load config file" << std::endl;
+      LOG_ERROR << "Failed to load config file: " << clargs.config_path
+                << std::endl;
       return 1;
     } else
-      std::cout << "Config file: " << clargs.config_path
-                << " loaded successfully" << std::endl;
+      LOG_INFO << "Config file: " << clargs.config_path
+               << " loaded successfully" << std::endl;
 
     // 初始化Logger
+    if (!Logger::getInstance().loadConfig(configLoader.getConfig().logger))
+      return 1;
 
     // 初始化libclang
     LibclangInitializer libclangInit;

@@ -6,7 +6,6 @@
 #include "model/log/log_message.h"
 #include "util/thread_safe_queue.h"
 #include <atomic>
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -42,6 +41,9 @@ private:
   Logger();
   ~Logger();
 
+  Logger(const Logger &) = delete;
+  Logger &operator=(const Logger &) = delete;
+
   void processMessages();
   void formatOutput(const std::vector<LogMessage> &messages);
   void flushBuffer();
@@ -49,7 +51,8 @@ private:
 public:
   static Logger &getInstance();
 
-  bool init(const LoggerConfig &config);
+  void init();
+  bool loadConfig(const LoggerConfig &config);
   void shutdown();
   void log(LogMessage &&msg);
   void setLogLevel(LogLevel level);

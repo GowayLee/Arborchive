@@ -1,13 +1,15 @@
+#define _DEBUG_
+
 #include "util/logger/logger.h"
+#include "util/logger/logger_macros.h"
 #include <chrono>
-#include <cstring>
 #include <iostream>
 #include <sstream>
 
 thread_local Logger::LogContext Logger::log_context_;
 thread_local bool Logger::is_logging_ = false;
 
-Logger::Logger() : log_level_threshold_(LogLevel::INFO), batch_size_(100) {}
+Logger::Logger() : log_level_threshold_(LogLevel::INFO), batch_size_(5) {}
 
 Logger::~Logger() { shutdown(); }
 
@@ -16,9 +18,19 @@ Logger &Logger::getInstance() {
   return instance;
 }
 
-bool Logger::init(const LoggerConfig &config) {
+// Initialize the logger
+void Logger::init() {
+  is_to_file_ = false;
+  is_to_console_ = true;
+  log_level_threshold_ = LogLevel::INFO;
+  batch_size_ = 60;
+  running_ = true;
+  worker_thread_ = std::thread(&Logger::processMessages, this);
+}
+
+// Load the logger configuration
+bool Logger::loadConfig(const LoggerConfig &config) {
   try {
-    // Initialize the logger with the given configuration
     if ((is_to_file_ =
              !config.file.empty())) { // Open the log file if specified
       log_file_.open(config.file, std::ios::app);
@@ -28,25 +40,45 @@ bool Logger::init(const LoggerConfig &config) {
     log_level_threshold_ = StringToLevel(config.level);
     batch_size_ = config.batch_size;
     is_to_console_ = config.is_to_console;
-
-    // Start the worker thread to process log messages
-    running_ = true;
-    worker_thread_ = std::thread(&Logger::processMessages, this);
   } catch (const std::exception &e) {
-    std::cerr << "Logger initialization failed: " << e.what() << std::endl;
+    LOG_ERROR << "Logger config initialization failed: " << e.what()
+              << std::endl;
     return false;
   }
+  LOG_INFO << "Logger config initialized successfully\n"
+           << "Log level: " << levelToString(log_level_threshold_)
+           << "\nBatch size: " << batch_size_
+           << "\nLog file: " << (is_to_file_ ? config.file : "N/A")
+           << std::endl;
   return true;
 }
 
 void Logger::shutdown() {
   if (running_) {
     running_ = false;
-    if (worker_thread_.joinable()) {
+    queue_.stop(); // 通知队列终止
+
+    if (worker_thread_.joinable())
       worker_thread_.join();
+
+    // 处理队列中剩余的日志
+    while (!queue_.empty()) {
+      auto msg = queue_.pop();
+      batch_buffer_.push_back(std::move(msg));
+      if (batch_buffer_.size() >= batch_size_) {
+        formatOutput(batch_buffer_);
+        batch_buffer_.clear();
+      }
     }
-    flushBuffer();
-    log_file_.close();
+
+    // 处理 batch_buffer_ 中剩余的日志
+    if (!batch_buffer_.empty()) {
+      formatOutput(batch_buffer_);
+      batch_buffer_.clear();
+    }
+
+    if (log_file_.is_open())
+      log_file_.close();
   }
 }
 
@@ -59,12 +91,26 @@ void Logger::log(LogMessage &&msg) {
 void Logger::setLogLevel(LogLevel level) { log_level_threshold_ = level; }
 
 void Logger::processMessages() {
-  while (running_ || !queue_.empty()) {
-    auto msg = queue_.pop();
-    batch_buffer_.push_back(std::move(msg));
+  try {
+    while (running_ || !queue_.empty()) {
+      auto msg = queue_.pop();
+      batch_buffer_.push_back(std::move(msg));
 
-    if (batch_buffer_.size() >= batch_size_ ||
-        (!running_ && !batch_buffer_.empty())) {
+      if (batch_buffer_.size() >= batch_size_ ||
+          (!running_ && !queue_.empty())) {
+        formatOutput(batch_buffer_);
+        batch_buffer_.clear();
+      }
+    }
+
+    // 处理 batch_buffer_ 中剩余的日志
+    if (!batch_buffer_.empty()) {
+      formatOutput(batch_buffer_);
+      batch_buffer_.clear();
+    }
+  } catch (const std::runtime_error &e) {
+    // 处理队列终止异常
+    if (!batch_buffer_.empty()) {
       formatOutput(batch_buffer_);
       batch_buffer_.clear();
     }
@@ -80,9 +126,14 @@ void Logger::formatOutput(const std::vector<LogMessage> &messages) {
     //               std::localtime(&t));
     std::strftime(time_str, sizeof(time_str), "%H:%M:%S", std::localtime(&t));
 
+#ifdef _DEBUG_
     ss << "[" << time_str << "] "
        << "[" << levelToString(msg.level) << "] " << msg.file << ":" << msg.line
        << " - " << msg.message;
+#else
+    ss << "[" << time_str << "] "
+       << "[" << levelToString(msg.level) << "] " << msg.message;
+#endif
   }
 
   if (is_to_console_)
@@ -114,17 +165,11 @@ const char *Logger::levelToString(LogLevel level) {
 }
 
 const LogLevel Logger::StringToLevel(const std::string &level) {
-  if (level == "DEBUG" || level == "debug") {
-    return LogLevel::DEBUG;
-  } else if (level == "INFO" || level == "info") {
-    return LogLevel::INFO;
-  } else if (level == "WARNING" || level == "warning") {
-    return LogLevel::WARNING;
-  } else if (level == "ERROR" || level == "error") {
-    return LogLevel::ERROR;
-  } else {
+  auto it = log_level_map.find(level);
+  if (it != log_level_map.end())
+    return it->second;
+  else
     throw std::runtime_error("Invalid log level");
-  }
 }
 
 // Logger类的成员函数，用于设置日志级别、文件名和行号
