@@ -4,6 +4,9 @@
 #include <iostream>
 #include <sstream>
 
+thread_local Logger::LogContext Logger::log_context_;
+thread_local bool Logger::is_logging_ = false;
+
 Logger::Logger() : log_level_threshold_(LogLevel::INFO), batch_size_(100) {}
 
 Logger::~Logger() { shutdown(); }
@@ -16,16 +19,17 @@ Logger &Logger::getInstance() {
 bool Logger::init(const LoggerConfig &config) {
   try {
     // Initialize the logger with the given configuration
-
-    if ((is_to_file_ = config.file.empty())) { // Open the log file if specified
+    if ((is_to_file_ =
+             !config.file.empty())) { // Open the log file if specified
       log_file_.open(config.file, std::ios::app);
-      if (!log_file_.is_open()) {
+      if (!log_file_.is_open())
         throw std::runtime_error("Cannot open log file");
-      }
     }
     log_level_threshold_ = StringToLevel(config.level);
     batch_size_ = config.batch_size;
     is_to_console_ = config.is_to_console;
+
+    // Start the worker thread to process log messages
     running_ = true;
     worker_thread_ = std::thread(&Logger::processMessages, this);
   } catch (const std::exception &e) {
@@ -71,13 +75,14 @@ void Logger::formatOutput(const std::vector<LogMessage> &messages) {
   std::stringstream ss;
   for (const auto &msg : messages) {
     auto t = std::chrono::system_clock::to_time_t(msg.timestamp);
-    char time_str[20];
-    std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S",
-                  std::localtime(&t));
+    char time_str[9];
+    // std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S",
+    //               std::localtime(&t));
+    std::strftime(time_str, sizeof(time_str), "%H:%M:%S", std::localtime(&t));
 
     ss << "[" << time_str << "] "
        << "[" << levelToString(msg.level) << "] " << msg.file << ":" << msg.line
-       << " - " << msg.message << "\n";
+       << " - " << msg.message;
   }
 
   if (is_to_console_)
@@ -120,4 +125,30 @@ const LogLevel Logger::StringToLevel(const std::string &level) {
   } else {
     throw std::runtime_error("Invalid log level");
   }
+}
+
+// Logger类的成员函数，用于设置日志级别、文件名和行号
+Logger &Logger::operator()(LogLevel level, const char *file, int line) {
+  if (level >= log_level_threshold_) {
+    is_logging_ = true;
+    // 初始化日志上下文，包括日志流、日志级别、文件名和行号
+    log_context_ = LogContext{std::ostringstream(), level, file, line};
+  } else
+    is_logging_ = false;
+  return *this; // 返回当前Logger对象，以便支持链式调用
+}
+
+// Logger类的成员函数，用于处理流操作符<<
+Logger &Logger::operator<<(std::ostream &(*manip)(std::ostream &)) {
+  if (is_logging_) {
+    manip(log_context_.stream);
+    // 检查操作符是否为std::endl
+    if (manip == static_cast<std::ostream &(*)(std::ostream &)>(std::endl)) {
+      // 如果是，则将日志消息写入日志系统
+      log(LogMessage(log_context_.level, log_context_.stream.str(),
+                     log_context_.file, log_context_.line));
+      is_logging_ = false;
+    }
+  }
+  return *this;
 }
