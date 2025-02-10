@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
     const CLArgs &clargs = cli.getOptions();
 
     auto &configLoader = ConfigLoader::getInstance();
-    configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
     if (!configLoader.loadFromFile(clargs.config_path)) {
       LOG_ERROR << "Failed to load config file: " << clargs.config_path
                 << std::endl;
@@ -29,6 +28,7 @@ int main(int argc, char *argv[]) {
     } else
       LOG_INFO << "Config file: " << clargs.config_path
                << " loaded successfully" << std::endl;
+    configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
 
     // 初始化Logger
     if (!Logger::getInstance().loadConfig(configLoader.getConfig().logger))
