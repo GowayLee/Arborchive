@@ -1,5 +1,6 @@
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
+#include "util/logger/logger_macros.h"
 
 #include <iostream>
 #include <toml.hpp>
@@ -47,7 +48,7 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
 
     return true;
   } catch (const std::exception &e) {
-    std::cerr << "Error loading config file: " << e.what() << std::endl;
+    LOG_ERROR << "Error loading config file: " << e.what() << std::endl;
     return false;
   }
 }
@@ -56,8 +57,12 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
  * 从命令行参数中加载配置信息, 如果命令行参数中存在与配置文件中相同的配置项,
  * 则覆盖配置文件中的配置项
  */
+
 void ConfigLoader::mergeFromCli(const CLArgs &args) {
   config.general.source_path = args.source_path;
+  LOG_INFO << "merged source_path: " << config.general.source_path << std::endl;
   config.general.output_path = args.output_path;
+  LOG_DEBUG << "merged output_path: " << config.general.output_path << std::endl;
   config.logger.is_to_console = !args.quiet;
+  LOG_DEBUG << "merged is_to_console: " << config.logger.is_to_console << std::endl;
 }

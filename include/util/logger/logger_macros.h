@@ -11,4 +11,6 @@
 #define LOG_WARNING LOG(LogLevel::WARNING)
 #define LOG_ERROR LOG(LogLevel::ERROR)
 
+#define INDENT_LEFT "                  "
+
 #endif // _LOGGER_MACROS_H

@@ -9,7 +9,7 @@
 thread_local Logger::LogContext Logger::log_context_;
 thread_local bool Logger::is_logging_ = false;
 
-Logger::Logger() : log_level_threshold_(LogLevel::INFO), batch_size_(5) {}
+Logger::Logger() {};
 
 Logger::~Logger() { shutdown(); }
 
@@ -22,8 +22,13 @@ Logger &Logger::getInstance() {
 void Logger::init() {
   is_to_file_ = false;
   is_to_console_ = true;
+#ifdef _DEBUG_
+  log_level_threshold_ = LogLevel::DEBUG;
+  batch_size_ = 5;
+#else
   log_level_threshold_ = LogLevel::INFO;
   batch_size_ = 60;
+#endif
   running_ = true;
   worker_thread_ = std::thread(&Logger::processMessages, this);
 }
@@ -46,9 +51,10 @@ bool Logger::loadConfig(const LoggerConfig &config) {
     return false;
   }
   LOG_INFO << "Logger config initialized successfully\n"
-           << "Log level: " << levelToString(log_level_threshold_)
-           << "\nBatch size: " << batch_size_
-           << "\nLog file: " << (is_to_file_ ? config.file : "N/A")
+           << INDENT_LEFT
+           << "Log level: " << levelToString(log_level_threshold_) << "\n"
+           << INDENT_LEFT << "Batch size: " << batch_size_ << "\n"
+           << INDENT_LEFT << "Log file: " << (is_to_file_ ? config.file : "N/A")
            << std::endl;
   return true;
 }

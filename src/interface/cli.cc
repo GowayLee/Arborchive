@@ -1,7 +1,10 @@
 #include "interface/cli.h"
+#include "util/logger/logger_macros.h"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+
+void printBanner();
 
 void Cli::init(int argc, char *argv[]) {
   for (int i = 1; i < argc; ++i)
@@ -42,6 +45,7 @@ void Cli::parseArgs() {
         if (i + 1 >= args.size()) // check if next argument exists
           throw std::runtime_error("Missing value for argument: " + arg);
         it->handler(args[++i]);
+        LOG_DEBUG << "Argument: " << arg << " Value: " << args[i] << std::endl;
       } else
         it->handler("");
     } else
@@ -85,11 +89,22 @@ int Cli::process() {
     }
 
     // output file ./banner to console
+    printBanner();
 
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
+    showHelp();
     return 1;
   }
 
   return 2;
+}
+
+void printBanner() {
+    std::cout << "         /\\                .\n";
+    std::cout << "     _  / |               /                               /       .-.\n";
+    std::cout << "    (  /  |  .  ).--.    /-.    .-._.   ).--.  .-.       /-.      `-'  )   .-.   .-.\n";
+    std::cout << "     `/.__|_.' /        /   )  (   )   /      (         /   |    /    (   /    ./.-'_\n";
+    std::cout << " .:' /    |   /       .'`--'`-  `-'   /        `---' _.'    | _.(__.   \\_/     (__.'\n";
+    std::cout << "(__.'     `-' \n";
 }
