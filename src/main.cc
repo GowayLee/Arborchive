@@ -1,4 +1,4 @@
-#include "interface/clang_initializer.h"
+#include "interface/clang_indexer.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
@@ -30,14 +30,15 @@ int main(int argc, char *argv[]) {
                << " loaded successfully" << std::endl;
     configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
 
-    // 初始化Logger
+    // 加载日志配置
     if (!Logger::getInstance().loadConfig(configLoader.getConfig().logger))
       return 1;
 
     // 初始化libclang
-    LibclangInitializer libclangInit;
-    if (!libclangInit.initialize()) {
-      std::cerr << "Failed to initialize libclang" << std::endl;
+    auto &clangIndexer = ClangIndexer::getInstance();
+    clangIndexer.loadConfig(configLoader.getConfig());
+    if (!clangIndexer.init()) {
+      LOG_ERROR << "Failed to initialize libclang" << std::endl;
       return 1;
     }
 
