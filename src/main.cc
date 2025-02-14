@@ -4,7 +4,6 @@
 #include "model/config/cl_args.h"
 #include "util/logger/logger.h"
 #include "util/logger/logger_macros.h"
-#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char *argv[]) {
