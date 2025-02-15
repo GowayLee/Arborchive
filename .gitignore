@@ -33,5 +33,6 @@
 
 # Editor related
 .vscode/*
+.zed/*
 build/*
 .clangd
