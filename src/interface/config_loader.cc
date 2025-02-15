@@ -29,7 +29,6 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
 
     // 解析database部分
     auto &database = toml::find(data, "database");
-    config.database.path = toml::find<std::string>(database, "path");
     config.database.batch_size = toml::find<int>(database, "batch_size");
     config.database.cache_size_mb = toml::find<int>(database, "cache_size_mb");
     config.database.journal_mode =
