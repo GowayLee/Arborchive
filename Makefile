@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Iinclude -g -O0
+CXXFLAGS = -std=c++17 -Wall -Iinclude -g -D_DEBUG_
 LDFLAGS = -lclang
 
 TARGET = build/demo

@@ -1,6 +1,3 @@
-#include <cstdlib>
-#define _DEBUG_
-
 #include "util/logger/logger.h"
 #include "util/logger/logger_macros.h"
 #include <chrono>

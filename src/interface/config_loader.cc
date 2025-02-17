@@ -1,7 +1,6 @@
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
 #include "util/logger/logger_macros.h"
-
 #include <iostream>
 #include <toml.hpp>
 

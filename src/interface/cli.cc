@@ -89,7 +89,9 @@ int Cli::process() {
     }
 
     // output file ./banner to console
+#ifndef _DEBUG_
     printBanner();
+#endif
 
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
