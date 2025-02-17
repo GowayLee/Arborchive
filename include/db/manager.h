@@ -13,6 +13,8 @@ private:
   std::unique_ptr<DatabaseWorker> worker_;
 
   DatabaseManager(const DatabaseConfig &config);
+  ~DatabaseManager() = default;
+
   DatabaseManager(const DatabaseManager &) = delete;
   DatabaseManager &operator=(const DatabaseManager &) = delete;
 

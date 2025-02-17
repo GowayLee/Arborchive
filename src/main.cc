@@ -9,7 +9,8 @@
 
 int main(int argc, char *argv[]) {
   try {
-    Logger::getInstance().init(); // 初始化Logger
+    auto &logger = Logger::getInstance();
+    logger.init();
 
     auto &cli = Cli::getInstance();
     cli.init(argc, argv);
@@ -31,20 +32,24 @@ int main(int argc, char *argv[]) {
     configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
 
     // 加载日志配置
-    if (!Logger::getInstance().loadConfig(configLoader.getConfig().logger))
+    if (!logger.loadConfig(configLoader.getConfig().logger))
       return 1;
 
     // 初始化libclang
     auto &clangIndexer = ClangIndexer::getInstance();
-    clangIndexer.loadConfig(configLoader.getConfig());
-    if (!clangIndexer.init()) {
-      LOG_ERROR << "Failed to initialize libclang" << std::endl;
+    if (!clangIndexer.loadConfig(configLoader.getConfig()))
       return 1;
-    }
 
     // 初始化数据库连接
-    DatabaseManager::getInstance(configLoader.getConfig().database).start();
+    auto &dbManager =
+        DatabaseManager::getInstance(configLoader.getConfig().database);
+    dbManager.start();
 
+    // Start parsing process
+
+    // Manually stop worker threads
+    dbManager.stop();
+    logger.stop();
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Fatal error: " << e.what() << std::endl;

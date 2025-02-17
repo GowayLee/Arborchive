@@ -21,7 +21,7 @@ private:
 public:
   DatabaseWorker(ThreadSafeQueue<std::unique_ptr<SQLModel>> &queue,
                  const DatabaseConfig &config);
-  ~DatabaseWorker();
+  ~DatabaseWorker() = default;
   void start();
   void stop();
 };

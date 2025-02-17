@@ -38,8 +38,8 @@ private:
   static thread_local LogContext log_context_;
   static thread_local bool is_logging_; // 标记当前线程是否正在进行日志记录
 
-  Logger();
-  ~Logger();
+  Logger() = default;
+  ~Logger() = default;
 
   Logger(const Logger &) = delete;
   Logger &operator=(const Logger &) = delete;
@@ -53,7 +53,7 @@ public:
 
   void init();
   bool loadConfig(const LoggerConfig &config);
-  void shutdown();
+  void stop();
   void log(LogMessage &&msg);
   void setLogLevel(LogLevel level);
   const char *levelToString(LogLevel level);

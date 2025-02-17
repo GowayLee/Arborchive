@@ -7,10 +7,6 @@
 thread_local Logger::LogContext Logger::log_context_;
 thread_local bool Logger::is_logging_ = false;
 
-Logger::Logger() {};
-
-Logger::~Logger() { shutdown(); }
-
 Logger &Logger::getInstance() {
   static Logger instance;
   return instance;
@@ -57,7 +53,7 @@ bool Logger::loadConfig(const LoggerConfig &config) {
   return true;
 }
 
-void Logger::shutdown() {
+void Logger::stop() {
   if (running_) {
     running_ = false;
     queue_.stop(); // 通知队列终止

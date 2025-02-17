@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <stdexcept>
 
-
 DatabaseWorker::DatabaseWorker(
     ThreadSafeQueue<std::unique_ptr<SQLModel>> &queue,
     const DatabaseConfig &config)
@@ -23,11 +22,6 @@ DatabaseWorker::DatabaseWorker(
     LOG_INFO << "Database opened successfully: " << config.path << std::endl;
 
   configureDatabase(config);
-}
-
-DatabaseWorker::~DatabaseWorker() {
-  stop();
-  sqlite3_close(db_);
 }
 
 void DatabaseWorker::configureDatabase(const DatabaseConfig &config) {
@@ -56,6 +50,8 @@ void DatabaseWorker::stop() {
   queue_.stop();
   if (worker_thread_.joinable())
     worker_thread_.join();
+
+  sqlite3_close(db_);
 }
 
 void DatabaseWorker::run() {

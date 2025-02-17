@@ -16,7 +16,7 @@ public:
     return instance;
   }
 
-  void loadConfig(const Configuration &config);
+  bool loadConfig(const Configuration &config);
 
   bool init();
 

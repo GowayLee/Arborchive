@@ -10,7 +10,7 @@ ClangIndexer::~ClangIndexer() {
     clang_disposeIndex(index);
 }
 
-void ClangIndexer::loadConfig(const Configuration &config) {
+bool ClangIndexer::loadConfig(const Configuration &config) {
   // 根据配置文件设置相应的成员变量
   sourcePath = config.general.source_path;
   includePaths = config.compilation.include_paths;
@@ -18,6 +18,9 @@ void ClangIndexer::loadConfig(const Configuration &config) {
   cxxStandard = config.compilation.cxx_standard;
   flags = config.compilation.flags;
   LOG_INFO << "ClangIndexer configuration loaded" << std::endl;
+
+  // initialize
+  return init();
 }
 
 const std::string &ClangIndexer::getSourcePath() const { return sourcePath; }
@@ -38,7 +41,7 @@ bool ClangIndexer::init() {
 
   args = convertToCommandLineArgs();
 
-  // Convert args to C-style strings, 
+  // Convert args to C-style strings,
   for (const auto &arg : args)
     c_args.push_back(arg.c_str());
 
