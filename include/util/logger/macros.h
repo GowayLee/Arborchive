@@ -13,4 +13,10 @@
 
 #define INDENT_LEFT "                  "
 
+/* Example:
+ * LOG_INFO << "This is a test" << std::endl;
+ * LOG_DEBUG << "Args: " << arg1 << ", " << arg2 << std::endl;
+ * LOG_ERROR << "Error in parsing file" << std::endl;
+*/
+
 #endif // _LOGGER_MACROS_H

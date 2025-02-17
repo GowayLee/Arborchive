@@ -1,6 +1,6 @@
 [general]
 source_path = "src/"          # 需要扫描的源码路径
-output_path = "ast.db"        # 输出数据库路径
+output_path = "tests/ast.db"        # 输出数据库路径
 
 [compilation]
 # 编译设置
@@ -27,7 +27,7 @@ flags = [              # 编译器标志
 [database]
 # 数据库连接参数
 
-path = "ast.db"
+path = "tests/ast.db"
 batch_size = 1000        # 批量写入记录数
 cache_size_mb = 64       # SQLite缓存大小（MB）
 journal_mode = "WAL"     # 日志模式

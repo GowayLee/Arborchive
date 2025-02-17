@@ -43,9 +43,7 @@ int main(int argc, char *argv[]) {
     }
 
     // 初始化数据库连接
-    auto &dbManager =
-        DatabaseManager::getInstance(configLoader.getConfig().database);
-    dbManager.start();
+    DatabaseManager::getInstance(configLoader.getConfig().database).start();
 
     return 0;
   } catch (const std::exception &e) {

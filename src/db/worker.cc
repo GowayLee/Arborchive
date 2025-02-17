@@ -1,12 +1,21 @@
 #include "db/worker.h"
 #include "model/config/configuration.h"
 #include "util/logger/macros.h"
+#include <filesystem>
 #include <stdexcept>
+
 
 DatabaseWorker::DatabaseWorker(
     ThreadSafeQueue<std::unique_ptr<SQLModel>> &queue,
     const DatabaseConfig &config)
     : queue_(queue), batch_size_(config.batch_size) {
+
+  // 解析路径并创建目录
+  std::filesystem::path dbFilePath(config.path);
+  std::filesystem::path dbDir = dbFilePath.parent_path();
+  if (!dbDir.empty() && !std::filesystem::exists(dbDir))
+    std::filesystem::create_directories(dbDir);
+
   if (sqlite3_open(config.path.c_str(), &db_) != SQLITE_OK) {
     LOG_ERROR << "Failed to open database: " << config.path << std::endl;
     throw std::runtime_error("Failed to open database");
@@ -45,9 +54,8 @@ void DatabaseWorker::start() {
 void DatabaseWorker::stop() {
   LOG_INFO << "Stopping database worker thread" << std::endl;
   queue_.stop();
-  if (worker_thread_.joinable()) {
+  if (worker_thread_.joinable())
     worker_thread_.join();
-  }
 }
 
 void DatabaseWorker::run() {
@@ -93,7 +101,6 @@ void DatabaseWorker::processBatch(
   if (rc != SQLITE_OK) {
     LOG_ERROR << "Failed to commit transaction: " << errMsg << std::endl;
     sqlite3_free(errMsg);
-  } else {
+  } else
     LOG_INFO << "Transaction committed successfully" << std::endl;
-  }
 }
