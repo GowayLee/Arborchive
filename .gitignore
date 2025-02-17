@@ -36,3 +36,6 @@
 .zed/*
 build/*
 .clangd
+
+# Project related
+ast.db

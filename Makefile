@@ -43,10 +43,10 @@ run: $(TARGET)
 
 help:
 	@echo "Usage:"
-	@echo "  make        # Build"
-	@echo "  make debug  # Build with debug flags"
-	@echo "  make release # Build with release flags"
-	@echo "  make run    # Build and run to show testing output"
-	@echo "  make clean  # Clean up all build files"
+	@echo "  make          # Build"
+	@echo "  make debug    # Build with debug flags"
+	@echo "  make release  # Build with release flags"
+	@echo "  make run      # Build and run to show testing output"
+	@echo "  make clean    # Clean up all build files"
 
 .PHONY: all clean help run debug release
