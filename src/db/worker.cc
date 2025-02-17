@@ -59,7 +59,7 @@ void DatabaseWorker::run() {
   while (!queue_.isStopped() || !queue_.empty()) {
     try {
       batch.push_back(std::move(queue_.pop()));
-      if (batch.size() >= batch_size_) {
+      if (batch.size() >= static_cast<std::size_t>(batch_size_)) {
         processBatch(batch);
         batch.clear();
       }

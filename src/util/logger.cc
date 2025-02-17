@@ -164,7 +164,7 @@ const char *Logger::levelToString(LogLevel level) {
   }
 }
 
-const LogLevel Logger::StringToLevel(const std::string &level) {
+LogLevel Logger::StringToLevel(const std::string &level) {
   auto it = log_level_map.find(level);
   if (it != log_level_map.end())
     return it->second;

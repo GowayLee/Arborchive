@@ -57,7 +57,7 @@ public:
   void log(LogMessage &&msg);
   void setLogLevel(LogLevel level);
   const char *levelToString(LogLevel level);
-  const LogLevel StringToLevel(const std::string &level);
+  LogLevel StringToLevel(const std::string &level);
 
   // 定义一个函数调用运算符，用于设置日志级别和代码文件信息
   Logger &operator()(LogLevel level, const char *file, int line);
