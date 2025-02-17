@@ -28,6 +28,7 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
 
     // 解析database部分
     auto &database = toml::find(data, "database");
+    config.database.path = toml::find<std::string>(database, "path");
     config.database.batch_size = toml::find<int>(database, "batch_size");
     config.database.cache_size_mb = toml::find<int>(database, "cache_size_mb");
     config.database.journal_mode =
@@ -60,7 +61,9 @@ void ConfigLoader::mergeFromCli(const CLArgs &args) {
   config.general.source_path = args.source_path;
   LOG_INFO << "merged source_path: " << config.general.source_path << std::endl;
   config.general.output_path = args.output_path;
-  LOG_DEBUG << "merged output_path: " << config.general.output_path << std::endl;
+  LOG_DEBUG << "merged output_path: " << config.general.output_path
+            << std::endl;
   config.logger.is_to_console = !args.quiet;
-  LOG_DEBUG << "merged is_to_console: " << config.logger.is_to_console << std::endl;
+  LOG_DEBUG << "merged is_to_console: " << config.logger.is_to_console
+            << std::endl;
 }

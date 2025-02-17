@@ -1,3 +1,4 @@
+#include "db/manager.h"
 #include "interface/clang_indexer.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
@@ -41,7 +42,10 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    // TODO: 继续处理流程
+    // 初始化数据库连接
+    auto &dbManager =
+        DatabaseManager::getInstance(configLoader.getConfig().database);
+    dbManager.start();
 
     return 0;
   } catch (const std::exception &e) {

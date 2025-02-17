@@ -21,6 +21,7 @@ struct CompilationConfig {
 
 // 数据库相关配置
 struct DatabaseConfig {
+  std::string path;
   int batch_size;
   int cache_size_mb;
   std::string journal_mode;
