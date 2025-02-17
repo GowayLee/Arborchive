@@ -1,5 +1,5 @@
 #include "interface/cli.h"
-#include "util/logger/logger_macros.h"
+#include "util/logger/macros.h"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>

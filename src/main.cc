@@ -3,7 +3,7 @@
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
 #include "util/logger/logger.h"
-#include "util/logger/logger_macros.h"
+#include "util/logger/macros.h"
 #include <iostream>
 
 int main(int argc, char *argv[]) {

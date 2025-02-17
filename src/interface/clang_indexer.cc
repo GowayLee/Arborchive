@@ -1,5 +1,5 @@
 #include "interface/clang_indexer.h"
-#include "util/logger/logger_macros.h"
+#include "util/logger/macros.h"
 #include <clang-c/Index.h>
 #include <string>
 
