@@ -1,3 +1,4 @@
+#include "core/router.h"
 #include "db/manager.h"
 #include "interface/clang_indexer.h"
 #include "interface/cli.h"
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]) {
     dbManager.start();
 
     // Start parsing process
+    Router &router = Router::getInstance();
+    router.parseAST(configLoader.getConfig().general.source_path);
 
     // Manually stop worker threads
     dbManager.stop();
