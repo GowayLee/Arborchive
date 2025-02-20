@@ -13,6 +13,8 @@ SRCS = $(wildcard $(SRC_DIR)/*.cc \
                   $(SRC_DIR)/interface/*.cc \
                   $(SRC_DIR)/util/*.cc \
                   $(SRC_DIR)/db/*.cc \
+                  $(SRC_DIR)/core/*.cc \
+                  $(SRC_DIR)/core/processor/*.cc \
                   $(SRC_DIR)/model/*/*.cc)
 
 OBJS = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(SRCS))
@@ -38,8 +40,9 @@ release: all
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
 
+run: CXXFLAGS += $(DEBUG_FLAG)
 run: $(TARGET)
-	./$(TARGET) -c config.example.toml -s aa -o aa
+	./$(TARGET) -c config.example.toml -s tests/slight-case.cc -o tests/ast.db
 
 help:
 	@echo "Usage:"
