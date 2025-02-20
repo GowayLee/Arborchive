@@ -1,20 +1,20 @@
 [general]
-source_path = "src/"          # 需要扫描的源码路径
+source_path = "tests/slight-case.cc"          # 需要扫描的源码路径
 output_path = "tests/ast.db"        # 输出数据库路径
 
 [compilation]
 # 编译设置
 
 include_paths = [             # include path
-    "/usr/local/include",
-    "third_party/boost_1.83",
-    "src/core/include",
+    # "/usr/local/include",
+    # "third_party/boost_1.83",
+    # "src/core/include",
 ]
 
 defines = [         # 预定义宏
-    "DEBUG_MODE=1",   # 带值的宏
-    "USE_FAST_ALGO",  # 无值宏
-    "MAX_ITEMS=1000", # 数值宏
+    # "DEBUG_MODE=1",   # 带值的宏
+    # "USE_FAST_ALGO",  # 无值宏
+    # "MAX_ITEMS=1000", # 数值宏
 ]
 
 cxx_standard = "c++17" # C++标准版本
