@@ -1,0 +1,440 @@
+/*
+ * C++ dbscheme
+ */
+
+/*
+case @funbindexpr.kind of
+  0 = @normal_call  // a normal call
+| 1 = @virtual_call // a virtual call
+| 2 = @adl_call     // a call whose target is only found by ADL
+;
+*/
+iscall(
+    unique int caller: @funbindexpr ref,
+    int kind: int ref
+);
+
+numtemplatearguments(
+    unique int expr_id: @expr ref,
+    int num: int ref
+);
+
+specialnamequalifyingelements(
+    unique int id: @specialnamequalifyingelement,
+    unique string name: string ref
+);
+
+@namequalifiableelement = @expr | @namequalifier;
+@namequalifyingelement = @namespace
+                       | @specialnamequalifyingelement
+                       | @usertype;
+
+namequalifiers(
+    unique int id: @namequalifier,
+    unique int qualifiableelement: @namequalifiableelement ref,
+    int qualifyingelement: @namequalifyingelement ref,
+    int location: @location_default ref
+);
+
+compound_requirement_is_noexcept(
+    int expr: @compound_requirement ref
+);
+
+new_allocated_type(
+    unique int expr: @new_expr ref,
+    int type_id: @type ref
+);
+
+new_array_allocated_type(
+    unique int expr: @new_array_expr ref,
+    int type_id: @type ref
+);
+
+@ctorinit = @ctordirectinit
+          | @ctorvirtualinit
+          | @ctorfieldinit
+          | @ctordelegatinginit;
+@dtordestruct = @dtordirectdestruct
+              | @dtorvirtualdestruct
+              | @dtorfielddestruct;
+
+
+condition_decl_bind(
+    unique int expr: @condition_decl ref,
+    unique int decl: @declaration ref
+);
+
+typeid_bind(
+    unique int expr: @type_id ref,
+    int type_id: @type ref
+);
+
+uuidof_bind(
+    unique int expr: @uuidof ref,
+    int type_id: @type ref
+);
+
+@sizeof_or_alignof = @runtime_sizeof | @runtime_alignof | @datasizeof | @sizeof_pack;
+
+sizeof_bind(
+    unique int expr: @sizeof_or_alignof ref,
+    int type_id: @type ref
+);
+
+code_block(
+    unique int block: @literal ref,
+    unique int routine: @function ref
+);
+
+lambdas(
+    unique int expr: @lambdaexpr ref,
+    string default_capture: string ref,
+    boolean has_explicit_return_type: boolean ref
+);
+
+lambda_capture(
+    unique int id: @lambdacapture,
+    int lambda: @lambdaexpr ref,
+    int index: int ref,
+    int field: @membervariable ref,
+    boolean captured_by_reference: boolean ref,
+    boolean is_implicit: boolean ref,
+    int location: @location_default ref
+);
+
+@funbindexpr = @routineexpr
+             | @new_expr
+             | @delete_expr
+             | @delete_array_expr
+             | @ctordirectinit
+             | @ctorvirtualinit
+             | @ctordelegatinginit
+             | @dtordirectdestruct
+             | @dtorvirtualdestruct;
+
+@varbindexpr = @varaccess | @ctorfieldinit | @dtorfielddestruct;
+@addressable = @function | @variable ;
+@accessible = @addressable | @enumconstant ;
+
+@access = @varaccess | @routineexpr ;
+
+fold(
+    int expr: @foldexpr ref,
+    string operator: string ref,
+    boolean is_left_fold: boolean ref
+);
+
+stmts(
+    unique int id: @stmt,
+    int kind: int ref,
+    int location: @location_stmt ref
+);
+
+case @stmt.kind of
+    1 = @stmt_expr
+|   2 = @stmt_if
+|   3 = @stmt_while
+|   4 = @stmt_goto
+|   5 = @stmt_label
+|   6 = @stmt_return
+|   7 = @stmt_block
+|   8 = @stmt_end_test_while // do { ... } while ( ... )
+|   9 = @stmt_for
+|  10 = @stmt_switch_case
+|  11 = @stmt_switch
+|  13 = @stmt_asm // "asm" statement or the body of an asm function
+|  15 = @stmt_try_block
+|  16 = @stmt_microsoft_try // Microsoft
+|  17 = @stmt_decl
+|  18 = @stmt_set_vla_size // C99
+|  19 = @stmt_vla_decl // C99
+|  25 = @stmt_assigned_goto // GNU
+|  26 = @stmt_empty
+|  27 = @stmt_continue
+|  28 = @stmt_break
+|  29 = @stmt_range_based_for // C++11
+// ...  30 @stmt_at_autoreleasepool_block deprecated
+// ...  31 @stmt_objc_for_in deprecated
+// ...  32 @stmt_at_synchronized deprecated
+|  33 = @stmt_handler
+// ...  34 @stmt_finally_end deprecated
+|  35 = @stmt_constexpr_if
+|  37 = @stmt_co_return
+|  38 = @stmt_consteval_if
+|  39 = @stmt_not_consteval_if
+;
+
+type_vla(
+    int type_id: @type ref,
+    int decl: @stmt_vla_decl ref
+);
+
+variable_vla(
+    int var: @variable ref,
+    int decl: @stmt_vla_decl ref
+);
+
+if_initialization(
+    unique int if_stmt: @stmt_if ref,
+    int init_id: @stmt ref
+);
+
+if_then(
+    unique int if_stmt: @stmt_if ref,
+    int then_id: @stmt ref
+);
+
+if_else(
+    unique int if_stmt: @stmt_if ref,
+    int else_id: @stmt ref
+);
+
+constexpr_if_initialization(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int init_id: @stmt ref
+);
+
+constexpr_if_then(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int then_id: @stmt ref
+);
+
+constexpr_if_else(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int else_id: @stmt ref
+);
+
+@stmt_consteval_or_not_consteval_if = @stmt_consteval_if | @stmt_not_consteval_if;
+
+consteval_if_then(
+    unique int constexpr_if_stmt: @stmt_consteval_or_not_consteval_if ref,
+    int then_id: @stmt ref
+);
+
+consteval_if_else(
+    unique int constexpr_if_stmt: @stmt_consteval_or_not_consteval_if ref,
+    int else_id: @stmt ref
+);
+
+while_body(
+    unique int while_stmt: @stmt_while ref,
+    int body_id: @stmt ref
+);
+
+do_body(
+    unique int do_stmt: @stmt_end_test_while ref,
+    int body_id: @stmt ref
+);
+
+switch_initialization(
+    unique int switch_stmt: @stmt_switch ref,
+    int init_id: @stmt ref
+);
+
+#keyset[switch_stmt, index]
+switch_case(
+    int switch_stmt: @stmt_switch ref,
+    int index: int ref,
+    int case_id: @stmt_switch_case ref
+);
+
+switch_body(
+    unique int switch_stmt: @stmt_switch ref,
+    int body_id: @stmt ref
+);
+
+@stmt_for_or_range_based_for = @stmt_for
+                             | @stmt_range_based_for;
+
+for_initialization(
+    unique int for_stmt: @stmt_for_or_range_based_for ref,
+    int init_id: @stmt ref
+);
+
+for_condition(
+    unique int for_stmt: @stmt_for ref,
+    int condition_id: @expr ref
+);
+
+for_update(
+    unique int for_stmt: @stmt_for ref,
+    int update_id: @expr ref
+);
+
+for_body(
+    unique int for_stmt: @stmt_for ref,
+    int body_id: @stmt ref
+);
+
+@stmtparent = @stmt | @expr_stmt ;
+stmtparents(
+    unique int id: @stmt ref,
+    int index: int ref,
+    int parent: @stmtparent ref
+);
+
+ishandler(unique int block: @stmt_block ref);
+
+@cfgnode = @stmt | @expr | @function | @initialiser ;
+
+stmt_decl_bind(
+    int stmt: @stmt_decl ref,
+    int num: int ref,
+    int decl: @declaration ref
+);
+
+stmt_decl_entry_bind(
+    int stmt: @stmt_decl ref,
+    int num: int ref,
+    int decl_entry: @element ref
+);
+
+@parameterized_element = @function | @stmt_block | @requires_expr;
+
+blockscope(
+    unique int block: @stmt_block ref,
+    int enclosing: @parameterized_element ref
+);
+
+@jump = @stmt_goto | @stmt_break | @stmt_continue;
+
+@jumporlabel = @jump | @stmt_label | @literal;
+
+jumpinfo(
+    unique int id: @jumporlabel ref,
+    string str: string ref,
+    int target: @stmt ref
+);
+
+preprocdirects(
+    unique int id: @preprocdirect,
+    int kind: int ref,
+    int location: @location_default ref
+);
+case @preprocdirect.kind of
+   0 = @ppd_if
+|  1 = @ppd_ifdef
+|  2 = @ppd_ifndef
+|  3 = @ppd_elif
+|  4 = @ppd_else
+|  5 = @ppd_endif
+|  6 = @ppd_plain_include
+|  7 = @ppd_define
+|  8 = @ppd_undef
+|  9 = @ppd_line
+| 10 = @ppd_error
+| 11 = @ppd_pragma
+| 12 = @ppd_objc_import
+| 13 = @ppd_include_next
+| 14 = @ppd_ms_import
+| 15 = @ppd_elifdef
+| 16 = @ppd_elifndef
+| 18 = @ppd_warning
+;
+
+@ppd_include = @ppd_plain_include | @ppd_objc_import | @ppd_include_next | @ppd_ms_import;
+
+@ppd_branch = @ppd_if | @ppd_ifdef | @ppd_ifndef | @ppd_elif | @ppd_elifdef | @ppd_elifndef;
+
+preprocpair(
+    int begin : @ppd_branch ref,
+    int elseelifend : @preprocdirect ref
+);
+
+preproctrue(int branch : @ppd_branch ref);
+preprocfalse(int branch : @ppd_branch ref);
+
+preproctext(
+    unique int id: @preprocdirect ref,
+    string head: string ref,
+    string body: string ref
+);
+
+includes(
+    unique int id: @ppd_include ref,
+    int included: @file ref
+);
+
+link_targets(
+    int id: @link_target,
+    int binary: @file ref
+);
+
+link_parent(
+    int element : @element ref,
+    int link_target : @link_target ref
+);
+
+/* XML Files */
+
+xmlEncoding(unique int id: @file ref, string encoding: string ref);
+
+xmlDTDs(
+    unique int id: @xmldtd,
+    string root: string ref,
+    string publicId: string ref,
+    string systemId: string ref,
+    int fileid: @file ref
+);
+
+xmlElements(
+    unique int id: @xmlelement,
+    string name: string ref,
+    int parentid: @xmlparent ref,
+    int idx: int ref,
+    int fileid: @file ref
+);
+
+xmlAttrs(
+    unique int id: @xmlattribute,
+    int elementid: @xmlelement ref,
+    string name: string ref,
+    string value: string ref,
+    int idx: int ref,
+    int fileid: @file ref
+);
+
+xmlNs(
+    int id: @xmlnamespace,
+    string prefixName: string ref,
+    string URI: string ref,
+    int fileid: @file ref
+);
+
+xmlHasNs(
+    int elementId: @xmlnamespaceable ref,
+    int nsId: @xmlnamespace ref,
+    int fileid: @file ref
+);
+
+xmlComments(
+    unique int id: @xmlcomment,
+    string text: string ref,
+    int parentid: @xmlparent ref,
+    int fileid: @file ref
+);
+
+xmlChars(
+    unique int id: @xmlcharacters,
+    string text: string ref,
+    int parentid: @xmlparent ref,
+    int idx: int ref,
+    int isCDATA: int ref,
+    int fileid: @file ref
+);
+
+@xmlparent = @file | @xmlelement;
+@xmlnamespaceable = @xmlelement | @xmlattribute;
+
+xmllocations(
+    int xmlElement: @xmllocatable ref,
+    int location: @location_default ref
+);
+
+@xmllocatable = @xmlcharacters
+              | @xmlelement
+              | @xmlcomment
+              | @xmlattribute
+              | @xmldtd
+              | @file
+              | @xmlnamespace;

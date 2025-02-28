@@ -1,0 +1,1227 @@
+/*
+ * C++ dbscheme
+ */
+
+comments(
+    unique int id: @comment,
+    string contents: string ref,
+    int location: @location_default ref
+);
+
+commentbinding(
+    int id: @comment ref,
+    int element: @element ref
+);
+
+exprconv(
+    int converted: @expr ref,
+    unique int conversion: @expr ref
+);
+
+compgenerated(unique int id: @element ref);
+
+/**
+ * `destructor_call` destructs the `i`'th entity that should be
+ * destructed following `element`. Note that entities should be
+ * destructed in reverse construction order, so for a given `element`
+ * these should be called from highest to lowest `i`.
+ */
+#keyset[element, destructor_call]
+#keyset[element, i]
+synthetic_destructor_call(
+    int element: @element ref,
+    int i: int ref,
+    int destructor_call: @routineexpr ref
+);
+
+namespaces(
+    unique int id: @namespace,
+    string name: string ref
+);
+
+namespace_inline(
+    unique int id: @namespace ref
+);
+
+namespacembrs(
+    int parentid: @namespace ref,
+    unique int memberid: @namespacembr ref
+);
+
+@namespacembr = @declaration | @namespace;
+
+exprparents(
+    int expr_id: @expr ref,
+    int child_index: int ref,
+    int parent_id: @exprparent ref
+);
+
+expr_isload(unique int expr_id: @expr ref);
+
+@cast = @c_style_cast
+      | @const_cast
+      | @dynamic_cast
+      | @reinterpret_cast
+      | @static_cast
+      ;
+
+/*
+case @conversion.kind of
+  0 = @simple_conversion           // a numeric conversion, qualification conversion, or a reinterpret_cast
+| 1 = @bool_conversion             // conversion to 'bool'
+| 2 = @base_class_conversion       // a derived-to-base conversion
+| 3 = @derived_class_conversion    // a base-to-derived conversion
+| 4 = @pm_base_class_conversion    // a derived-to-base conversion of a pointer to member
+| 5 = @pm_derived_class_conversion // a base-to-derived conversion of a pointer to member
+| 6 = @glvalue_adjust              // an adjustment of the type of a glvalue
+| 7 = @prvalue_adjust              // an adjustment of the type of a prvalue
+;
+*/
+/**
+ * Describes the semantics represented by a cast expression. This is largely
+ * independent of the source syntax of the cast, so it is separate from the
+ * regular expression kind.
+ */
+conversionkinds(
+    unique int expr_id: @cast ref,
+    int kind: int ref
+);
+
+@conversion = @cast
+            | @array_to_pointer
+            | @parexpr
+            | @reference_to
+            | @ref_indirect
+            | @temp_init
+            | @c11_generic
+            ;
+
+/*
+case @funbindexpr.kind of
+  0 = @normal_call  // a normal call
+| 1 = @virtual_call // a virtual call
+| 2 = @adl_call     // a call whose target is only found by ADL
+;
+*/
+iscall(
+    unique int caller: @funbindexpr ref,
+    int kind: int ref
+);
+
+numtemplatearguments(
+    unique int expr_id: @expr ref,
+    int num: int ref
+);
+
+specialnamequalifyingelements(
+    unique int id: @specialnamequalifyingelement,
+    unique string name: string ref
+);
+
+@namequalifiableelement = @expr | @namequalifier;
+@namequalifyingelement = @namespace
+                       | @specialnamequalifyingelement
+                       | @usertype;
+
+namequalifiers(
+    unique int id: @namequalifier,
+    unique int qualifiableelement: @namequalifiableelement ref,
+    int qualifyingelement: @namequalifyingelement ref,
+    int location: @location_default ref
+);
+
+varbind(
+    int expr: @varbindexpr ref,
+    int var: @accessible ref
+);
+
+funbind(
+    int expr: @funbindexpr ref,
+    int fun: @function ref
+);
+
+@any_new_expr = @new_expr
+              | @new_array_expr;
+
+@new_or_delete_expr = @any_new_expr
+                    | @delete_expr
+                    | @delete_array_expr;
+
+@prefix_crement_expr = @preincrexpr | @predecrexpr;
+
+@postfix_crement_expr = @postincrexpr | @postdecrexpr;
+
+@increment_expr = @preincrexpr | @postincrexpr;
+
+@decrement_expr = @predecrexpr | @postdecrexpr;
+
+@crement_expr = @increment_expr | @decrement_expr;
+
+@un_arith_op_expr = @arithnegexpr
+                  | @unaryplusexpr
+                  | @conjugation
+                  | @realpartexpr
+                  | @imagpartexpr
+                  | @crement_expr
+                  ;
+
+@un_bitwise_op_expr = @complementexpr;
+
+@un_log_op_expr = @notexpr;
+
+@un_op_expr = @address_of
+            | @indirect
+            | @un_arith_op_expr
+            | @un_bitwise_op_expr
+            | @builtinaddressof
+            | @vec_fill
+            | @un_log_op_expr
+            | @co_await
+            | @co_yield
+            ;
+
+@bin_log_op_expr = @andlogicalexpr | @orlogicalexpr;
+
+@cmp_op_expr = @eq_op_expr | @rel_op_expr;
+
+@eq_op_expr = @eqexpr | @neexpr;
+
+@rel_op_expr = @gtexpr
+             | @ltexpr
+             | @geexpr
+             | @leexpr
+             | @spaceshipexpr
+             ;
+
+@bin_bitwise_op_expr = @lshiftexpr
+                     | @rshiftexpr
+                     | @andexpr
+                     | @orexpr
+                     | @xorexpr
+                     ;
+
+@p_arith_op_expr = @paddexpr
+                 | @psubexpr
+                 | @pdiffexpr
+                 ;
+
+@bin_arith_op_expr = @addexpr
+                   | @subexpr
+                   | @mulexpr
+                   | @divexpr
+                   | @remexpr
+                   | @jmulexpr
+                   | @jdivexpr
+                   | @fjaddexpr
+                   | @jfaddexpr
+                   | @fjsubexpr
+                   | @jfsubexpr
+                   | @minexpr
+                   | @maxexpr
+                   | @p_arith_op_expr
+                   ;
+
+@bin_op_expr = @bin_arith_op_expr
+             | @bin_bitwise_op_expr
+             | @cmp_op_expr
+             | @bin_log_op_expr
+             ;
+
+@op_expr = @un_op_expr
+         | @bin_op_expr
+         | @assign_expr
+         | @conditionalexpr
+         ;
+
+@assign_arith_expr = @assignaddexpr
+                   | @assignsubexpr
+                   | @assignmulexpr
+                   | @assigndivexpr
+                   | @assignremexpr
+                   ;
+
+@assign_bitwise_expr = @assignandexpr
+                     | @assignorexpr
+                     | @assignxorexpr
+                     | @assignlshiftexpr
+                     | @assignrshiftexpr
+                     ;
+
+@assign_pointer_expr = @assignpaddexpr
+                     | @assignpsubexpr
+                     ;
+
+@assign_op_expr = @assign_arith_expr
+                | @assign_bitwise_expr
+                | @assign_pointer_expr
+                ;
+
+@assign_expr = @assignexpr | @assign_op_expr | @blockassignexpr
+
+/*
+  Binary encoding of the allocator form.
+
+  case @allocator.form of
+    0 = plain
+  | 1 = alignment
+  ;
+*/
+
+/**
+ * The allocator function associated with a `new` or `new[]` expression.
+ * The `form` column specified whether the allocation call contains an alignment
+ * argument.
+ */
+expr_allocator(
+    unique int expr: @any_new_expr ref,
+    int func: @function ref,
+    int form: int ref
+);
+
+/*
+  Binary encoding of the deallocator form.
+
+  case @deallocator.form of
+    0 = plain
+  | 1 = size
+  | 2 = alignment
+  | 4 = destroying_delete
+  ;
+*/
+
+/**
+ * The deallocator function associated with a `delete`, `delete[]`, `new`, or
+ * `new[]` expression. For a `new` or `new[]` expression, the deallocator is the
+ * one used to free memory if the initialization throws an exception.
+ * The `form` column specifies whether the deallocation call contains a size
+ * argument, and alignment argument, or both.
+ */
+expr_deallocator(
+    unique int expr: @new_or_delete_expr ref,
+    int func: @function ref,
+    int form: int ref
+);
+
+/**
+ * Holds if the `@conditionalexpr` is of the two operand form
+ * `guard ? : false`.
+ */
+expr_cond_two_operand(
+    unique int cond: @conditionalexpr ref
+);
+
+/**
+ * The guard of `@conditionalexpr` `guard ? true : false`
+ */
+expr_cond_guard(
+    unique int cond: @conditionalexpr ref,
+    int guard: @expr ref
+);
+
+/**
+ * The expression used when the guard of `@conditionalexpr`
+ * `guard ? true : false` holds. For the two operand form
+ * `guard ?: false` consider using `expr_cond_guard` instead.
+ */
+expr_cond_true(
+    unique int cond: @conditionalexpr ref,
+    int true: @expr ref
+);
+
+/**
+ * The expression used when the guard of `@conditionalexpr`
+ * `guard ? true : false` does not hold.
+ */
+expr_cond_false(
+    unique int cond: @conditionalexpr ref,
+    int false: @expr ref
+);
+
+/** A string representation of the value. */
+values(
+    unique int id: @value,
+    string str: string ref
+);
+
+/** The actual text in the source code for the value, if any. */
+valuetext(
+    unique int id: @value ref,
+    string text: string ref
+);
+
+valuebind(
+    int val: @value ref,
+    unique int expr: @expr ref
+);
+
+fieldoffsets(
+    unique int id: @variable ref,
+    int byteoffset: int ref,
+    int bitoffset: int ref
+);
+
+bitfield(
+    unique int id: @variable ref,
+    int bits: int ref,
+    int declared_bits: int ref
+);
+
+/* TODO
+memberprefix(
+    int member: @expr ref,
+    int prefix: @expr ref
+);
+*/
+
+/*
+   kind(1) = mbrcallexpr
+   kind(2) = mbrptrcallexpr
+   kind(3) = mbrptrmbrcallexpr
+   kind(4) = ptrmbrptrmbrcallexpr
+   kind(5) = mbrreadexpr // x.y
+   kind(6) = mbrptrreadexpr // p->y
+   kind(7) = mbrptrmbrreadexpr // x.*pm
+   kind(8) = mbrptrmbrptrreadexpr // x->*pm
+   kind(9) = staticmbrreadexpr // static x.y
+   kind(10) = staticmbrptrreadexpr // static p->y
+*/
+/* TODO
+memberaccess(
+    int member: @expr ref,
+    int kind: int ref
+);
+*/
+
+initialisers(
+    unique int init: @initialiser,
+    int var: @accessible ref,
+    unique int expr: @expr ref,
+    int location: @location_expr ref
+);
+
+braced_initialisers(
+    int init: @initialiser ref
+);
+
+/**
+ * An ancestor for the expression, for cases in which we cannot
+ * otherwise find the expression's parent.
+ */
+expr_ancestor(
+    int exp: @expr ref,
+    int ancestor: @element ref
+);
+
+exprs(
+    unique int id: @expr,
+    int kind: int ref,
+    int location: @location_expr ref
+);
+
+expr_reuse(
+    int reuse: @expr ref,
+    int original: @expr ref,
+    int value_category: int ref
+)
+
+/*
+  case @value.category of
+    1 = prval
+  | 2 = xval
+  | 3 = lval
+  ;
+*/
+expr_types(
+    int id: @expr ref,
+    int typeid: @type ref,
+    int value_category: int ref
+);
+
+case @expr.kind of
+    1 = @errorexpr
+|   2 = @address_of // & AddressOfExpr
+|   3 = @reference_to // ReferenceToExpr (implicit?)
+|   4 = @indirect // * PointerDereferenceExpr
+|   5 = @ref_indirect // ReferenceDereferenceExpr (implicit?)
+// ...
+|   8 = @array_to_pointer // (???)
+|   9 = @vacuous_destructor_call // VacuousDestructorCall
+// ...
+|  11 = @assume // Microsoft
+|  12 = @parexpr
+|  13 = @arithnegexpr
+|  14 = @unaryplusexpr
+|  15 = @complementexpr
+|  16 = @notexpr
+|  17 = @conjugation // GNU ~ operator
+|  18 = @realpartexpr // GNU __real
+|  19 = @imagpartexpr // GNU __imag
+|  20 = @postincrexpr
+|  21 = @postdecrexpr
+|  22 = @preincrexpr
+|  23 = @predecrexpr
+|  24 = @conditionalexpr
+|  25 = @addexpr
+|  26 = @subexpr
+|  27 = @mulexpr
+|  28 = @divexpr
+|  29 = @remexpr
+|  30 = @jmulexpr // C99 mul imaginary
+|  31 = @jdivexpr // C99 div imaginary
+|  32 = @fjaddexpr // C99 add real + imaginary
+|  33 = @jfaddexpr // C99 add imaginary + real
+|  34 = @fjsubexpr // C99 sub real - imaginary
+|  35 = @jfsubexpr // C99 sub imaginary - real
+|  36 = @paddexpr // pointer add (pointer + int or int + pointer)
+|  37 = @psubexpr // pointer sub (pointer - integer)
+|  38 = @pdiffexpr // difference between two pointers
+|  39 = @lshiftexpr
+|  40 = @rshiftexpr
+|  41 = @andexpr
+|  42 = @orexpr
+|  43 = @xorexpr
+|  44 = @eqexpr
+|  45 = @neexpr
+|  46 = @gtexpr
+|  47 = @ltexpr
+|  48 = @geexpr
+|  49 = @leexpr
+|  50 = @minexpr // GNU minimum
+|  51 = @maxexpr // GNU maximum
+|  52 = @assignexpr
+|  53 = @assignaddexpr
+|  54 = @assignsubexpr
+|  55 = @assignmulexpr
+|  56 = @assigndivexpr
+|  57 = @assignremexpr
+|  58 = @assignlshiftexpr
+|  59 = @assignrshiftexpr
+|  60 = @assignandexpr
+|  61 = @assignorexpr
+|  62 = @assignxorexpr
+|  63 = @assignpaddexpr // assign pointer add
+|  64 = @assignpsubexpr // assign pointer sub
+|  65 = @andlogicalexpr
+|  66 = @orlogicalexpr
+|  67 = @commaexpr
+|  68 = @subscriptexpr // access to member of an array, e.g., a[5]
+// ...  69 @objc_subscriptexpr deprecated
+// ...  70 @cmdaccess deprecated
+// ...
+|  73 = @virtfunptrexpr
+|  74 = @callexpr
+// ...  75 @msgexpr_normal deprecated
+// ...  76 @msgexpr_super deprecated
+// ...  77 @atselectorexpr deprecated
+// ...  78 @atprotocolexpr deprecated
+|  79 = @vastartexpr
+|  80 = @vaargexpr
+|  81 = @vaendexpr
+|  82 = @vacopyexpr
+// ...  83 @atencodeexpr deprecated
+|  84 = @varaccess
+|  85 = @thisaccess
+// ...  86 @objc_box_expr deprecated
+|  87 = @new_expr
+|  88 = @delete_expr
+|  89 = @throw_expr
+|  90 = @condition_decl // a variable declared in a condition, e.g., if(int x = y > 2)
+|  91 = @braced_init_list
+|  92 = @type_id
+|  93 = @runtime_sizeof
+|  94 = @runtime_alignof
+|  95 = @sizeof_pack
+|  96 = @expr_stmt // GNU extension
+|  97 = @routineexpr
+|  98 = @type_operand // used to access a type in certain contexts (haven't found any examples yet....)
+|  99 = @offsetofexpr // offsetof ::= type and field
+| 100 = @hasassignexpr // __has_assign ::= type
+| 101 = @hascopyexpr // __has_copy ::= type
+| 102 = @hasnothrowassign // __has_nothrow_assign ::= type
+| 103 = @hasnothrowconstr // __has_nothrow_constructor ::= type
+| 104 = @hasnothrowcopy // __has_nothrow_copy ::= type
+| 105 = @hastrivialassign // __has_trivial_assign ::= type
+| 106 = @hastrivialconstr // __has_trivial_constructor ::= type
+| 107 = @hastrivialcopy // __has_trivial_copy ::= type
+| 108 = @hasuserdestr // __has_user_destructor ::= type
+| 109 = @hasvirtualdestr // __has_virtual_destructor ::= type
+| 110 = @isabstractexpr // __is_abstract ::= type
+| 111 = @isbaseofexpr // __is_base_of ::= type type
+| 112 = @isclassexpr // __is_class ::= type
+| 113 = @isconvtoexpr // __is_convertible_to ::= type type
+| 114 = @isemptyexpr // __is_empty ::= type
+| 115 = @isenumexpr // __is_enum ::= type
+| 116 = @ispodexpr // __is_pod ::= type
+| 117 = @ispolyexpr // __is_polymorphic ::= type
+| 118 = @isunionexpr // __is_union ::= type
+| 119 = @typescompexpr // GNU __builtin_types_compatible ::= type type
+| 120 = @intaddrexpr // frontend internal builtin, used to implement offsetof
+// ...
+| 122 = @hastrivialdestructor // __has_trivial_destructor ::= type
+| 123 = @literal
+| 124 = @uuidof
+| 127 = @aggregateliteral
+| 128 = @delete_array_expr
+| 129 = @new_array_expr
+// ... 130 @objc_array_literal deprecated
+// ... 131 @objc_dictionary_literal deprecated
+| 132 = @foldexpr
+// ...
+| 200 = @ctordirectinit
+| 201 = @ctorvirtualinit
+| 202 = @ctorfieldinit
+| 203 = @ctordelegatinginit
+| 204 = @dtordirectdestruct
+| 205 = @dtorvirtualdestruct
+| 206 = @dtorfielddestruct
+// ...
+| 210 = @static_cast
+| 211 = @reinterpret_cast
+| 212 = @const_cast
+| 213 = @dynamic_cast
+| 214 = @c_style_cast
+| 215 = @lambdaexpr
+| 216 = @param_ref
+| 217 = @noopexpr
+// ...
+| 294 = @istriviallyconstructibleexpr
+| 295 = @isdestructibleexpr
+| 296 = @isnothrowdestructibleexpr
+| 297 = @istriviallydestructibleexpr
+| 298 = @istriviallyassignableexpr
+| 299 = @isnothrowassignableexpr
+| 300 = @istrivialexpr
+| 301 = @isstandardlayoutexpr
+| 302 = @istriviallycopyableexpr
+| 303 = @isliteraltypeexpr
+| 304 = @hastrivialmoveconstructorexpr
+| 305 = @hastrivialmoveassignexpr
+| 306 = @hasnothrowmoveassignexpr
+| 307 = @isconstructibleexpr
+| 308 = @isnothrowconstructibleexpr
+| 309 = @hasfinalizerexpr
+| 310 = @isdelegateexpr
+| 311 = @isinterfaceclassexpr
+| 312 = @isrefarrayexpr
+| 313 = @isrefclassexpr
+| 314 = @issealedexpr
+| 315 = @issimplevalueclassexpr
+| 316 = @isvalueclassexpr
+| 317 = @isfinalexpr
+| 319 = @noexceptexpr
+| 320 = @builtinshufflevector
+| 321 = @builtinchooseexpr
+| 322 = @builtinaddressof
+| 323 = @vec_fill
+| 324 = @builtinconvertvector
+| 325 = @builtincomplex
+| 326 = @spaceshipexpr
+| 327 = @co_await
+| 328 = @co_yield
+| 329 = @temp_init
+| 330 = @isassignable
+| 331 = @isaggregate
+| 332 = @hasuniqueobjectrepresentations
+| 333 = @builtinbitcast
+| 334 = @builtinshuffle
+| 335 = @blockassignexpr
+| 336 = @issame
+| 337 = @isfunction
+| 338 = @islayoutcompatible
+| 339 = @ispointerinterconvertiblebaseof
+| 340 = @isarray
+| 341 = @arrayrank
+| 342 = @arrayextent
+| 343 = @isarithmetic
+| 344 = @iscompletetype
+| 345 = @iscompound
+| 346 = @isconst
+| 347 = @isfloatingpoint
+| 348 = @isfundamental
+| 349 = @isintegral
+| 350 = @islvaluereference
+| 351 = @ismemberfunctionpointer
+| 352 = @ismemberobjectpointer
+| 353 = @ismemberpointer
+| 354 = @isobject
+| 355 = @ispointer
+| 356 = @isreference
+| 357 = @isrvaluereference
+| 358 = @isscalar
+| 359 = @issigned
+| 360 = @isunsigned
+| 361 = @isvoid
+| 362 = @isvolatile
+| 363 = @reuseexpr
+| 364 = @istriviallycopyassignable
+| 365 = @isassignablenopreconditioncheck
+| 366 = @referencebindstotemporary
+| 367 = @issameas
+| 368 = @builtinhasattribute
+| 369 = @ispointerinterconvertiblewithclass
+| 370 = @builtinispointerinterconvertiblewithclass
+| 371 = @iscorrespondingmember
+| 372 = @builtiniscorrespondingmember
+| 373 = @isboundedarray
+| 374 = @isunboundedarray
+| 375 = @isreferenceable
+| 378 = @isnothrowconvertible
+| 379 = @referenceconstructsfromtemporary
+| 380 = @referenceconvertsfromtemporary
+| 381 = @isconvertible
+| 382 = @isvalidwinrttype
+| 383 = @iswinclass
+| 384 = @iswininterface
+| 385 = @istriviallyequalitycomparable
+| 386 = @isscopedenum
+| 387 = @istriviallyrelocatable
+| 388 = @datasizeof
+| 389 = @c11_generic
+| 390 = @requires_expr
+| 391 = @nested_requirement
+| 392 = @compound_requirement
+| 393 = @concept_id
+;
+
+@var_args_expr = @vastartexpr
+               | @vaendexpr
+               | @vaargexpr
+               | @vacopyexpr
+               ;
+
+@builtin_op = @var_args_expr
+            | @noopexpr
+            | @offsetofexpr
+            | @intaddrexpr
+            | @hasassignexpr
+            | @hascopyexpr
+            | @hasnothrowassign
+            | @hasnothrowconstr
+            | @hasnothrowcopy
+            | @hastrivialassign
+            | @hastrivialconstr
+            | @hastrivialcopy
+            | @hastrivialdestructor
+            | @hasuserdestr
+            | @hasvirtualdestr
+            | @isabstractexpr
+            | @isbaseofexpr
+            | @isclassexpr
+            | @isconvtoexpr
+            | @isemptyexpr
+            | @isenumexpr
+            | @ispodexpr
+            | @ispolyexpr
+            | @isunionexpr
+            | @typescompexpr
+            | @builtinshufflevector
+            | @builtinconvertvector
+            | @builtinaddressof
+            | @istriviallyconstructibleexpr
+            | @isdestructibleexpr
+            | @isnothrowdestructibleexpr
+            | @istriviallydestructibleexpr
+            | @istriviallyassignableexpr
+            | @isnothrowassignableexpr
+            | @istrivialexpr
+            | @isstandardlayoutexpr
+            | @istriviallycopyableexpr
+            | @isliteraltypeexpr
+            | @hastrivialmoveconstructorexpr
+            | @hastrivialmoveassignexpr
+            | @hasnothrowmoveassignexpr
+            | @isconstructibleexpr
+            | @isnothrowconstructibleexpr
+            | @hasfinalizerexpr
+            | @isdelegateexpr
+            | @isinterfaceclassexpr
+            | @isrefarrayexpr
+            | @isrefclassexpr
+            | @issealedexpr
+            | @issimplevalueclassexpr
+            | @isvalueclassexpr
+            | @isfinalexpr
+            | @builtinchooseexpr
+            | @builtincomplex
+            | @isassignable
+            | @isaggregate
+            | @hasuniqueobjectrepresentations
+            | @builtinbitcast
+            | @builtinshuffle
+            | @issame
+            | @isfunction
+            | @islayoutcompatible
+            | @ispointerinterconvertiblebaseof
+            | @isarray
+            | @arrayrank
+            | @arrayextent
+            | @isarithmetic
+            | @iscompletetype
+            | @iscompound
+            | @isconst
+            | @isfloatingpoint
+            | @isfundamental
+            | @isintegral
+            | @islvaluereference
+            | @ismemberfunctionpointer
+            | @ismemberobjectpointer
+            | @ismemberpointer
+            | @isobject
+            | @ispointer
+            | @isreference
+            | @isrvaluereference
+            | @isscalar
+            | @issigned
+            | @isunsigned
+            | @isvoid
+            | @isvolatile
+            | @istriviallycopyassignable
+            | @isassignablenopreconditioncheck
+            | @referencebindstotemporary
+            | @issameas
+            | @builtinhasattribute
+            | @ispointerinterconvertiblewithclass
+            | @builtinispointerinterconvertiblewithclass
+            | @iscorrespondingmember
+            | @builtiniscorrespondingmember
+            | @isboundedarray
+            | @isunboundedarray
+            | @isreferenceable
+            | @isnothrowconvertible
+            | @referenceconstructsfromtemporary
+            | @referenceconvertsfromtemporary
+            | @isconvertible
+            | @isvalidwinrttype
+            | @iswinclass
+            | @iswininterface
+            | @istriviallyequalitycomparable
+            | @isscopedenum
+            | @istriviallyrelocatable
+            ;
+
+compound_requirement_is_noexcept(
+    int expr: @compound_requirement ref
+);
+
+new_allocated_type(
+    unique int expr: @new_expr ref,
+    int type_id: @type ref
+);
+
+new_array_allocated_type(
+    unique int expr: @new_array_expr ref,
+    int type_id: @type ref
+);
+
+/**
+ * The field being initialized by an initializer expression within an aggregate
+ * initializer for a class/struct/union. Position is used to sort repeated initializers.
+ */
+#keyset[aggregate, position]
+aggregate_field_init(
+    int aggregate: @aggregateliteral ref,
+    int initializer: @expr ref,
+    int field: @membervariable ref,
+    int position: int ref
+);
+
+/**
+ * The index of the element being initialized by an initializer expression
+ * within an aggregate initializer for an array. Position is used to sort repeated initializers.
+ */
+#keyset[aggregate, position]
+aggregate_array_init(
+    int aggregate: @aggregateliteral ref,
+    int initializer: @expr ref,
+    int element_index: int ref,
+    int position: int ref
+);
+
+@ctorinit = @ctordirectinit
+          | @ctorvirtualinit
+          | @ctorfieldinit
+          | @ctordelegatinginit;
+@dtordestruct = @dtordirectdestruct
+              | @dtorvirtualdestruct
+              | @dtorfielddestruct;
+
+
+condition_decl_bind(
+    unique int expr: @condition_decl ref,
+    unique int decl: @declaration ref
+);
+
+typeid_bind(
+    unique int expr: @type_id ref,
+    int type_id: @type ref
+);
+
+uuidof_bind(
+    unique int expr: @uuidof ref,
+    int type_id: @type ref
+);
+
+@sizeof_or_alignof = @runtime_sizeof | @runtime_alignof | @datasizeof | @sizeof_pack;
+
+sizeof_bind(
+    unique int expr: @sizeof_or_alignof ref,
+    int type_id: @type ref
+);
+
+code_block(
+    unique int block: @literal ref,
+    unique int routine: @function ref
+);
+
+lambdas(
+    unique int expr: @lambdaexpr ref,
+    string default_capture: string ref,
+    boolean has_explicit_return_type: boolean ref
+);
+
+lambda_capture(
+    unique int id: @lambdacapture,
+    int lambda: @lambdaexpr ref,
+    int index: int ref,
+    int field: @membervariable ref,
+    boolean captured_by_reference: boolean ref,
+    boolean is_implicit: boolean ref,
+    int location: @location_default ref
+);
+
+@funbindexpr = @routineexpr
+             | @new_expr
+             | @delete_expr
+             | @delete_array_expr
+             | @ctordirectinit
+             | @ctorvirtualinit
+             | @ctordelegatinginit
+             | @dtordirectdestruct
+             | @dtorvirtualdestruct;
+
+@varbindexpr = @varaccess | @ctorfieldinit | @dtorfielddestruct;
+@addressable = @function | @variable ;
+@accessible = @addressable | @enumconstant ;
+
+@access = @varaccess | @routineexpr ;
+
+fold(
+    int expr: @foldexpr ref,
+    string operator: string ref,
+    boolean is_left_fold: boolean ref
+);
+
+stmts(
+    unique int id: @stmt,
+    int kind: int ref,
+    int location: @location_stmt ref
+);
+
+case @stmt.kind of
+    1 = @stmt_expr
+|   2 = @stmt_if
+|   3 = @stmt_while
+|   4 = @stmt_goto
+|   5 = @stmt_label
+|   6 = @stmt_return
+|   7 = @stmt_block
+|   8 = @stmt_end_test_while // do { ... } while ( ... )
+|   9 = @stmt_for
+|  10 = @stmt_switch_case
+|  11 = @stmt_switch
+|  13 = @stmt_asm // "asm" statement or the body of an asm function
+|  15 = @stmt_try_block
+|  16 = @stmt_microsoft_try // Microsoft
+|  17 = @stmt_decl
+|  18 = @stmt_set_vla_size // C99
+|  19 = @stmt_vla_decl // C99
+|  25 = @stmt_assigned_goto // GNU
+|  26 = @stmt_empty
+|  27 = @stmt_continue
+|  28 = @stmt_break
+|  29 = @stmt_range_based_for // C++11
+// ...  30 @stmt_at_autoreleasepool_block deprecated
+// ...  31 @stmt_objc_for_in deprecated
+// ...  32 @stmt_at_synchronized deprecated
+|  33 = @stmt_handler
+// ...  34 @stmt_finally_end deprecated
+|  35 = @stmt_constexpr_if
+|  37 = @stmt_co_return
+|  38 = @stmt_consteval_if
+|  39 = @stmt_not_consteval_if
+;
+
+type_vla(
+    int type_id: @type ref,
+    int decl: @stmt_vla_decl ref
+);
+
+variable_vla(
+    int var: @variable ref,
+    int decl: @stmt_vla_decl ref
+);
+
+if_initialization(
+    unique int if_stmt: @stmt_if ref,
+    int init_id: @stmt ref
+);
+
+if_then(
+    unique int if_stmt: @stmt_if ref,
+    int then_id: @stmt ref
+);
+
+if_else(
+    unique int if_stmt: @stmt_if ref,
+    int else_id: @stmt ref
+);
+
+constexpr_if_initialization(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int init_id: @stmt ref
+);
+
+constexpr_if_then(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int then_id: @stmt ref
+);
+
+constexpr_if_else(
+    unique int constexpr_if_stmt: @stmt_constexpr_if ref,
+    int else_id: @stmt ref
+);
+
+@stmt_consteval_or_not_consteval_if = @stmt_consteval_if | @stmt_not_consteval_if;
+
+consteval_if_then(
+    unique int constexpr_if_stmt: @stmt_consteval_or_not_consteval_if ref,
+    int then_id: @stmt ref
+);
+
+consteval_if_else(
+    unique int constexpr_if_stmt: @stmt_consteval_or_not_consteval_if ref,
+    int else_id: @stmt ref
+);
+
+while_body(
+    unique int while_stmt: @stmt_while ref,
+    int body_id: @stmt ref
+);
+
+do_body(
+    unique int do_stmt: @stmt_end_test_while ref,
+    int body_id: @stmt ref
+);
+
+switch_initialization(
+    unique int switch_stmt: @stmt_switch ref,
+    int init_id: @stmt ref
+);
+
+#keyset[switch_stmt, index]
+switch_case(
+    int switch_stmt: @stmt_switch ref,
+    int index: int ref,
+    int case_id: @stmt_switch_case ref
+);
+
+switch_body(
+    unique int switch_stmt: @stmt_switch ref,
+    int body_id: @stmt ref
+);
+
+@stmt_for_or_range_based_for = @stmt_for
+                             | @stmt_range_based_for;
+
+for_initialization(
+    unique int for_stmt: @stmt_for_or_range_based_for ref,
+    int init_id: @stmt ref
+);
+
+for_condition(
+    unique int for_stmt: @stmt_for ref,
+    int condition_id: @expr ref
+);
+
+for_update(
+    unique int for_stmt: @stmt_for ref,
+    int update_id: @expr ref
+);
+
+for_body(
+    unique int for_stmt: @stmt_for ref,
+    int body_id: @stmt ref
+);
+
+@stmtparent = @stmt | @expr_stmt ;
+stmtparents(
+    unique int id: @stmt ref,
+    int index: int ref,
+    int parent: @stmtparent ref
+);
+
+ishandler(unique int block: @stmt_block ref);
+
+@cfgnode = @stmt | @expr | @function | @initialiser ;
+
+stmt_decl_bind(
+    int stmt: @stmt_decl ref,
+    int num: int ref,
+    int decl: @declaration ref
+);
+
+stmt_decl_entry_bind(
+    int stmt: @stmt_decl ref,
+    int num: int ref,
+    int decl_entry: @element ref
+);
+
+@parameterized_element = @function | @stmt_block | @requires_expr;
+
+blockscope(
+    unique int block: @stmt_block ref,
+    int enclosing: @parameterized_element ref
+);
+
+@jump = @stmt_goto | @stmt_break | @stmt_continue;
+
+@jumporlabel = @jump | @stmt_label | @literal;
+
+jumpinfo(
+    unique int id: @jumporlabel ref,
+    string str: string ref,
+    int target: @stmt ref
+);
+
+preprocdirects(
+    unique int id: @preprocdirect,
+    int kind: int ref,
+    int location: @location_default ref
+);
+case @preprocdirect.kind of
+   0 = @ppd_if
+|  1 = @ppd_ifdef
+|  2 = @ppd_ifndef
+|  3 = @ppd_elif
+|  4 = @ppd_else
+|  5 = @ppd_endif
+|  6 = @ppd_plain_include
+|  7 = @ppd_define
+|  8 = @ppd_undef
+|  9 = @ppd_line
+| 10 = @ppd_error
+| 11 = @ppd_pragma
+| 12 = @ppd_objc_import
+| 13 = @ppd_include_next
+| 14 = @ppd_ms_import
+| 15 = @ppd_elifdef
+| 16 = @ppd_elifndef
+| 18 = @ppd_warning
+;
+
+@ppd_include = @ppd_plain_include | @ppd_objc_import | @ppd_include_next | @ppd_ms_import;
+
+@ppd_branch = @ppd_if | @ppd_ifdef | @ppd_ifndef | @ppd_elif | @ppd_elifdef | @ppd_elifndef;
+
+preprocpair(
+    int begin : @ppd_branch ref,
+    int elseelifend : @preprocdirect ref
+);
+
+preproctrue(int branch : @ppd_branch ref);
+preprocfalse(int branch : @ppd_branch ref);
+
+preproctext(
+    unique int id: @preprocdirect ref,
+    string head: string ref,
+    string body: string ref
+);
+
+includes(
+    unique int id: @ppd_include ref,
+    int included: @file ref
+);
+
+link_targets(
+    int id: @link_target,
+    int binary: @file ref
+);
+
+link_parent(
+    int element : @element ref,
+    int link_target : @link_target ref
+);
+
+/* XML Files */
+
+xmlEncoding(unique int id: @file ref, string encoding: string ref);
+
+xmlDTDs(
+    unique int id: @xmldtd,
+    string root: string ref,
+    string publicId: string ref,
+    string systemId: string ref,
+    int fileid: @file ref
+);
+
+xmlElements(
+    unique int id: @xmlelement,
+    string name: string ref,
+    int parentid: @xmlparent ref,
+    int idx: int ref,
+    int fileid: @file ref
+);
+
+xmlAttrs(
+    unique int id: @xmlattribute,
+    int elementid: @xmlelement ref,
+    string name: string ref,
+    string value: string ref,
+    int idx: int ref,
+    int fileid: @file ref
+);
+
+xmlNs(
+    int id: @xmlnamespace,
+    string prefixName: string ref,
+    string URI: string ref,
+    int fileid: @file ref
+);
+
+xmlHasNs(
+    int elementId: @xmlnamespaceable ref,
+    int nsId: @xmlnamespace ref,
+    int fileid: @file ref
+);
+
+xmlComments(
+    unique int id: @xmlcomment,
+    string text: string ref,
+    int parentid: @xmlparent ref,
+    int fileid: @file ref
+);
+
+xmlChars(
+    unique int id: @xmlcharacters,
+    string text: string ref,
+    int parentid: @xmlparent ref,
+    int idx: int ref,
+    int isCDATA: int ref,
+    int fileid: @file ref
+);
+
+@xmlparent = @file | @xmlelement;
+@xmlnamespaceable = @xmlelement | @xmlattribute;
+
+xmllocations(
+    int xmlElement: @xmllocatable ref,
+    int location: @location_default ref
+);
+
+@xmllocatable = @xmlcharacters
+              | @xmlelement
+              | @xmlcomment
+              | @xmlattribute
+              | @xmldtd
+              | @file
+              | @xmlnamespace;

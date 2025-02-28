@@ -1,0 +1,88 @@
+### 64. **enclosingfunction**
+
+- **描述**: 包含函数。
+- **属性**:
+  - `child` (INTEGER, 主键): 子元素的ID，引用自`enclosingfunction_child`表。
+  - `parent` (INTEGER, 外键): 函数的ID，引用自`function`表。
+- **示例**:
+  ```sql
+  CREATE TABLE enclosingfunction (
+      child INTEGER PRIMARY KEY,
+      parent INTEGER,
+      FOREIGN KEY (child) REFERENCES user_or_decltype(id),
+      FOREIGN KEY (parent) REFERENCES function(id)
+  );
+  ```
+
+### 65. **derivations**
+
+- **描述**: 派生。
+- **属性**:
+  - `derivation` (INTEGER, 主键): 派生的唯一标识符。
+  - `sub` (INTEGER, 外键): 子类型的ID，引用自`type`表。
+  - `index` (INTEGER): 索引。
+  - `super` (INTEGER, 外键): 父类型的ID，引用自`type`表。
+  - `location` (INTEGER, 外键): 位置的ID，引用自`location_default`表。
+- **示例**:
+  ```sql
+  CREATE TABLE derivations (
+      derivation INTEGER PRIMARY KEY,
+      sub INTEGER,
+      index INTEGER,
+      super INTEGER,
+      location INTEGER,
+      FOREIGN KEY (sub) REFERENCES type(id),
+      FOREIGN KEY (super) REFERENCES type(id),
+      FOREIGN KEY (location) REFERENCES location_default(id)
+  );
+  ```
+
+### 66. **derspecifiers**
+
+- **描述**: 派生说明符。
+- **属性**:
+  - `der_id` (INTEGER, 主键): 派生ID，引用自`derivation`表。
+  - `spec_id` (INTEGER, 外键): 说明符ID，引用自`specifier`表。
+- **示例**:
+  ```sql
+  CREATE TABLE derspecifiers (
+      der_id INTEGER PRIMARY KEY,
+      spec_id INTEGER,
+      FOREIGN KEY (der_id) REFERENCES derivation(id),
+      FOREIGN KEY (spec_id) REFERENCES specifier(id)
+  );
+  ```
+
+### 67. **direct_base_offsets**
+
+- **描述**: 直接基类偏移量。
+- **属性**:
+  - `der_id` (INTEGER, 主键): 派生ID，引用自`derivation`表。
+  - `offset` (INTEGER): 偏移量。
+- **示例**:
+  ```sql
+  CREATE TABLE direct_base_offsets (
+      der_id INTEGER PRIMARY KEY,
+      offset INTEGER,
+      FOREIGN KEY (der_id) REFERENCES derivation(id)
+  );
+  ```
+
+### 68. **virtual_base_offsets**
+
+- **描述**: 虚拟基类偏移量。
+- **属性**:
+  - `sub` (INTEGER, 外键): 子用户类型的ID，引用自`usertype`表。
+  - `super` (INTEGER, 外键): 父用户类型的ID，引用自`usertype`表。
+  - `offset` (INTEGER): 偏移量。
+- **示例**:
+  ```sql
+  CREATE TABLE virtual_base_offsets (
+      sub INTEGER,
+      super INTEGER,
+      offset INTEGER,
+      PRIMARY KEY (sub, super),
+      FOREIGN KEY (sub) REFERENCES usertype(id),
+      FOREIGN KEY (super) REFERENCES usertype(id)
+  );
+  ```
