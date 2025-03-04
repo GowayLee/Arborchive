@@ -1738,7 +1738,7 @@ case @expr.kind of
 |  95 = @sizeof_pack
 |  96 = @expr_stmt // GNU extension
 |  97 = @routineexpr
-|  98 = @type_operand // used to access a type in certain contexts (haven't found any examples yet....)
+|  98 = @type_operand // used to access a type in certain contexts (havent found any examples yet....)
 |  99 = @offsetofexpr // offsetof ::= type and field
 | 100 = @hasassignexpr // __has_assign ::= type
 | 101 = @hascopyexpr // __has_copy ::= type

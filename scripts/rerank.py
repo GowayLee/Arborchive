@@ -34,7 +34,7 @@ def renumber_markdown_headers(input_file, output_file=None):
         if match:
             # 如果是四级标题行，替换序号
             prefix, number, dot_star, title, suffix, rest = match.groups()
-            new_line = f"{prefix}{counter}{dot_star}{title}{suffix}{rest}"
+            new_line = f"{prefix}{counter}{dot_star}{title}{suffix}{rest}\n"
             counter += 1
             new_lines.append(new_line)
         else:
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         sys.exit(1)
     
     input_file = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
+    output_file = sys.argv[2] if len(sys.argv) > 2 else sys.argv[1]
     
     renumber_markdown_headers(input_file, output_file)
 

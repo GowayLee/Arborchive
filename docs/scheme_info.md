@@ -37,15 +37,15 @@
   For command `$gcc -c f1.c f2.c f3.c`
 
   ```
-  num | arg
-  --- | ---
-  0   | *path to extractor*
-  1   | `--mimic`
-  2   | `/usr/bin/gcc`
-  3   | `-c`
-  4   | f1.c
-  5   | f2.c
-  6   | f3.c
+  | num | arg                 |
+  | --- | ------------------- |
+  | 0   | *path to extractor* |
+  | 1   | `--mimic`           |
+  | 2   | `/usr/bin/gcc`      |
+  | 3   | `-c`                |
+  | 4   | f1.c                |
+  | 5   | f2.c                |
+  | 6   | f3.c                |
   ```
 
 ### 3. **compilation_build_mode**
@@ -93,11 +93,11 @@
   For command `$gcc -c f1.c f2.c f3.c`
 
   ```
-  num | arg
-  --- | ---
-  0   | f1.c
-  1   | f2.c
-  2   | f3.c
+  | num | arg  |
+  | --- | ---- |
+  | 0   | f1.c |
+  | 1   | f2.c |
+  | 2   | f3.c |
   ```
 
   Note: rows only contains the files that were actually compiled, does not include `#include` directives.
@@ -198,17 +198,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 10. **@sourceline** ?Q
-- **描述**: 包含行数信息的元素。
-- **属性**:
-  - `id` (INTEGER, 主键): 元素的唯一标识符，引用自`file`、`function`、`variable`、`enumconstant`、`xmllocatable`表。
-- **示例**:
-
-```
-  @sourceline = @file | @function | @variable | @enumconstant | @xmllocatable;
-```
-
-### 11. **external_packages**
+### 10. **external_packages**
 - **描述**: 记录在编译过程中使用的外部包的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 包的唯一标识符。
@@ -225,7 +215,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 12. **header_to_external_package**
+### 11. **header_to_external_package**
 - **描述**: 记录文件与外部包的关联。
 - **属性**:
   - `fileid` (INTEGER, 外键): 文件的ID，引用自`files`表。
@@ -240,7 +230,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 13. **svnentries**
+### 12. **svnentries**
 - **描述**: 记录SVN提交的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 提交的ID。
@@ -259,7 +249,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 14. **svnaffectedfiles**
+### 13. **svnaffectedfiles**
 - **描述**: 记录SVN提交中受影响的文件。
 - **属性**:
   - `id` (INTEGER, 外键): 提交的ID，引用自`svnentries`表。
@@ -276,7 +266,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 15. **svnentrymsg**
+### 14. **svnentrymsg**
 - **描述**: 记录SVN提交的提交信息。
 - **属性**:
   - `id` (INTEGER, 外键): 提交的ID，引用自`svnentries`表。
@@ -290,7 +280,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 16. **svnchurn**
+### 15. **svnchurn**
 - **描述**: 记录SVN提交中每个文件的添加和删除行数。
 - **属性**:
   - `commit` (INTEGER, 外键): 提交的ID，引用自`svnentries`表。
@@ -309,7 +299,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 17. **extractor_version**
+### 16. **extractor_version**
 - **描述**: 记录提取器的版本信息。
 - **属性**:
   - `codeql_version` (TEXT): CodeQL的版本。
@@ -322,15 +312,40 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 18. **locations_default**, **locations_stmt**, **locations_expr**
+### 17. **location** +-+
 ```
-@location = @location_stmt | @location_expr | @location_default; ?Q
+@location = @location_stmt | @location_expr | @location_default;
 ```
+
+- **描述**: 记录代码中元素的位置信息。父表
+- **属性**:
+  - `id` (INTEGER, 主键): 位置的ID。
+  - `associated_id` (INTEGER, 外键): 子表id
+  - `type` (INTEGER): 子表的类型
+    ```
+    case location.type:
+      1 = @location_stmt
+    | 2 = @location_expr
+    | 3 = @location_default
+    ;
+    ```
+- **示例**:
+
+  ```sql
+  CREATE TABLE locations_default (
+      id INTEGER PRIMARY KEY,
+      associated_id INTEGER,
+      type TEXT,
+      CHECK (type IN ('locations_default', 'locations_stmt', 'locations_expr'))
+  );
+  ```
+
+### 18. **locations_default**
 
 - **描述**: 记录代码中元素的位置信息。
 - **属性**:
   - `id` (INTEGER, 主键): 位置的ID。
-  - `container` (INTEGER, 外键): 容器元素的ID。
+  - `container` (INTEGER, 外键): 容器元素的ID。refer from @container
   - `startLine` (INTEGER): 起始行。
   - `startColumn` (INTEGER): 起始列。
   - `endLine` (INTEGER): 结束行。
@@ -349,9 +364,76 @@ CREATE TABLE compilation_time (
   );
   ```
 
-  _`@location_stmt` and `@location_expr` share the same structure and attributes as `locations_default`_
+### 19. **locations_stmt**
 
-### 19. **numlines**
+- **描述**: 记录代码中stmt的位置信息。
+- **属性**:
+  - `id` (INTEGER, 主键): 位置的ID。
+  - `container` (INTEGER, 外键): 容器元素的ID。refer from @container
+  - `startLine` (INTEGER): 起始行。
+  - `startColumn` (INTEGER): 起始列。
+  - `endLine` (INTEGER): 结束行。
+  - `endColumn` (INTEGER): 结束列。
+- **示例**:
+
+  ```sql
+  CREATE TABLE locations_default (
+      id INTEGER PRIMARY KEY,
+      container INTEGER,
+      startLine INTEGER,
+      startColumn INTEGER,
+      endLine INTEGER,
+      endColumn INTEGER,
+      FOREIGN KEY (container) REFERENCES container(id)
+  );
+  ```
+
+### 20. **locations_expr**
+
+- **描述**: 记录代码中表达式的位置信息。
+- **属性**:
+  - `id` (INTEGER, 主键): 位置的ID。
+  - `container` (INTEGER, 外键): 容器元素的ID。refer from @container
+  - `startLine` (INTEGER): 起始行。
+  - `startColumn` (INTEGER): 起始列。
+  - `endLine` (INTEGER): 结束行。
+  - `endColumn` (INTEGER): 结束列。
+- **示例**:
+
+  ```sql
+  CREATE TABLE locations_default (
+      id INTEGER PRIMARY KEY,
+      container INTEGER,
+      startLine INTEGER,
+      startColumn INTEGER,
+      endLine INTEGER,
+      endColumn INTEGER,
+      FOREIGN KEY (container) REFERENCES container(id)
+  );
+  ```
+
+
+### 21. **sourceline**
+  ```
+    @sourceline = @file | @function | @variable | @enumconstant | @xmllocatable; +-+
+  ```
+- **描述**: 包含行数信息的元素。
+- **属性**:
+  - `id` (INTEGER, 主键): 主键
+  - `associated_id` (INTEGER, 外键): 元素的ID。
+  - `type` (TEXT): 元素的类型。
+- **示例**:
+  ```sql
+  CREATE TABLE sourceline (
+      id INTEGER PRIMARY KEY,
+      associated_id INTEGER,
+      type TEXT,
+      CHECK (type IN ('sourceline', 'file', 'function', 'variable', 'enumconstant', 'xmllocatable'))
+  )
+  ```
+
+
+### 22. **numlines**
 - **描述**: 记录代码中元素的总行数、代码行数、注释行数。
 - **属性**:
   - `element_id` (INTEGER, 外键): 元素的ID。
@@ -369,7 +451,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 20. **diagnostics**
+### 23. **diagnostics**
 - **描述**: 记录诊断信息（错误或警告）。
 - **属性**:
   - `id` (INTEGER, 主键): 诊断信息的ID。
@@ -391,7 +473,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 21. **files**
+### 24. **files**
 - **描述**: 记录文件信息。
 - **属性**:
   - `id` (INTEGER, 主键): 文件的ID。
@@ -404,7 +486,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 22. **folders**
+### 25. **folders**
 - **描述**: 记录文件夹信息。
 - **属性**:
   - `id` (INTEGER, 主键): 文件夹的ID。
@@ -421,7 +503,7 @@ CREATE TABLE compilation_time (
 @container = @folder | @file ?Q
 ```
 
-### 23. **containerparent**
+### 26. **containerparent**
 - **描述**: 记录容器元素的父子关系。
 - **属性**:
   - `parent` (INTEGER, 外键): 父容器的ID, reference to `container` table
@@ -436,7 +518,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 24. **fileannotations**
+### 27. **fileannotations**
 - **描述**: 记录文件的注释信息。
 - **属性**:
   - `id` (INTEGER, 外键): 文件的ID，引用自`files`表。
@@ -454,7 +536,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 25. **inmacroexpansion**
+### 28. **inmacroexpansion**
 - **描述**: 记录元素在宏展开中的位置。
 - **属性**:
   - `id` (INTEGER, 外键): 元素的ID, reference to `element` table
@@ -469,7 +551,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 26. **affectedbymacroexpansion**
+### 29. **affectedbymacroexpansion**
 - **描述**: 记录元素受宏展开影响的程度。
 - **属性**:
   - `id` (INTEGER, 外键): 元素的ID, reference to `element` table
@@ -484,7 +566,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 27. **macroinvocations**
+### 30. **macroinvocations**
 - **描述**: 记录宏调用的信息。
 - **属性**:
 
@@ -511,7 +593,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 28. **macroparent**
+### 31. **macroparent**
 - **描述**: 记录宏调用的父子关系。
 - **属性**:
   - `id` (INTEGER, 主键): 宏调用的ID
@@ -525,7 +607,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 29. **macrolocationbind**
+### 32. **macrolocationbind**
 - **描述**: 记录宏调用与位置的关系。
 - **属性**:
   - `id` (INTEGER, 外键): 宏调用的ID, reference to `macroinvocation` table
@@ -540,7 +622,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 30. **macro_argument_unexpanded**
+### 33. **macro_argument_unexpanded**
 - **描述**: 记录未展开的宏参数。
 - **属性**:
   - `invocation` (INTEGER, 外键): 宏调用的ID, reference to `macroinvocation` table
@@ -558,7 +640,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 31. **macro_argument_expanded**
+### 34. **macro_argument_expanded**
 - **描述**: 记录展开后的宏参数。
 - **属性**:
   - `invocation` (INTEGER, 外键): 宏调用的ID, reference to `macroinvocation` table
@@ -576,7 +658,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 32. **functions**
+### 35. **functions**
 - **描述**: 记录函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID。
@@ -603,7 +685,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 33. **function_entry_point**
+### 36. **function_entry_point**
 - **描述**: 记录函数的入口点。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -619,7 +701,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 34. **function_return_type**
+### 37. **function_return_type**
 - **描述**: 记录函数的返回类型。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -634,7 +716,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 35. **coroutine**
+### 38. **coroutine**
 - **描述**: 记录协程的相关信息。
 
   > If `function` is a coroutine, then this gives the `std::experimental::resumable_traits` instance associated with it, and the variables representing the `handle` and `promise` for it.
@@ -652,7 +734,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 36. **coroutine_placeholder_variable**
+### 39. **coroutine_placeholder_variable**
 - **描述**: 记录协程占位符变量的信息。
 - **属性**:
   - `placeholder_variable` (INTEGER, 主键): 占位符变量的ID, reference to `variable` table.
@@ -676,7 +758,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 37. **coroutine_new**
+### 40. **coroutine_new**
 - **描述**: 记录协程的`new`函数。
 - **属性**:
   - `function` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -691,7 +773,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 38. **coroutine_delete**
+### 41. **coroutine_delete**
 - **描述**: 记录协程的`delete`函数。
 - **属性**:
   - `function` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -706,7 +788,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 39. **purefunctions**
+### 42. **purefunctions**
 - **描述**: 记录纯函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -718,7 +800,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 40. **function_deleted**
+### 43. **function_deleted**
 - **描述**: 记录被删除的函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -730,7 +812,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 41. **function_defaulted**
+### 44. **function_defaulted**
 - **描述**: 记录默认函数的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -742,7 +824,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 42. **function_prototyped**
+### 45. **function_prototyped**
 - **描述**: 记录函数原型。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -754,7 +836,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 43. **deduction_guide_for_class**
+### 46. **deduction_guide_for_class**
 - **描述**: 记录类的推导指南。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -769,7 +851,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 44. **member_function_this_type**
+### 47. **member_function_this_type**
 - **描述**: 记录成员函数的`this`类型。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -784,7 +866,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 45. **fun_decls**
+### 48. **fun_decls**
 - **描述**: 记录函数声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID
@@ -800,13 +882,14 @@ CREATE TABLE compilation_time (
       type_id INTEGER,
       name TEXT,
       location INTEGER,
+      PRIMARY KEY (id, type_id),
       FOREIGN KEY (function) REFERENCES function(id),
       FOREIGN KEY (type_id) REFERENCES type(id),
       FOREIGN KEY (location) REFERENCES location_default(id)
   );
   ```
 
-### 46. **fun_def**
+### 49. **fun_def**
 - **描述**: 记录函数定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -818,7 +901,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 47. **fun_specialized**
+### 50. **fun_specialized**
 - **描述**: 记录函数特化的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -830,7 +913,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 48. **fun_implicit**
+### 51. **fun_implicit**
 - **描述**: 记录隐式函数的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -842,7 +925,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 49. **fun_decl_specifiers**
+### 52. **fun_decl_specifiers**
 - **描述**: 记录函数声明的说明符。
 - **属性**:
   - `id` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -856,7 +939,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 50. **fun_decl_throws**
+### 53. **fun_decl_throws**
 - **描述**: 记录函数声明的抛出说明。
 - **属性**:
   - `fun_decl` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -868,12 +951,13 @@ CREATE TABLE compilation_time (
       fun_decl INTEGER,
       index INTEGER,
       type_id INTEGER,
+      PRIMARY KEY (fun_decl, index)
       FOREIGN KEY (fun_decl) REFERENCES fun_decls(id),
       FOREIGN KEY (type_id) REFERENCES type(id)
   );
   ```
 
-### 51. **fun_decl_empty_throws**
+### 54. **fun_decl_empty_throws**
 - **描述**: 记录函数声明的空抛出说明。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -885,7 +969,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 52. **fun_decl_noexcept**
+### 55. **fun_decl_noexcept**
 - **描述**: 记录函数声明的`noexcept`说明。
 - **属性**:
   - `fun_decl` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -900,7 +984,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 53. **fun_decl_empty_noexcept**
+### 56. **fun_decl_empty_noexcept**
 - **描述**: 记录函数声明的空`noexcept`说明。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -912,7 +996,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 54. **fun_decl_typedef_type**
+### 57. **fun_decl_typedef_type**
 - **描述**: 记录函数声明的`typedef`类型。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -927,7 +1011,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 55. **fun_requires**
+### 58. **fun_requires**
 - **描述**: 记录函数声明的`requires`说明。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -950,7 +1034,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 56. **param_decl_bind**
+### 59. **param_decl_bind**
 - **描述**: 记录参数声明的绑定。
 - **属性**:
   - `id` (INTEGER, 主键): 参数声明的ID, reference to `var_decls` table.
@@ -967,7 +1051,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 57. **var_decls**
+### 60. **var_decls**
 - **描述**: 记录变量声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 变量声明的ID
@@ -983,13 +1067,14 @@ CREATE TABLE compilation_time (
       type_id INTEGER,
       name TEXT,
       location INTEGER,
+      PRIMARY KEY (id, type_id),
       FOREIGN KEY (variable) REFERENCES variable(id),
       FOREIGN KEY (type_id) REFERENCES type(id),
       FOREIGN KEY (location) REFERENCES location_default(id)
   );
   ```
 
-### 58. **var_def**
+### 61. **var_def**
 - **描述**: 记录变量定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 变量声明的ID, reference to `var_decls` table.
@@ -1001,7 +1086,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 59. **var_specialized**
+### 62. **var_specialized**
 - **描述**: 记录变量特化的信息。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1013,7 +1098,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 60. **var_decl_specifiers**
+### 63. **var_decl_specifiers**
 - **描述**: 记录变量声明的说明符。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1027,7 +1112,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 61. **is_structured_binding**
+### 64. **is_structured_binding**
 - **描述**: 记录变量是否为结构化绑定
 - **属性**:
   - `id` (INTEGER, 主键): 变量的ID, reference to `variable` table.
@@ -1039,7 +1124,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 62. **var_requires**
+### 65. **var_requires**
 - **描述**: 记录变量声明的`requires`说明。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1054,7 +1139,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 63. **type_decls**
+### 66. **type_decls**
 - **描述**: 记录类型声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 类型声明的ID。
@@ -1071,7 +1156,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 64. **type_def**
+### 67. **type_def**
 - **描述**: 记录类型定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 类型声明的ID, reference to `type_decls` table.
@@ -1083,7 +1168,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 65. **type_decl_top**
+### 68. **type_decl_top**
 - **描述**: 记录顶级类型声明。
 - **属性**:
   - `type_decl` (INTEGER, 主键): 类型声明的ID, reference to `type_decls` table.
@@ -1095,7 +1180,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 66. **type_requires**
+### 69. **type_requires**
 - **描述**: 记录类型声明的`requires`说明。
 - **属性**:
   - `id` (INTEGER, 外键): 类型声明的ID, reference to `type_decls` table.
@@ -1110,7 +1195,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 67. **namespace_decls**
+### 70. **namespace_decls**
 - **描述**: 记录命名空间声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 命名空间声明的ID。
@@ -1130,7 +1215,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 68. **usings**
+### 71. **usings**
 - **描述**: 记录`using`声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): `using`声明的ID。
@@ -1156,7 +1241,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 69. **using_container**
+### 72. **using_container**
 - **描述**: 包含`using`声明的元素。
 - **属性**:
   - `parent` (INTEGER, 外键): 父元素的ID，引用自`element`表。
@@ -1171,7 +1256,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 70. **static_asserts**
+### 73. **static_asserts**
 - **描述**: 记录静态断言的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 静态断言的ID。
@@ -1193,7 +1278,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 71. **params**
+### 74. **params**
 - **描述**: 记录函数参数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 参数的ID。
@@ -1207,12 +1292,14 @@ CREATE TABLE compilation_time (
       function INTEGER,
       index INTEGER,
       type_id INTEGER,
+      PRIMARY KEY (id, type_id),
+      PRIMARY KEY (function, index, type_id)
       FOREIGN KEY (function) REFERENCES parameterized_element(id),
       FOREIGN KEY (type_id) REFERENCES type(id)
   );
   ```
 
-### 72. **overrides**
+### 75. **overrides**
 - **描述**: 记录函数重写的信息。
 - **属性**:
   - `new` (INTEGER, 外键): 新函数的ID, reference to `function` table.
@@ -1227,7 +1314,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 73. **membervariables**
+### 76. **membervariables**
 - **描述**: 记录成员变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 成员变量的ID。
@@ -1243,7 +1330,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 74. **globalvariables**
+### 77. **globalvariables**
 - **描述**: 记录全局变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 全局变量的ID。
@@ -1259,7 +1346,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 75. **localvariables**
+### 78. **localvariables**
 - **描述**: 记录局部变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 局部变量的ID。
@@ -1275,7 +1362,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 76. **autoderivation**
+### 79. **autoderivation**
 - **描述**: 记录变量的自动推导信息。
 - **属性**:
   - `var` (INTEGER, 主键): 变量的ID。
@@ -1289,7 +1376,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 77. **orphaned_variables**
+### 80. **orphaned_variables**
 - **描述**: 记录孤立变量的信息。
 - **属性**:
   - `var` (INTEGER, 外键): 局部变量的ID, reference to `localvariable` table.
@@ -1304,7 +1391,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 78. **enumconstants**
+### 81. **enumconstants**
 - **描述**: 记录枚举常量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 枚举常量的ID。
@@ -1329,13 +1416,53 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 82. **vairable**
 ```
-@variable = @localscopevariable | @globalvariable | @membervariable; ?Q
-
-@localscopevariable = @localvariable | @parameter;
+@variable = @localscopevariable | @globalvariable | @membervariable; +-+
 ```
+- **描述**: 变量
+- **属性**:
 
-### 79. **builtintypes**
+  - `id` (INTEGER PRIMARY KEY): 主键
+  - `associate_id` (INTEGER): 关联的变量ID，用于标识变量的关联关系
+  - `type` (INTEGER): 子表的类型
+    - 1: @loacalscopevariable
+    - 2: @globalvariable
+    - 3: @membervariable
+
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER
+  )
+  ```
+
+
+### 83. **localscopevariable**
+```
+@localscopevariable = @localvariable | @parameter; +-+
+```
+- **描述**: 局部变量
+- **属性**:
+  - `id` (INTEGER): 主键
+  - `associate_id` (INTEGER): 关联的变量ID
+  - `type` (INTEGER): 类型
+    - 1: @localscopevariable
+    - 2: @parameter
+
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER
+  )
+  ```
+
+
+### 84. **builtintypes**
 - **描述**: 记录内置类型的详细信息。
 - **属性**:
 
@@ -1425,7 +1552,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 80. **derivedtypes**
+### 85. **derivedtypes**
 - **描述**: 记录派生类型的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 派生类型的ID。
@@ -1458,7 +1585,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 81. **pointerishsize**
+### 86. **pointerishsize**
 - **描述**: 指针类型的大小和对齐信息。
 - **属性**:
   - `id` (INTEGER, 主键): 派生类型的唯一标识符，引用自`derivedtype`表。
@@ -1474,7 +1601,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 82. **arraysizes**
+### 87. **arraysizes**
 - **描述**: 数组类型的大小和对齐信息。
 - **属性**:
   - `id` (INTEGER, 主键): 派生类型的唯一标识符，引用自`derivedtype`表。
@@ -1492,7 +1619,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 83. **typedefbase**
+### 88. **typedefbase**
 - **描述**: `typedef`的基础类型。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1507,7 +1634,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 84. **decltypes**
+### 89. **decltypes**
 - **描述**: `decltype`运算符的实例。
 - **属性**:
   - `id` (INTEGER, 主键): `decltype`的ID，引用自`decltype`。
@@ -1521,12 +1648,13 @@ CREATE TABLE compilation_time (
       expr INTEGER,
       base_type INTEGER,
       parentheses_would_change_meaning BOOLEAN,
+      PRIMARY KEY (id, expr),
       FOREIGN KEY (expr) REFERENCES expr(id),
       FOREIGN KEY (base_type) REFERENCES type(id)
   );
   ```
 
-### 85. **usertypes**
+### 90. **usertypes**
 - **描述**: 用户定义的类型。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符。
@@ -1563,7 +1691,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 86. **usertypesize**
+### 91. **usertypesize**
 - **描述**: 用户定义类型的大小和对齐信息。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1579,7 +1707,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 87. **usertype_final**
+### 92. **usertype_final**
 - **描述**: 用户定义类型的最终状态。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1591,7 +1719,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 88. **usertype_uuid**
+### 93. **usertype_uuid**
 - **描述**: 用户定义类型的UUID。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1605,7 +1733,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 89. **nontype_template_parameters**
+### 94. **nontype_template_parameters**
 - **描述**: 非类型模板参数。
 - **属性**:
   - `id` (INTEGER, 主键): 表达式的唯一标识符，引用自`expr`表。
@@ -1617,7 +1745,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 90. **type_template_type_constraint**
+### 95. **type_template_type_constraint**
 - **描述**: 类型模板的类型约束。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1632,7 +1760,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 91. **mangled_name** ?Q
+### 96. **mangled_name**
 - **描述**: 名称的修饰形式。
 - **属性**:
   - `id` (INTEGER, 主键): 声明的唯一标识符，引用自`declaration`表。
@@ -1649,7 +1777,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 92. **is_pod_class** ?Q
+### 97. **is_pod_class**
 - **描述**: 是否为POD类。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1661,7 +1789,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 93. **is_standard_layout_class**
+### 98. **is_standard_layout_class**
 - **描述**: 是否为标准布局类。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1673,7 +1801,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 94. **is_complete**
+### 99. **is_complete**
 - **描述**: 是否完整。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1685,7 +1813,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 95. **is_class_template**
+### 100. **is_class_template**
 - **描述**: 是否为类模板。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1697,7 +1825,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 96. **class_instantiation**
+### 101. **class_instantiation**
 - **描述**: 类实例化。
 - **属性**:
   - `to` (INTEGER, 外键): 目标用户类型的ID，引用自`usertype`表。
@@ -1713,7 +1841,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 97. **class_template_argument**
+### 102. **class_template_argument**
 - **描述**: 类模板参数。
 - **属性**:
   - `type_id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1731,7 +1859,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 98. **class_template_argument_value**
+### 103. **class_template_argument_value**
 - **描述**: 类模板参数值。
 - **属性**:
   - `type_id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1749,11 +1877,28 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 104. **user_or_decltype**
 ```
-@user_or_decltype = @usertype | @decltype ?Q
+@user_or_decltype = @usertype | @decltype +-+
 ```
+- **描述**: 用户的类型，可以是用户类型（`@usertype`）或声明类型（`@decltype`）。
+- **属性**:
+  - `id` (INTEGER): 主键
+  - `associate_id` (INTEGER): 关联的变量ID
+  - `type` (INTEGER): 类型
+    - 1: @localscopevariable
+    - 2: @parameter
 
-### 99. **is_proxy_class_for**
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
+
+### 105. **is_proxy_class_for**
 - **描述**: 是否为代理类。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1768,7 +1913,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 100. **type_mentions**
+### 106. **type_mentions**
 - **描述**: 类型提及。
 - **属性**:
   - `id` (INTEGER, 主键): 类型提及的唯一标识符
@@ -1787,7 +1932,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 101. **is_function_template**
+### 107. **is_function_template**
 - **描述**: 是否为函数模板。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的唯一标识符，引用自`function`表。
@@ -1799,7 +1944,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 102. **function_instantiation**
+### 108. **function_instantiation**
 - **描述**: 函数实例化。
 - **属性**:
   - `to` (INTEGER, 外键): 目标函数的ID，引用自`function`表。
@@ -1815,7 +1960,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 103. **function_template_argument**
+### 109. **function_template_argument**
 - **描述**: 函数模板参数。
 - **属性**:
   - `function_id` (INTEGER, 主键): 函数的唯一标识符，引用自`function`表。
@@ -1833,7 +1978,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 104. **function_template_argument_value**
+### 110. **function_template_argument_value**
 - **描述**: 函数模板参数值。
 - **属性**:
   - `function_id` (INTEGER, 主键): 函数的唯一标识符，引用自`function`表。
@@ -1851,7 +1996,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 105. **is_variable_template**
+### 111. **is_variable_template**
 - **描述**: 是否为变量模板。
 - **属性**:
   - `id` (INTEGER, 主键): 变量的唯一标识符，引用自`variable`表。
@@ -1863,7 +2008,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 106. **variable_instantiation**
+### 112. **variable_instantiation**
 - **描述**: 变量实例化。
 - **属性**:
   - `to` (INTEGER, 外键): 目标变量的ID，引用自`variable`表。
@@ -1879,7 +2024,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 107. **variable_template_argument**
+### 113. **variable_template_argument**
 - **描述**: 变量模板参数。
 - **属性**:
   - `variable_id` (INTEGER, 主键): 变量的唯一标识符，引用自`variable`表。
@@ -1897,7 +2042,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 108. **variable_template_argument_value**
+### 114. **variable_template_argument_value**
 - **描述**: 变量模板参数值。
 - **属性**:
   - `variable_id` (INTEGER, 主键): 变量的唯一标识符，引用自`variable`表。
@@ -1915,7 +2060,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 109. **template_template_instantiation**
+### 115. **template_template_instantiation**
 - **描述**: 模板模板实例化。
 - **属性**:
   - `to` (INTEGER, 外键): 目标用户类型的ID，引用自`usertype`表。
@@ -1931,7 +2076,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 110. **template_template_argument**
+### 116. **template_template_argument**
 - **描述**: 模板模板参数。
 - **属性**:
   - `type_id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1949,7 +2094,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 111. **template_template_argument_value**
+### 117. **template_template_argument_value**
 - **描述**: 模板模板参数值。
 - **属性**:
   - `type_id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1967,23 +2112,28 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 112. **concept**
+### 118. **concept**
 ```
-@concept = @concept_template | @concept_id ?Q
+@concept = @concept_template | @concept_id +-+
 ```
 
 - **描述**: 概念。
 - **属性**:
-  - `concept_id` (INTEGER, 主键): 概念的唯一标识符，引用自`concept_template`表。
+  - `id`: 概念的 ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @concept_template
+    - 2: @concept_id
 - **示例**:
   ```sql
-  CREATE TABLE concept (
-      concept_id INTEGER PRIMARY KEY,
-      FOREIGN KEY (concept_id) REFERENCES concept_template(id)
-  );
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
   ```
 
-### 113. **concept_templates**
+### 119. **concept_templates**
 - **描述**: 概念模板。
 - **属性**:
   - `concept_id` (INTEGER, 主键): 概念模板的唯一标识符。
@@ -1999,7 +2149,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 114. **concept_instantiation**
+### 120. **concept_instantiation**
 - **描述**: 概念实例化。
 - **属性**:
   - `to` (INTEGER, 外键): 目标概念的唯一标识符，引用自`concept_id`表。
@@ -2015,7 +2165,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 115. **is_type_constraint**
+### 121. **is_type_constraint**
 - **描述**: 是否为类型约束。
 - **属性**:
   - `concept_id` (INTEGER, 主键): 概念的唯一标识符，引用自`concept_id`表。
@@ -2027,7 +2177,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 116. **concept_template_argument**
+### 122. **concept_template_argument**
 - **描述**: 概念模板参数。
 - **属性**:
   - `concept_id` (INTEGER, 主键): 概念的唯一标识符，引用自`concept`表。
@@ -2045,7 +2195,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 117. **concept_template_argument_value**
+### 123. **concept_template_argument_value**
 - **描述**: 概念模板参数值。
 - **属性**:
   - `concept_id` (INTEGER, 主键): 概念的唯一标识符，引用自`concept`表。
@@ -2063,7 +2213,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 118. **routinetypes**
+### 124. **routinetypes**
 - **描述**: 例程类型。
 - **属性**:
   - `id` (INTEGER, 主键): 例程类型的唯一标识符。
@@ -2077,7 +2227,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 119. **routinetypeargs**
+### 125. **routinetypeargs**
 - **描述**: 例程类型参数。
 - **属性**:
   - `routine` (INTEGER, 外键): 例程类型的ID，引用自`routinetype`表。
@@ -2095,7 +2245,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 120. **ptrtomembers**
+### 126. **ptrtomembers**
 - **描述**: 指向成员的指针。
 - **属性**:
   - `id` (INTEGER, 主键): 指向成员的指针的唯一标识符。
@@ -2112,7 +2262,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 121. **specifiers**
+### 127. **specifiers**
 - **描述**: 类型的、函数的和变量的说明符。
 - **属性**:
 
@@ -2164,7 +2314,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 122. **typespecifiers**
+### 128. **typespecifiers**
 - **描述**: 类型的说明符。
 - **属性**:
   - `type_id` (INTEGER, 外键): 类型的ID，引用自`type`表。
@@ -2180,7 +2330,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 123. **funspecifiers**
+### 129. **funspecifiers**
 - **描述**: 函数的说明符。
 - **属性**:
   - `func_id` (INTEGER, 外键): 函数的ID，引用自`function`表。
@@ -2196,7 +2346,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 124. **varspecifiers**
+### 130. **varspecifiers**
 - **描述**: 变量的说明符。
 - **属性**:
   - `var_id` (INTEGER, 外键): 变量的ID，引用自`accessible`表。
@@ -2212,7 +2362,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 125. **explicit_specifier_exprs**
+### 131. **explicit_specifier_exprs**
 - **描述**: 明确的说明符表达式。
 - **属性**:
   - `func_id` (INTEGER, 主键): 函数的ID，引用自`function`表。
@@ -2227,7 +2377,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 126. **attributes**
+### 132. **attributes**
 - **描述**: 属性。
 - **属性**:
 
@@ -2261,7 +2411,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 127. **attribute_args**
+### 133. **attribute_args**
 - **描述**: 属性参数。
 - **属性**:
 
@@ -2296,7 +2446,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 128. **attribute_arg_value**
+### 134. **attribute_arg_value**
 - **描述**: 属性参数值。
 - **属性**:
   - `arg` (INTEGER, 主键): 属性参数的唯一标识符，引用自`attribute_arg`表。
@@ -2310,7 +2460,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 129. **attribute_arg_type**
+### 135. **attribute_arg_type**
 - **描述**: 属性参数类型。
 - **属性**:
   - `arg` (INTEGER, 主键): 属性参数的唯一标识符，引用自`attribute_arg`表。
@@ -2325,7 +2475,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 130. **attribute_arg_constant**
+### 136. **attribute_arg_constant**
 - **描述**: 属性参数常量。
 - **属性**:
   - `arg` (INTEGER, 主键): 属性参数的唯一标识符，引用自`attribute_arg`表。
@@ -2340,7 +2490,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 131. **attribute_arg_expr**
+### 137. **attribute_arg_expr**
 - **描述**: 属性参数表达式。
 - **属性**:
   - `arg` (INTEGER, 主键): 属性参数的唯一标识符，引用自`attribute_arg`表。
@@ -2355,7 +2505,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 132. **attribute_arg_name**
+### 138. **attribute_arg_name**
 - **描述**: 属性参数名称。
 - **属性**:
   - `arg` (INTEGER, 主键): 属性参数的唯一标识符，引用自`attribute_arg`表。
@@ -2369,7 +2519,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 133. **typeattributes**
+### 139. **typeattributes**
 - **描述**: 类型的属性。
 - **属性**:
   - `type_id` (INTEGER, 外键): 类型的ID，引用自`type`表。
@@ -2385,7 +2535,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 134. **funcattributes**
+### 140. **funcattributes**
 - **描述**: 函数的属性。
 - **属性**:
   - `func_id` (INTEGER, 外键): 函数的ID，引用自`function`表。
@@ -2401,7 +2551,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 135. **varattributes**
+### 141. **varattributes**
 - **描述**: 变量的属性。
 - **属性**:
   - `var_id` (INTEGER, 外键): 变量的ID，引用自`accessible`表。
@@ -2417,7 +2567,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 136. **stmtattributes**
+### 142. **stmtattributes**
 - **描述**: 语句的属性。
 - **属性**:
   - `stmt_id` (INTEGER, 外键): 语句ID，引用自`stmt`表。
@@ -2433,9 +2583,9 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 137. **@type** ?Q
+### 143. **@type**
 ```
-@type = @builtintype
+@type = @builtintype +-+
       | @derivedtype
       | @usertype
       /* TODO | @fixedpointtype */
@@ -2443,8 +2593,27 @@ CREATE TABLE compilation_time (
       | @ptrtomember
       | @decltype;
 ```
+- **描述**: 类型。
+- **属性**:
+  - `id`: 类型的 ID。
+  - `associate_id`: 关联的子表 ID。
+  - `type`: 子表类型
+    - 1: @buildintype
+    - 2: @derivedtype
+    - 3: @usertype
+    - 4: @routinetype
+    - 5: @ptrtomember
+    - 6: @decltype
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-### 138. **unspecifiedtype**
+### 144. **unspecifiedtype**
 - **描述**: 未指定的类型。
 - **属性**:
   - `type_id` (INTEGER, 主键): 类型的ID，引用自`type`表。
@@ -2459,7 +2628,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 139. **member**
+### 145. **member**
 - **描述**: 成员。
 - **属性**:
   - `parent` (INTEGER, 外键): 父类型的ID，引用自`type`表。
@@ -2476,11 +2645,28 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 146. **enclosingfunction_child**
 ```
-@enclosingfunction_child = @usertype | @variable | @namespace ?Q
+@enclosingfunction_child = @usertype | @variable | @namespace +-+
 ```
+- **描述**: 引用了当前函数的函数。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的子表 ID。
+  - `type`: 子表类型
+    - 1: @usertype
+    - 2: @variable
+    - 3: @namespace
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-### 140. **enclosingfunction**
+### 147. **enclosingfunction**
 - **描述**: 包含函数。
 - **属性**:
   - `child` (INTEGER, 主键): 子元素的ID，引用自`enclosingfunction_child`表。
@@ -2495,7 +2681,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 141. **derivations**
+### 148. **derivations**
 - **描述**: 派生。
 - **属性**:
   - `derivation` (INTEGER, 主键): 派生的唯一标识符。
@@ -2517,7 +2703,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 142. **derspecifiers**
+### 149. **derspecifiers**
 - **描述**: 派生说明符。
 - **属性**:
   - `der_id` (INTEGER, 主键): 派生ID，引用自`derivation`表。
@@ -2532,7 +2718,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 143. **direct_base_offsets**
+### 150. **direct_base_offsets**
 - **描述**: 直接基类偏移量。
 - **属性**:
   - `der_id` (INTEGER, 主键): 派生ID，引用自`derivation`表。
@@ -2546,7 +2732,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 144. **virtual_base_offsets**
+### 151. **virtual_base_offsets**
 - **描述**: 虚拟基类偏移量。
 - **属性**:
   - `sub` (INTEGER, 外键): 子用户类型的ID，引用自`usertype`表。
@@ -2564,7 +2750,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 145. **frienddecls**
+### 152. **frienddecls**
 - **描述**: 友元声明。
 - **属性**:
   - `id` (INTEGER, 主键): 友元声明的唯一标识符。
@@ -2584,34 +2770,137 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 153. **declaredtype**
 ```
-@declaredtype = @usertype ; ?Q
+@declaredtype = @usertype; +-+
+```
+- **description**: The declared type of a declaration.
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @usertype
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-@declaration = @function
+
+### 154. **declaration**
+```
+@declaration = @function +-+
 | @declaredtype
 | @variable
 | @enumconstant
 | @frienddecl
 | @concept_template;
+```
+- **description**: The declared type of a declaration.
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @function
+    - 2: @declaredtype
+    - 3: @variable
+    - 4: @enumconstant
+    - 5: @frienddecl
+    - 6: @concept_template
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-@member = @membervariable
+### 155. **member**
+```
+@member = @membervariable +-+
 | @function
 | @declaredtype
 | @enumconstant;
+```
+- **description**: 成员变量
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @memebervariable
+    - 2: @function
+    - 3: @declaredtype
+    - 4: @enumconstant
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-@locatable = @diagnostic
+### 156. **locatable**
+```
+@locatable = @diagnostic +-+
 | @declaration
-| @ppd*include
+| @ppd_include
 | @ppd_define
 | @macroinvocation
 /*| @funcall\_/
 | @xmllocatable
 | @attribute
 | @attribute_arg;
+```
+- **description**: 表示可定位的元素。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @diagnostic
+    - 2: @declaration
+    - 3: @ppd_include
+    - 4: @ppd_define
+    - 5: @macroinvocation
+    - 6: @xmllocatable
+    - 7: @attribute
+    - 8: @attribute_arg
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-@namedscope = @namespace | @usertype;
+### 157. **namedscope**
+```
+@namedscope = @namespace | @usertype; +-+
+```
+- **description**: 命名空间或用户类型。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @namespace
+    - 2: @usertype
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-@element = @locatable
+### 158. **element**
+```
+@element = @locatable +-+
 | @file
 | @folder
 | @specifier
@@ -2633,11 +2922,62 @@ CREATE TABLE compilation_time (
 | @static_assert
 | @type_mention
 | @lambdacapture;
-
-@exprparent = @element; ?Q
 ```
+- **description**: 元素。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @file
+    - 2: @folder
+    - 3: @specifier
+    - 4: @type
+    - 5: @expr
+    - 6: @namespace
+    - 7: @initialiser
+    - 8: @stmt
+    - 9: @derivation
+    - 10: @commment
+    - 11: @preprocdirect
+    - 12: @fun_decl
+    - 13: @var_decl
+    - 14: @type_decl
+    - 15: @namespace_decl
+    - 16: @using
+    - 17: @namequalifier
+    - 18: @specialnamequalifyingelement
+    - 19: @static_assert
+    - 20: @type_mention
+    - 21: @lambdacapture;
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-### 146. **comments**
+### 159. **exprparent**
+```
+@exprparent = @element; +-+
+```
+- **description**: 表示一个表达式的父节点。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @element
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
+
+### 160. **comments**
 - **描述**: 注释。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`comment`。
@@ -2653,7 +2993,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 147. **commentbinding**
+### 161. **commentbinding**
 - **描述**: 注释绑定。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`comment`。
@@ -2668,7 +3008,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 148. **exprconv**
+### 162. **exprconv**
 - **描述**: 表达式转换。
 - **属性**:
   - `converted` (INTEGER, 外键): 转换后的表达式，引用自`expr`表。
@@ -2684,7 +3024,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 149. **compgenerated**
+### 163. **compgenerated**
 - **描述**: 编译器生成。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`element`。
@@ -2696,7 +3036,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 150. **synthetic_destructor_call**
+### 164. **synthetic_destructor_call**
 - **描述**: 合成析构函数调用。
   > `destructor_call` destructs the `i`'th entity that should be destructed following `element`. Note that entities should be destructed in reverse construction order, so for a given `element` these should be called from highest to lowest `i`.
 - **属性**:
@@ -2710,12 +3050,13 @@ CREATE TABLE compilation_time (
       i INTEGER,
       destructor_call INTEGER,
       PRIMARY KEY (element, i),
+      PRIMARY KEY (element, destructor_call)
       FOREIGN KEY (element) REFERENCES element(id),
       FOREIGN KEY (destructor_call) REFERENCES routineexpr(id)
   );
   ```
 
-### 151. **namespaces**
+### 165. **namespaces**
 - **描述**: 命名空间。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`namespace`。
@@ -2729,7 +3070,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 152. **namespace_inline**
+### 166. **namespace_inline**
 - **描述**: 内联命名空间。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`namespace`。
@@ -2741,7 +3082,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 153. **namespacembrs**
+### 167. **namespacembrs**
 - **描述**: 命名空间成员。
 - **属性**:
   - `parentid` (INTEGER, 外键): 父命名空间，引用自`namespace`表。
@@ -2757,11 +3098,27 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 168. **namespacembr**
 ```
-@namespacembr = @declaration | @namespace ?Q
+@namespacembr = @declaration | @namespace +-+
 ```
+- **description**: 命名空间成员。
+- **属性**:
+  - `id`:  ID。
+  - `associate_id`: 关联的 ID。
+  - `type`: 子表类型
+    - 1: @declaration
+    - 2: @namespace
+- **示例**:
+  ```sql
+  CREATE TBALE variable (
+    id INTEGER PRIMARY KEY,
+    associate_id INTEGER,
+    type INTEGER,
+  )
+  ```
 
-### 154. **exprparents**
+### 169. **exprparents**
 - **描述**: 表达式父节点。
 - **属性**:
   - `expr_id` (INTEGER, 外键): 表达式，引用自`expr`表。
@@ -2779,7 +3136,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 155. **expr_isload**
+### 170. **expr_isload**
 - **描述**: 表达式加载。
 - **属性**:
   - `expr_id` (INTEGER, 主键): 表达式，引用自`expr`表。
@@ -2791,134 +3148,17 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 171. **cast**
 ```
-@cast = @c_style_cast ?Q
+@cast = @c_style_cast +-+
       | @const_cast
       | @dynamic_cast
       | @reinterpret_cast
       | @static_cast
       ;
-
-@any_new_expr = @new_expr
-              | @new_array_expr;
-
-@new_or_delete_expr = @any_new_expr
-                    | @delete_expr
-                    | @delete_array_expr;
-
-@prefix_crement_expr = @preincrexpr | @predecrexpr;
-
-@postfix_crement_expr = @postincrexpr | @postdecrexpr;
-
-@increment_expr = @preincrexpr | @postincrexpr;
-
-@decrement_expr = @predecrexpr | @postdecrexpr;
-
-@crement_expr = @increment_expr | @decrement_expr;
-
-@un_arith_op_expr = @arithnegexpr
-                  | @unaryplusexpr
-                  | @conjugation
-                  | @realpartexpr
-                  | @imagpartexpr
-                  | @crement_expr
-                  ;
-
-@un_bitwise_op_expr = @complementexpr;
-
-@un_log_op_expr = @notexpr;
-
-@un_op_expr = @address_of
-            | @indirect
-            | @un_arith_op_expr
-            | @un_bitwise_op_expr
-            | @builtinaddressof
-            | @vec_fill
-            | @un_log_op_expr
-            | @co_await
-            | @co_yield
-            ;
-
-@bin_log_op_expr = @andlogicalexpr | @orlogicalexpr;
-
-@cmp_op_expr = @eq_op_expr | @rel_op_expr;
-
-@eq_op_expr = @eqexpr | @neexpr;
-
-@rel_op_expr = @gtexpr
-             | @ltexpr
-             | @geexpr
-             | @leexpr
-             | @spaceshipexpr
-             ;
-
-@bin_bitwise_op_expr = @lshiftexpr
-                     | @rshiftexpr
-                     | @andexpr
-                     | @orexpr
-                     | @xorexpr
-                     ;
-
-@p_arith_op_expr = @paddexpr
-                 | @psubexpr
-                 | @pdiffexpr
-                 ;
-
-@bin_arith_op_expr = @addexpr
-                   | @subexpr
-                   | @mulexpr
-                   | @divexpr
-                   | @remexpr
-                   | @jmulexpr
-                   | @jdivexpr
-                   | @fjaddexpr
-                   | @jfaddexpr
-                   | @fjsubexpr
-                   | @jfsubexpr
-                   | @minexpr
-                   | @maxexpr
-                   | @p_arith_op_expr
-                   ;
-
-@bin_op_expr = @bin_arith_op_expr
-             | @bin_bitwise_op_expr
-             | @cmp_op_expr
-             | @bin_log_op_expr
-             ;
-
-@op_expr = @un_op_expr
-         | @bin_op_expr
-         | @assign_expr
-         | @conditionalexpr
-         ;
-
-@assign_arith_expr = @assignaddexpr
-                   | @assignsubexpr
-                   | @assignmulexpr
-                   | @assigndivexpr
-                   | @assignremexpr
-                   ;
-
-@assign_bitwise_expr = @assignandexpr
-                     | @assignorexpr
-                     | @assignxorexpr
-                     | @assignlshiftexpr
-                     | @assignrshiftexpr
-                     ;
-
-@assign_pointer_expr = @assignpaddexpr
-                     | @assignpsubexpr
-                     ;
-
-@assign_op_expr = @assign_arith_expr
-                | @assign_bitwise_expr
-                | @assign_pointer_expr
-                ;
-
-@assign_expr = @assignexpr | @assign_op_expr | @blockassignexpr
 ```
 
-### 156. **conversionkinds**
+### 172. **conversionkinds**
 - **描述**: 转换类型。
 - **属性**:
   - `expr_id` (INTEGER, 主键): 表达式，引用自`cast`表。
@@ -2944,11 +3184,9 @@ CREATE TABLE compilation_time (
   );
   ```
 
+### 173. **conversion**
 ```
-
-```
-
-@conversion = @cast ?Q
+@conversion = @cast +-+
 | @array_to_pointer
 | @parexpr
 | @reference_to
@@ -2956,10 +3194,313 @@ CREATE TABLE compilation_time (
 | @temp_init
 | @c11_generic
 ;
+```
 
-````
+### 174. **iscall**
 
-### 157. **expr_allocator**
+- **描述**: 表示一个函数调用。
+- **属性**:
+  - `caller` (INTEGER, 主键): 调用者的唯一标识符，引用自`funbindexpr`表。
+  - `kind` (INTEGER): 调用的类型。
+
+```sql
+CREATE TABLE iscall (
+    caller INTEGER PRIMARY KEY,
+    kind INTEGER,
+    FOREIGN KEY (caller) REFERENCES funbindexpr(ref)
+);
+```
+
+### 175. **numtemplatearguments**
+
+- **描述**: 表示模板参数的数目。
+- **属性**:
+  - `expr_id` (INTEGER, 主键): 表达式的唯一标识符，引用自`expr`表。
+  - `num` (INTEGER): 模板参数的数量。
+
+```sql
+CREATE TABLE numtemplatearguments (
+    expr_id INTEGER PRIMARY KEY,
+    num INTEGER,
+    FOREIGN KEY (expr_id) REFERENCES expr(ref)
+);
+```
+
+### 176. **specialnamequalifyingelements**
+
+- **描述**: 表示特殊名称限定元素。
+- **属性**:
+  - `id` (INTEGER, 主键): 特殊名称限定元素的唯一标识符。
+  - `name` (VARCHAR, 唯一): 元素的名称。
+
+```sql
+CREATE TABLE specialnamequalifyingelements (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(255) UNIQUE,
+    FOREIGN KEY (id) REFERENCES specialnamequalifyingelement(id)
+);
+```
+
+### 177. **namequalifiableelement**
+```
+@namequalifiableelement = @expr | @namequalifier;
+```
+
+### 178. **namequalifiableelement**
+```
+@namequalifyingelement = @namespace
+                       | @specialnamequalifyingelement
+                       | @usertype;
+```
+
+### 179. **namequalifiers**
+
+- **描述**: 表示名称限定符。
+- **属性**:
+  - `id` (INTEGER, 主键): 名称限定符的唯一标识符，引用自`namequalifier`表。
+  - `qualifiableelement` (INTEGER): 可限定元素的唯一标识符，引用自`namequalifiableelement`表。
+  - `qualifyingelement` (INTEGER): 限定元素的唯一标识符，引用自`namequalifyingelement`表。
+  - `location` (INTEGER): 位置的唯一标识符，引用自`location_default`表。
+
+```sql
+CREATE TABLE namequalifiers (
+    id INTEGER PRIMARY KEY,
+    qualifiableelement INTEGER,
+    qualifyingelement INTEGER,
+    location INTEGER,
+    FOREIGN KEY (qualifiableelement) REFERENCES namequalifiableelement(ref),
+    FOREIGN KEY (qualifyingelement) REFERENCES namequalifyingelement(ref),
+    FOREIGN KEY (location) REFERENCES location_default(ref)
+);
+```
+
+### 180. **varbind**
+
+- **描述**: 表示变量绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): 表达式的唯一标识符，引用自`varbindexpr`表。
+  - `var` (INTEGER): 可访问变量的唯一标识符，引用自`accessible`表。
+
+```sql
+CREATE TABLE varbind (
+    expr INTEGER PRIMARY KEY,
+    var INTEGER,
+    FOREIGN KEY (expr) REFERENCES varbindexpr(ref),
+    FOREIGN KEY (var) REFERENCES accessible(ref)
+);
+```
+
+### 181. **funbind**
+
+- **描述**: 表示函数绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): 表达式的唯一标识符，引用自`funbindexpr`表。
+  - `fun` (INTEGER): 函数唯一标识符，引用自`function`表。
+
+```sql
+CREATE TABLE funbind (
+    expr INTEGER PRIMARY KEY,
+    fun INTEGER,
+    FOREIGN KEY (expr) REFERENCES funbindexpr(ref),
+    FOREIGN KEY (fun) REFERENCES function(ref)
+);
+```
+
+### 182. **any_new_expr**
+```
+@any_new_expr = @new_expr +-+
+              | @new_array_expr;
+```
+
+### 183. **new_or_delete_expr**
+```
+@new_or_delete_expr = @any_new_expr
+                    | @delete_expr
+                    | @delete_array_expr;
+```
+
+### 184. **prefix_crement_expr**
+```
+@prefix_crement_expr = @preincrexpr | @predecrexpr;
+```
+
+### 185. **postfix_crement_expr**
+```
+@postfix_crement_expr = @postincrexpr | @postdecrexpr;
+```
+
+### 186. **increment_expr**
+```
+@increment_expr = @preincrexpr | @postincrexpr;
+```
+
+### 187. **decrement_expr**
+```
+@decrement_expr = @predecrexpr | @postdecrexpr;
+```
+
+### 188. **crement_expr**
+```
+@crement_expr = @increment_expr | @decrement_expr;
+```
+
+### 189. **un_arith_op_expr**
+```
+@un_arith_op_expr = @arithnegexpr
+                  | @unaryplusexpr
+                  | @conjugation
+                  | @realpartexpr
+                  | @imagpartexpr
+                  | @crement_expr
+                  ;
+```
+
+### 190. **un_bitwise_op_expr**
+```
+@un_bitwise_op_expr = @complementexpr;
+```
+
+### 191. **un_log_op_expr**
+```
+@un_log_op_expr = @notexpr;
+```
+
+### 192. **un_op_expr**
+```
+@un_op_expr = @address_of
+            | @indirect
+            | @un_arith_op_expr
+            | @un_bitwise_op_expr
+            | @builtinaddressof
+            | @vec_fill
+            | @un_log_op_expr
+            | @co_await
+            | @co_yield
+            ;
+```
+
+### 193. **bin_log_op_expr**
+```
+@bin_log_op_expr = @andlogicalexpr | @orlogicalexpr;
+```
+
+### 194. **cmp_op_expr**
+```
+@cmp_op_expr = @eq_op_expr | @rel_op_expr;
+```
+
+### 195. **eq_op_expr**
+```
+@eq_op_expr = @eqexpr | @neexpr;
+```
+
+### 196. **rel_op_expr**
+```
+@rel_op_expr = @gtexpr
+             | @ltexpr
+             | @geexpr
+             | @leexpr
+             | @spaceshipexpr
+             ;
+```
+
+### 197. **bin_bitwise_op_expr**
+```
+@bin_bitwise_op_expr = @lshiftexpr
+                     | @rshiftexpr
+                     | @andexpr
+                     | @orexpr
+                     | @xorexpr
+                     ;
+```
+
+### 198. **p_arith_op_expr**
+```
+@p_arith_op_expr = @paddexpr
+                 | @psubexpr
+                 | @pdiffexpr
+                 ;
+```
+
+### 199. **bin_arith_op_expr**
+```
+@bin_arith_op_expr = @addexpr
+                   | @subexpr
+                   | @mulexpr
+                   | @divexpr
+                   | @remexpr
+                   | @jmulexpr
+                   | @jdivexpr
+                   | @fjaddexpr
+                   | @jfaddexpr
+                   | @fjsubexpr
+                   | @jfsubexpr
+                   | @minexpr
+                   | @maxexpr
+                   | @p_arith_op_expr
+                   ;
+```
+
+### 200. **bin_op_expr**
+```
+@bin_op_expr = @bin_arith_op_expr
+             | @bin_bitwise_op_expr
+             | @cmp_op_expr
+             | @bin_log_op_expr
+             ;
+```
+
+### 201. **op_expr**
+```
+@op_expr = @un_op_expr
+         | @bin_op_expr
+         | @assign_expr
+         | @conditionalexpr
+         ;
+```
+
+### 202. **assign_arith_expr**
+```
+@assign_arith_expr = @assignaddexpr
+                   | @assignsubexpr
+                   | @assignmulexpr
+                   | @assigndivexpr
+                   | @assignremexpr
+                   ;
+```
+
+### 203. **assign_bitwise_expr**
+```
+@assign_bitwise_expr = @assignandexpr
+                     | @assignorexpr
+                     | @assignxorexpr
+                     | @assignlshiftexpr
+                     | @assignrshiftexpr
+                     ;
+```
+
+### 204. **assign_pointer_expr**
+```
+@assign_pointer_expr = @assignpaddexpr
+                     | @assignpsubexpr
+                     ;
+```
+
+### 205. **assign_op_expr**
+```
+@assign_op_expr = @assign_arith_expr
+                | @assign_bitwise_expr
+                | @assign_pointer_expr
+                ;
+```
+
+### 206. **assign_expr**
+```
+@assign_expr = @assignexpr | @assign_op_expr | @blockassignexpr
+```
+
+
+### 207. **expr_allocator**
 - **描述**: 表达式分配器。
 - **属性**:
   - `expr` (INTEGER, 主键): 表达式，引用自`any_new_expr`表。
@@ -2979,9 +3520,9 @@ CREATE TABLE compilation_time (
       form INTEGER,
       FOREIGN KEY (func) REFERENCES function(id)
   );
-````
+  ```
 
-### 158. **expr_deallocator**
+### 208. **expr_deallocator**
 - **描述**: 表达式释放器。
 - **属性**:
   - `expr` (INTEGER, 主键): 表达式，引用自`new_or_delete_expr`表。
@@ -3005,7 +3546,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 159. **expr_cond_two_operand**
+### 209. **expr_cond_two_operand**
 - **描述**: 条件表达式双操作数。
 - **属性**:
   - `cond` (INTEGER, 主键): 条件表达式，引用自`conditionalexpr`表。
@@ -3017,7 +3558,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 160. **expr_cond_guard**
+### 210. **expr_cond_guard**
 - **描述**: 条件表达式守卫。
 - **属性**:
   - `cond` (INTEGER, 主键): 条件表达式，引用自`conditionalexpr`表。
@@ -3033,7 +3574,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 161. **expr_cond_true**
+### 211. **expr_cond_true**
 - **描述**: 条件表达式真值。
 - **属性**:
   - `cond` (INTEGER, 主键): 条件表达式，引用自`conditionalexpr`表。
@@ -3049,7 +3590,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 162. **expr_cond_false**
+### 212. **expr_cond_false**
 - **描述**: 条件表达式假值。
 - **属性**:
   - `cond` (INTEGER, 主键): 条件表达式，引用自`conditionalexpr`表。
@@ -3065,7 +3606,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 163. **values**
+### 213. **values**
 - **描述**: 值。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`value`。
@@ -3079,7 +3620,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 164. **valuetext**
+### 214. **valuetext**
 - **描述**: 值文本。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`value`。
@@ -3093,7 +3634,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 165. **valuebind**
+### 215. **valuebind**
 - **描述**: 值绑定。
 - **属性**:
   - `val` (INTEGER, 外键): 值，引用自`value`表。
@@ -3109,7 +3650,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 166. **fieldoffsets**
+### 216. **fieldoffsets**
 - **描述**: 字段偏移量。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`variable`。
@@ -3125,7 +3666,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 167. **bitfield**
+### 217. **bitfield**
 - **描述**: 位字段。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`variable`。
@@ -3171,7 +3712,7 @@ memberaccess(
 */
 ```
 
-### 168. **initialisers**
+### 218. **initialisers**
 - **描述**: 初始化器。
 - **属性**:
   - `init` (INTEGER, 主键): 初始化器，引用自`initialiser`表。
@@ -3191,7 +3732,7 @@ memberaccess(
   );
   ```
 
-### 169. **braced_initialisers**
+### 219. **braced_initialisers**
 - **描述**: 大括号初始化器。
 - **属性**:
   - `init` (INTEGER, 主键): 初始化器，引用自`initialiser`表。
@@ -3203,7 +3744,7 @@ memberaccess(
   );
   ```
 
-### 170. **expr_ancestor**
+### 220. **expr_ancestor**
 - **描述**: 表达式祖先。
 - **属性**:
   - `exp` (INTEGER, 外键): 表达式，引用自`expr`表。
@@ -3219,7 +3760,7 @@ memberaccess(
   );
   ```
 
-### 171. **exprs**
+### 221. **exprs**
 - **描述**: 表达式。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`expr`。
@@ -3481,15 +4022,54 @@ memberaccess(
       FOREIGN KEY (location) REFERENCES location_expr(id)
   );
   ```
+### 222. **expr_reuse**
+- **描述**: 表达式重用。
+- **属性**:
+  - `reuse` (INTEGER, 外键): 重用表达式，引用自`expr`表。
+  - `original` (INTEGER, 外键): 原始表达式，引用自`expr`表。
+  - `value_category` (INTEGER): 值类别。
+- **示例**:
+  ```sql
+  CREATE TABLE expr_reuse (
+      reuse INTEGER,
+      original INTEGER,
+      value_category INTEGER,
+      PRIMARY KEY (reuse, original),
+      FOREIGN KEY (reuse) REFERENCES expr(id),
+      FOREIGN KEY (original) REFERENCES expr(id)
+  );
+  ```
 
+### 223. **expr_types**
+- **描述**: 表达式类型。
+- **属性**:
+  - `id` (INTEGER, 外键): 表达式，引用自`expr`表。
+  - `typeid` (INTEGER, 外键): 类型，引用自`type`表。
+  - `value_category` (INTEGER): 值类别。
+- **示例**:
+  ```sql
+  CREATE TABLE expr_types (
+      id INTEGER,
+      typeid INTEGER,
+      value_category INTEGER,
+      PRIMARY KEY (id, typeid),
+      FOREIGN KEY (id) REFERENCES expr(id),
+      FOREIGN KEY (typeid) REFERENCES type(id)
+  );
+  ```
+
+### 224. **var_args_expr**
 ```
-@var_args_expr = @vastartexpr ?Q
+@var_args_expr = @vastartexpr +-+
                | @vaendexpr
                | @vaargexpr
                | @vacopyexpr
                ;
+```
 
-@builtin_op = @var_args_expr
+### 225. **builtin_op**
+```
+@builtin_op = @var_args_expr +-+
             | @noopexpr
             | @offsetofexpr
             | @intaddrexpr
@@ -3600,75 +4180,52 @@ memberaccess(
             ;
 ```
 
-### 172. **expr_reuse**
-- **描述**: 表达式重用。
-- **属性**:
-  - `reuse` (INTEGER, 外键): 重用表达式，引用自`expr`表。
-  - `original` (INTEGER, 外键): 原始表达式，引用自`expr`表。
-  - `value_category` (INTEGER): 值类别。
-- **示例**:
-  ```sql
-  CREATE TABLE expr_reuse (
-      reuse INTEGER,
-      original INTEGER,
-      value_category INTEGER,
-      PRIMARY KEY (reuse, original),
-      FOREIGN KEY (reuse) REFERENCES expr(id),
-      FOREIGN KEY (original) REFERENCES expr(id)
-  );
-  ```
+### 226. **compound_requirement_is_noexcept**
 
-### 173. **expr_types**
-- **描述**: 表达式类型。
+- **描述**: 表示一个复合要求是否为`noexcept`。
 - **属性**:
-  - `id` (INTEGER, 外键): 表达式，引用自`expr`表。
-  - `typeid` (INTEGER, 外键): 类型，引用自`type`表。
-  - `value_category` (INTEGER): 值类别。
-- **示例**:
-  ```sql
-  CREATE TABLE expr_types (
-      id INTEGER,
-      typeid INTEGER,
-      value_category INTEGER,
-      PRIMARY KEY (id, typeid),
-      FOREIGN KEY (id) REFERENCES expr(id),
-      FOREIGN KEY (typeid) REFERENCES type(id)
-  );
-  ```
+  - `expr` (INTEGER, 主键): 复合要求的唯一标识符，引用自`compound_requirement`表。
 
-### 174. **varbind**
-- **描述**: 变量绑定。
+```sql
+CREATE TABLE compound_requirement_is_noexcept (
+    expr INTEGER PRIMARY KEY,
+    FOREIGN KEY (expr) REFERENCES compound_requirement(ref)
+);
+```
+
+### 227. **new_allocated_type**
+
+- **描述**: 表示通过`new`表达式分配的类型。
 - **属性**:
-  - `expr` (INTEGER, 外键): 表达式，引用自`varbindexpr`表。
-  - `var` (INTEGER, 外键): 变量，引用自`accessible`表。
-- **示例**:
-  ```sql
-  CREATE TABLE varbind (
-      expr INTEGER,
-      var INTEGER,
-      PRIMARY KEY (expr, var),
-      FOREIGN KEY (expr) REFERENCES varbindexpr(id),
-      FOREIGN KEY (var) REFERENCES accessible(id)
-  );
-  ```
+  - `expr` (INTEGER, 主键): `new`表达式的唯一标识符，引用自`new_expr`表。
+  - `type_id` (INTEGER): 分配类型的唯一标识符，引用自`type`表。
 
-### 175. **funbind**
-- **描述**: 函数绑定。
+```sql
+CREATE TABLE new_allocated_type (
+    expr INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    FOREIGN KEY (expr) REFERENCES new_expr(ref),
+    FOREIGN KEY (type_id) REFERENCES type(ref)
+);
+```
+
+### 228. **new_array_allocated_type**
+
+- **描述**: 表示通过`new`数组表达式分配的类型。
 - **属性**:
-  - `expr` (INTEGER, 外键): 表达式，引用自`funbindexpr`表。
-  - `fun` (INTEGER, 外键): 函数，引用自`function`表。
-- **示例**:
-  ```sql
-  CREATE TABLE funbind (
-      expr INTEGER,
-      fun INTEGER,
-      PRIMARY KEY (expr, fun),
-      FOREIGN KEY (expr) REFERENCES funbindexpr(id),
-      FOREIGN KEY (fun) REFERENCES function(id)
-  );
-  ```
+  - `expr` (INTEGER, 主键): `new`数组表达式的唯一标识符，引用自`new_array_expr`表。
+  - `type_id` (INTEGER): 分配类型的唯一标识符，引用自`type`表。
 
-### 176. **aggregate_field_init**
+```sql
+CREATE TABLE new_array_allocated_type (
+    expr INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    FOREIGN KEY (expr) REFERENCES new_array_expr(ref),
+    FOREIGN KEY (type_id) REFERENCES type(ref)
+);
+```
+
+### 229. **aggregate_field_init**
 - **描述**: 聚合字段初始化。
   > The field being initialized by an initializer expression within an aggregate initializer for a class/struct/union. Position is used to sort repeated initializers.
 - **属性**:
@@ -3690,7 +4247,7 @@ memberaccess(
   );
   ```
 
-### 177. **aggregate_array_init**
+### 230. **aggregate_array_init**
 - **描述**: 聚合数组初始化。
   > The index of the element being initialized by an initializer expression within an aggregate initializer for an array. Position is used to sort repeated initializers.
 - **属性**:
@@ -3710,3 +4267,1060 @@ memberaccess(
       FOREIGN KEY (initializer) REFERENCES expr(id)
   );
   ```
+
+### 231. **ctorinit**
+```
+@ctorinit = @ctordirectinit +-+
+          | @ctorvirtualinit
+          | @ctorfieldinit
+          | @ctordelegatinginit;
+```
+
+### 232. **dtordestruct**
+```
+@dtordestruct = @dtordirectdestruct +-+
+              | @dtorvirtualdestruct
+              | @dtorfielddestruct;
+```
+
+### 233. **condition_decl_bind**
+
+- **描述**: 表示条件声明的绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): 条件的唯一标识符，引用自`condition_decl`表。
+  - `decl` (INTEGER, 主键): 声明的唯一标识符，引用自`declaration`表。
+
+```sql
+CREATE TABLE condition_decl_bind (
+    expr INTEGER,
+    decl INTEGER,
+    PRIMARY KEY (expr, decl),
+    FOREIGN KEY (expr) REFERENCES condition_decl(ref),
+    FOREIGN KEY (decl) REFERENCES declaration(ref)
+);
+```
+
+### 234. **typeid_bind**
+
+- **描述**: 表示类型ID的绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): 表达式的唯一标识符，引用自`type_id`表。
+  - `type_id` (INTEGER): 类型的唯一标识符，引用自`type`表。
+
+```sql
+CREATE TABLE typeid_bind (
+    expr INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    FOREIGN KEY (expr) REFERENCES type_id(ref),
+    FOREIGN KEY (type_id) REFERENCES type(ref)
+);
+```
+
+### 235. **uuidof_bind**
+
+- **描述**: 表示UUID的绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): 表达式的唯一标识符，引用自`uuidof`表。
+  - `type_id` (INTEGER): 类型的唯一标识符，引用自`type`表。
+
+```sql
+CREATE TABLE uuidof_bind (
+    expr INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    FOREIGN KEY (expr) REFERENCES uuidof(ref),
+    FOREIGN KEY (type_id) REFERENCES type(ref)
+);
+```
+
+### 236. **sizeof_or_alignof**
+```
+@sizeof_or_alignof = @runtime_sizeof | @runtime_alignof | @datasizeof | @sizeof_pack; +-+
+```
+
+### 237. **sizeof_bind**
+
+- **描述**: 表示`sizeof`或`alignof`操作符的绑定。
+- **属性**:
+  - `expr` (INTEGER, 主键): `sizeof`或`alignof`操作符的唯一标识符，引用自`sizeof_or_alignof`表。
+  - `type_id` (INTEGER): 类型的唯一标识符，引用自`type`表。
+
+```sql
+CREATE TABLE sizeof_bind (
+    expr INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    FOREIGN KEY (expr) REFERENCES sizeof_or_alignof(ref),
+    FOREIGN KEY (type_id) REFERENCES type(ref)
+);
+```
+
+### 238. **code_block**
+
+- **描述**: 表示代码块。
+- **属性**:
+  - `block` (INTEGER, 主键): 代码块的唯一标识符，引用自`literal`表。
+  - `routine` (INTEGER, 主键): 函数的唯一标识符，引用自`function`表。
+
+```sql
+CREATE TABLE code_block (
+    block INTEGER PRIMARY KEY,
+    routine INTEGER,
+    FOREIGN KEY (block) REFERENCES literal(ref),
+    FOREIGN KEY (routine) REFERENCES function(ref)
+);
+```
+
+### 239. **lambdas**
+
+- **描述**: 表示Lambda表达式。
+- **属性**:
+  - `expr` (INTEGER, 主键): Lambda表达式的唯一标识符，引用自`lambdaexpr`表。
+  - `default_capture` (VARCHAR): 默认捕获方式。
+  - `has_explicit_return_type` (BOOLEAN): 是否显式指定返回类型。
+
+```sql
+CREATE TABLE lambdas (
+    expr INTEGER PRIMARY KEY,
+    default_capture VARCHAR(255),
+    has_explicit_return_type BOOLEAN,
+    FOREIGN KEY (expr) REFERENCES lambdaexpr(ref)
+);
+```
+
+### 240. **lambda_capture**
+
+- **描述**: 表示Lambda表达式的捕获。
+- **属性**:
+  - `id` (INTEGER, 主键): 捕获的唯一标识符。
+  - `lambda` (INTEGER): Lambda表达式的唯一标识符，引用自`lambdaexpr`表。
+  - `index` (INTEGER): 捕获的索引。
+  - `field` (INTEGER): 成员变量的唯一标识符，引用自`membervariable`表。
+  - `captured_by_reference` (BOOLEAN): 是否通过引用捕获。
+  - `is_implicit` (BOOLEAN): 是否隐式捕获。
+  - `location` (INTEGER): 位置的唯一标识符，引用自`location_default`表。
+
+```sql
+CREATE TABLE lambda_capture (
+    id INTEGER PRIMARY KEY,
+    lambda INTEGER,
+    index INTEGER,
+    field INTEGER,
+    captured_by_reference BOOLEAN,
+    is_implicit BOOLEAN,
+    location INTEGER,
+    FOREIGN KEY (lambda) REFERENCES lambdaexpr(ref),
+    FOREIGN KEY (field) REFERENCES membervariable(ref),
+    FOREIGN KEY (location) REFERENCES location_default(ref)
+);
+```
+
+### 241. **funbindexpr**
+```
+@funbindexpr = @routineexpr +-+
+             | @new_expr
+             | @delete_expr
+             | @delete_array_expr
+             | @ctordirectinit
+             | @ctorvirtualinit
+             | @ctordelegatinginit
+             | @dtordirectdestruct
+             | @dtorvirtualdestruct;
+```
+
+### 242. **varbindexpr**
+```
+@varbindexpr = @varaccess | @ctorfieldinit | @dtorfielddestruct; +-+
+```
+
+### 243. **addressable**
+```
+@addressable = @function | @variable; +-+
+```
+
+### 244. **aaccessible**
+```
+@accessible = @addressable | @enumconstant; +-+
+```
+
+### 245. **access**
+```
+@access = @varaccess | @routineexpr; +-+
+```
+
+### 246. **fold**
+
+- **描述**: 表示一个折叠操作。
+- **属性**:
+  - `expr` (INTEGER, 主键): 折叠表达式的唯一标识符，引用自`foldexpr`表。
+  - `operator` (VARCHAR): 运算符，引用自`string`表。
+  - `is_left_fold` (BOOLEAN): 是否为左折叠。
+
+```sql
+CREATE TABLE fold (
+    expr INTEGER PRIMARY KEY,
+    operator VARCHAR(255),
+    is_left_fold BOOLEAN,
+    FOREIGN KEY (expr) REFERENCES foldexpr(ref),
+    FOREIGN KEY (operator) REFERENCES string(ref)
+);
+```
+
+### 247. **stmts**
+
+- **描述**: 表示语句。
+- **属性**:
+  - `id` (INTEGER, 主键): 语句的唯一标识符，引用自`stmt`表。
+  - `kind` (INTEGER): 语句的类型。
+    ```
+    case @stmt.kind of
+        1 = @stmt_expr
+    |   2 = @stmt_if
+    |   3 = @stmt_while
+    |   4 = @stmt_goto
+    |   5 = @stmt_label
+    |   6 = @stmt_return
+    |   7 = @stmt_block
+    |   8 = @stmt_end_test_while // do { ... } while ( ... )
+    |   9 = @stmt_for
+    |  10 = @stmt_switch_case
+    |  11 = @stmt_switch
+    |  13 = @stmt_asm // "asm" statement or the body of an asm function
+    |  15 = @stmt_try_block
+    |  16 = @stmt_microsoft_try // Microsoft
+    |  17 = @stmt_decl
+    |  18 = @stmt_set_vla_size // C99
+    |  19 = @stmt_vla_decl // C99
+    |  25 = @stmt_assigned_goto // GNU
+    |  26 = @stmt_empty
+    |  27 = @stmt_continue
+    |  28 = @stmt_break
+    |  29 = @stmt_range_based_for // C++11
+    // ...  30 @stmt_at_autoreleasepool_block deprecated
+    // ...  31 @stmt_objc_for_in deprecated
+    // ...  32 @stmt_at_synchronized deprecated
+    |  33 = @stmt_handler
+    // ...  34 @stmt_finally_end deprecated
+    |  35 = @stmt_constexpr_if
+    |  37 = @stmt_co_return
+    |  38 = @stmt_consteval_if
+    |  39 = @stmt_not_consteval_if
+    ;
+    ```
+  - `location` (INTEGER): 语句的位置，引用自`location_stmt`表。
+
+```sql
+CREATE TABLE stmts (
+    id INTEGER PRIMARY KEY,
+    kind INTEGER,
+    location INTEGER,
+    FOREIGN KEY (id) REFERENCES stmt(ref),
+    FOREIGN KEY (location) REFERENCES location_stmt(ref)
+);
+```
+
+### 248. **type_vla**
+
+- **描述**: 表示可变长度数组的类型。
+- **属性**:
+  - `type_id` (INTEGER, 主键): 类型的唯一标识符，引用自`type`表。
+  - `decl` (INTEGER): 声明的标识符，引用自`stmt_vla_decl`表。
+
+```sql
+CREATE TABLE type_vla (
+    type_id INTEGER PRIMARY KEY,
+    decl INTEGER,
+    FOREIGN KEY (type_id) REFERENCES type(ref),
+    FOREIGN KEY (decl) REFERENCES stmt_vla_decl(ref)
+);
+```
+
+### 249. **variable_vla**
+
+- **描述**: 表示可变长度数组的变量。
+- **属性**:
+  - `var` (INTEGER, 主键): 变量的唯一标识符，引用自`variable`表。
+  - `decl` (INTEGER): 声明的标识符，引用自`stmt_vla_decl`表。
+
+```sql
+CREATE TABLE variable_vla (
+    var INTEGER PRIMARY KEY,
+    decl INTEGER,
+    FOREIGN KEY (var) REFERENCES variable(ref),
+    FOREIGN KEY (decl) REFERENCES stmt_vla_decl(ref)
+);
+```
+
+### 250. **if_initialization**
+
+- **描述**: 表示`if`语句的初始化部分。
+- **属性**:
+  - `if_stmt` (INTEGER, 主键): `if`语句的唯一标识符，引用自`stmt_if`表。
+  - `init_id` (INTEGER): 初始化语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE if_initialization (
+    if_stmt INTEGER PRIMARY KEY,
+    init_id INTEGER,
+    FOREIGN KEY (if_stmt) REFERENCES stmt_if(ref),
+    FOREIGN KEY (init_id) REFERENCES stmt(ref)
+);
+```
+
+### 251. **if_then**
+
+- **描述**: 表示`if`语句的`then`部分。
+- **属性**:
+  - `if_stmt` (INTEGER, 主键): `if`语句的唯一标识符，引用自`stmt_if`表。
+  - `then_id` (INTEGER): `then`语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE if_then (
+    if_stmt INTEGER PRIMARY KEY,
+    then_id INTEGER,
+    FOREIGN KEY (if_stmt) REFERENCES stmt_if(ref),
+    FOREIGN KEY (then_id) REFERENCES stmt(ref)
+);
+```
+
+### 252. **if_else**
+
+- **描述**: 表示`if`语句的`else`部分。
+- **属性**:
+  - `if_stmt` (INTEGER, 主键): `if`语句的唯一标识符，引用自`stmt_if`表。
+  - `else_id` (INTEGER): `else`语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE if_else (
+    if_stmt INTEGER PRIMARY KEY,
+    else_id INTEGER,
+    FOREIGN KEY (if_stmt) REFERENCES stmt_if(ref),
+    FOREIGN KEY (else_id) REFERENCES stmt(ref)
+);
+```
+
+### 253. **constexpr_if_initialization**
+
+- **描述**: 表示`constexpr if`语句的初始化部分。
+- **属性**:
+  - `constexpr_if_stmt` (INTEGER, 主键): `constexpr if`语句的唯一标识符，引用自`stmt_constexpr_if`表。
+  - `init_id` (INTEGER): 初始化语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE constexpr_if_initialization (
+    constexpr_if_stmt INTEGER PRIMARY KEY,
+    init_id INTEGER,
+    FOREIGN KEY (constexpr_if_stmt) REFERENCES stmt_constexpr_if(ref),
+    FOREIGN KEY (init_id) REFERENCES stmt(ref)
+);
+```
+
+### 254. **constexpr_if_then**
+
+- **描述**: 表示`constexpr if`语句的`then`部分。
+- **属性**:
+  - `constexpr_if_stmt` (INTEGER, 主键): `constexpr if`语句的唯一标识符，引用自`stmt_constexpr_if`表。
+  - `then_id` (INTEGER): `then`语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE constexpr_if_then (
+    constexpr_if_stmt INTEGER PRIMARY KEY,
+    then_id INTEGER,
+    FOREIGN KEY (constexpr_if_stmt) REFERENCES stmt_constexpr_if(ref),
+    FOREIGN KEY (then_id) REFERENCES stmt(ref)
+);
+```
+
+### 255. **constexpr_if_else**
+
+- **描述**: 表示`constexpr if`语句的`else`部分。
+- **属性**:
+  - `constexpr_if_stmt` (INTEGER, 主键): `constexpr if`语句的唯一标识符，引用自`stmt_constexpr_if`表。
+  - `else_id` (INTEGER): `else`语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE constexpr_if_else (
+    constexpr_if_stmt INTEGER PRIMARY KEY,
+    else_id INTEGER,
+    FOREIGN KEY (constexpr_if_stmt) REFERENCES stmt_constexpr_if(ref),
+    FOREIGN KEY (else_id) REFERENCES stmt(ref)
+);
+```
+
+
+### 256. **stmt_consteval_or_not_consteval_if**
+```
+@stmt_consteval_or_not_consteval_if = @stmt_consteval_if | @stmt_not_consteval_if; +-+
+```
+
+### 257. **consteval_if_then**
+
+- **描述**: 表示`consteval if`语句的`then`部分。
+- **属性**:
+  - `constexpr_if_stmt` (INTEGER, 主键): `consteval if`语句的唯一标识符，引用自`stmt_consteval_or_not_consteval_if`表。
+  - `then_id` (INTEGER): `then`部分的语句标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE consteval_if_then (
+    constexpr_if_stmt INTEGER PRIMARY KEY,
+    then_id INTEGER,
+    FOREIGN KEY (constexpr_if_stmt) REFERENCES stmt_consteval_or_not_consteval_if(ref),
+    FOREIGN KEY (then_id) REFERENCES stmt(ref)
+);
+```
+
+### 258. **consteval_if_else**
+
+- **描述**: 表示`consteval if`语句的`else`部分。
+- **属性**:
+  - `constexpr_if_stmt` (INTEGER, 主键): `consteval if`语句的唯一标识符，引用自`stmt_consteval_or_not_consteval_if`表。
+  - `else_id` (INTEGER): `else`部分的语句标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE consteval_if_else (
+    constexpr_if_stmt INTEGER PRIMARY KEY,
+    else_id INTEGER,
+    FOREIGN KEY (constexpr_if_stmt) REFERENCES stmt_consteval_or_not_consteval_if(ref),
+    FOREIGN KEY (else_id) REFERENCES stmt(ref)
+);
+```
+
+### 259. **while_body**
+
+- **描述**: 表示`while`循环的主体部分。
+- **属性**:
+  - `while_stmt` (INTEGER, 主键): `while`语句的唯一标识符，引用自`stmt_while`表。
+  - `body_id` (INTEGER): 循环主体的语句标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE while_body (
+    while_stmt INTEGER PRIMARY KEY,
+    body_id INTEGER,
+    FOREIGN KEY (while_stmt) REFERENCES stmt_while(ref),
+    FOREIGN KEY (body_id) REFERENCES stmt(ref)
+);
+```
+
+### 260. **do_body**
+
+- **描述**: 表示`do-while`循环的主体部分。
+- **属性**:
+  - `do_stmt` (INTEGER, 主键): `do`语句的唯一标识符，引用自`stmt_end_test_while`表。
+  - `body_id` (INTEGER): 循环主体的语句标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE do_body (
+    do_stmt INTEGER PRIMARY KEY,
+    body_id INTEGER,
+    FOREIGN KEY (do_stmt) REFERENCES stmt_end_test_while(ref),
+    FOREIGN KEY (body_id) REFERENCES stmt(ref)
+);
+```
+
+### 261. **switch_initialization**
+
+- **描述**: 表示`switch`语句的初始化部分。
+- **属性**:
+  - `switch_stmt` (INTEGER, 主键): `switch`语句的唯一标识符，引用自`stmt_switch`表。
+  - `init_id` (INTEGER): 初始化语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE switch_initialization (
+    switch_stmt INTEGER PRIMARY KEY,
+    init_id INTEGER,
+    FOREIGN KEY (switch_stmt) REFERENCES stmt_switch(ref),
+    FOREIGN KEY (init_id) REFERENCES stmt(ref)
+);
+```
+
+### 262. **switch_case**
+
+- **描述**: 表示`switch`语句的`case`部分。
+- **属性**:
+  - `switch_stmt` (INTEGER): `switch`语句的唯一标识符，引用自`stmt_switch`表。
+  - `index` (INTEGER): `case`的索引。
+  - `case_id` (INTEGER, 主键): `case`语句的唯一标识符，引用自`stmt_switch_case`表。
+
+```sql
+CREATE TABLE switch_case (
+    switch_stmt INTEGER,
+    index INTEGER,
+    case_id INTEGER PRIMARY KEY,
+    PRIMARY KEY (switch_stmt, index),
+    FOREIGN KEY (switch_stmt) REFERENCES stmt_switch(ref),
+    FOREIGN KEY (case_id) REFERENCES stmt_switch_case(ref)
+);
+```
+
+### 263. **switch_body**
+
+- **描述**: 表示`switch`语句的主体部分。
+- **属性**:
+  - `switch_stmt` (INTEGER, 主键): `switch`语句的唯一标识符，引用自`stmt_switch`表。
+  - `body_id` (INTEGER): 主体语句的标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE switch_body (
+    switch_stmt INTEGER PRIMARY KEY,
+    body_id INTEGER,
+    FOREIGN KEY (switch_stmt) REFERENCES stmt_switch(ref),
+    FOREIGN KEY (body_id) REFERENCES stmt(ref)
+);
+```
+
+### 264. **stmt_for_or_range_based_for**
+```
+@stmt_for_or_range_based_for = @stmt_for +-+
+                             | @stmt_range_based_for;
+```
+
+### 265. **for_initialization**
+
+- **描述**: 表示`for`循环的初始化部分。
+- **属性**:
+  - `for_stmt` (INTEGER, 主键): `for`语句的唯一标识符，引用自`stmt_for_or_range_based_for`表。
+  - `init_id` (INTEGER): 初始化语句的唯一标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE for_initialization (
+    for_stmt INTEGER PRIMARY KEY,
+    init_id INTEGER,
+    FOREIGN KEY (for_stmt) REFERENCES stmt_for_or_range_based_for(ref),
+    FOREIGN KEY (init_id) REFERENCES stmt(ref)
+);
+```
+
+### 266. **for_condition**
+
+- **描述**: 表示`for`循环的条件部分。
+- **属性**:
+  - `for_stmt` (INTEGER, 主键): `for`语句的唯一标识符，引用自`stmt_for`表。
+  - `condition_id` (INTEGER): 条件的唯一标识符，引用自`expr`表。
+
+```sql
+CREATE TABLE for_condition (
+    for_stmt INTEGER PRIMARY KEY,
+    condition_id INTEGER,
+    FOREIGN KEY (for_stmt) REFERENCES stmt_for(ref),
+    FOREIGN KEY (condition_id) REFERENCES expr(ref)
+);
+```
+
+### 267. **for_update**
+
+- **描述**: 表示`for`循环的更新部分。
+- **属性**:
+  - `for_stmt` (INTEGER, 主键): `for`语句的唯一标识符，引用自`stmt_for`表。
+  - `update_id` (INTEGER): 更新语句的唯一标识符，引用自`expr`表。
+
+```sql
+CREATE TABLE for_update (
+    for_stmt INTEGER PRIMARY KEY,
+    update_id INTEGER,
+    FOREIGN KEY (for_stmt) REFERENCES stmt_for(ref),
+    FOREIGN KEY (update_id) REFERENCES expr(ref)
+);
+```
+
+### 268. **for_body**
+
+- **描述**: 表示`for`循环的主体部分。
+- **属性**:
+  - `for_stmt` (INTEGER, 主键): `for`语句的唯一标识符，引用自`stmt_for`表。
+  - `body_id` (INTEGER): 主体语句的唯一标识符，引用自`stmt`表。
+
+```sql
+CREATE TABLE for_body (
+    for_stmt INTEGER PRIMARY KEY,
+    body_id INTEGER,
+    FOREIGN KEY (for_stmt) REFERENCES stmt_for(ref),
+    FOREIGN KEY (body_id) REFERENCES stmt(ref)
+);
+```
+
+### 269. **stmtparent**
+```
+@stmtparent = @stmt | @expr_stmt ; +-+
+```
+
+### 270. **stmtparents**
+
+- **描述**: 表示语句的父级关系。
+- **属性**:
+  - `id` (INTEGER, 主键): 语句的唯一标识符，引用自`stmt`表。
+  - `index` (INTEGER): 语句在父级中的索引。
+  - `parent` (INTEGER): 父级语句的唯一标识符，引用自`stmtparent`表。
+
+```sql
+CREATE TABLE stmtparents (
+    id INTEGER,
+    index INTEGER,
+    parent INTEGER,
+    PRIMARY KEY (id),
+    FOREIGN KEY (id) REFERENCES stmt(ref),
+    FOREIGN KEY (parent) REFERENCES stmtparent(ref)
+);
+```
+
+### 271. **ishandler**
+
+- **描述**: 表示一个处理器块。
+- **属性**:
+  - `block` (INTEGER, 主键): 语句块的唯一标识符，引用自`stmt_block`表。
+
+```sql
+CREATE TABLE ishandler (
+    block INTEGER PRIMARY KEY,
+    FOREIGN KEY (block) REFERENCES stmt_block(ref)
+);
+```
+
+### 272. **cfgnode**
+```
+@cfgnode = @stmt | @expr | @function | @initialiser ; +-+
+```
+
+### 273. **stmt_decl_bind**
+
+- **描述**: 表示语句声明绑定。
+- **属性**:
+  - `stmt` (INTEGER, 主键): 语句的唯一标识符，引用自`stmt_decl`表。
+  - `num` (INTEGER): 绑定编号。
+  - `decl` (INTEGER): 声明的唯一标识符，引用自`declaration`表。
+
+```sql
+CREATE TABLE stmt_decl_bind (
+    stmt INTEGER,
+    num INTEGER,
+    decl INTEGER,
+    PRIMARY KEY (stmt, num),
+    FOREIGN KEY (stmt) REFERENCES stmt_decl(ref),
+    FOREIGN KEY (decl) REFERENCES declaration(ref)
+);
+```
+
+### 274. **stmt_decl_entry_bind**
+
+- **描述**: 表示语句声明条目绑定。
+- **属性**:
+  - `stmt` (INTEGER, 主键): 语句的唯一标识符，引用自`stmt_decl`表。
+  - `num` (INTEGER): 绑定编号。
+  - `decl_entry` (INTEGER): 条目的唯一标识符，引用自`element`表。
+
+```sql
+CREATE TABLE stmt_decl_entry_bind (
+    stmt INTEGER,
+    num INTEGER,
+    decl_entry INTEGER,
+    PRIMARY KEY (stmt, num),
+    FOREIGN KEY (stmt) REFERENCES stmt_decl(ref),
+    FOREIGN KEY (decl_entry) REFERENCES element(ref)
+);
+```
+
+### 275. **parameterized_element**
+```
+@parameterized_element = @function | @stmt_block | @requires_expr; +-+
+```
+
+### 276. **blockscope**
+
+- **描述**: 表示一个块的作用域。
+- **属性**:
+  - `block` (INTEGER, 主键): 块的唯一标识符，引用自`stmt_block`表。
+  - `enclosing` (INTEGER): 包围该块的作用域的标识符，引用自`parameterized_element`表。
+
+```sql
+CREATE TABLE blockscope (
+    block INTEGER PRIMARY KEY,
+    enclosing INTEGER,
+    FOREIGN KEY (block) REFERENCES stmt_block(ref),
+    FOREIGN KEY (enclosing) REFERENCES parameterized_element(ref)
+);
+```
+
+### 277. **jump**
+```
+@jump = @stmt_goto | @stmt_break | @stmt_continue; +-+
+```
+
+### 278. **jumporlabel**
+```
+@jumporlabel = @jump | @stmt_label | @literal; +-+
+```
+
+### 279. **jumpinfo**
+
+- **描述**: 表示跳转信息。
+- **属性**:
+  - `id` (INTEGER, 主键): 跳转或块的唯一标识符，引用自`jumporlabel`表。
+  - `str` (VARCHAR): 相关的字符串。
+  - `target` (INTEGER): 跳转目标，引用自`stmt`表。
+
+```sql
+CREATE TABLE jumpinfo (
+    id INTEGER PRIMARY KEY,
+    str VARCHAR(255),
+    target INTEGER,
+    FOREIGN KEY (id) REFERENCES jumporlabel(ref),
+    FOREIGN KEY (target) REFERENCES stmt(ref)
+);
+```
+
+### 280. **preprocdirects**
+
+- **描述**: 表示预处理指令。
+- **属性**:
+  - `id` (INTEGER, 主键): 预处理指令的唯一标识符，引用自`preprocdirect`表。
+  - `kind` (INTEGER): 预处理指令的类型。
+    ```
+    case @preprocdirect.kind of
+       0 = @ppd_if
+    |  1 = @ppd_ifdef
+    |  2 = @ppd_ifndef
+    |  3 = @ppd_elif
+    |  4 = @ppd_else
+    |  5 = @ppd_endif
+    |  6 = @ppd_plain_include
+    |  7 = @ppd_define
+    |  8 = @ppd_undef
+    |  9 = @ppd_line
+    | 10 = @ppd_error
+    | 11 = @ppd_pragma
+    | 12 = @ppd_objc_import
+    | 13 = @ppd_include_next
+    | 14 = @ppd_ms_import
+    | 15 = @ppd_elifdef
+    | 16 = @ppd_elifndef
+    | 18 = @ppd_warning
+    ;
+    ```
+  - `location` (INTEGER): 指令的位置，引用自`location_default`表。
+
+```sql
+CREATE TABLE preprocdirects (
+    id INTEGER PRIMARY KEY,
+    kind INTEGER,
+    location INTEGER,
+    FOREIGN KEY (id) REFERENCES preprocdirect(id),
+    FOREIGN KEY (location) REFERENCES location_default(ref)
+);
+```
+
+
+### 281. **ppd_include**
+```
+@ppd_include = @ppd_plain_include | @ppd_objc_import | @ppd_include_next | @ppd_ms_import; +-+
+```
+
+### 282. **pdd_branch**
+```
+@ppd_branch = @ppd_if | @ppd_ifdef | @ppd_ifndef | @ppd_elif | @ppd_elifdef | @ppd_elifndef; +-+
+```
+
+### 283. **preprocpair**
+
+- **描述**: 表示预处理指令对。
+- **属性**:
+  - `begin` (INTEGER, 主键): 预处理分支的引用，引用自`ppd_branch`表。
+  - `elseelifend` (INTEGER): 预处理指令的引用，引用自`preprocdirect`表。
+
+```sql
+CREATE TABLE preprocpair (
+    begin INTEGER PRIMARY KEY,
+    elseelifend INTEGER,
+    FOREIGN KEY (begin) REFERENCES ppd_branch(ref),
+    FOREIGN KEY (elseelifend) REFERENCES preprocdirect(ref)
+);
+```
+
+### 284. **preproctrue**
+
+- **描述**: 表示预处理真分支。
+- **属性**:
+  - `branch` (INTEGER, 主键): 预处理分支的引用，引用自`ppd_branch`表。
+
+```sql
+CREATE TABLE preproctrue (
+    branch INTEGER PRIMARY KEY,
+    FOREIGN KEY (branch) REFERENCES ppd_branch(ref)
+);
+```
+
+### 285. **preprocfalse**
+
+- **描述**: 表示预处理假分支。
+- **属性**:
+  - `branch` (INTEGER, 主键): 预处理分支的引用，引用自`ppd_branch`表。
+
+```sql
+CREATE TABLE preprocfalse (
+    branch INTEGER PRIMARY KEY,
+    FOREIGN KEY (branch) REFERENCES ppd_branch(ref)
+);
+```
+
+### 286. **preproctext**
+
+- **描述**: 表示预处理文本。
+- **属性**:
+  - `id` (INTEGER, 主键): 预处理指令的唯一标识符，引用自`preprocdirect`表。
+  - `head` (VARCHAR): 预处理指令的头部。
+  - `body` (VARCHAR): 预处理指令的主体。
+
+```sql
+CREATE TABLE preproctext (
+    id INTEGER PRIMARY KEY,
+    head VARCHAR(255),
+    body VARCHAR(255),
+    FOREIGN KEY (id) REFERENCES preprocdirect(ref)
+);
+```
+
+### 287. **includes**
+
+- **描述**: 表示包含的文件。
+- **属性**:
+  - `id` (INTEGER, 主键): 包含指令的唯一标识符，引用自`ppd_include`表。
+  - `included` (INTEGER): 被包含文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE includes (
+    id INTEGER PRIMARY KEY,
+    included INTEGER,
+    FOREIGN KEY (id) REFERENCES ppd_include(ref),
+    FOREIGN KEY (included) REFERENCES file(ref)
+);
+```
+
+### 288. **link_targets**
+
+- **描述**: 表示链接目标。
+- **属性**:
+  - `id` (INTEGER, 主键): 链接目标的唯一标识符，引用自`link_target`表。
+  - `binary` (INTEGER): 二进制文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE link_targets (
+    id INTEGER PRIMARY KEY,
+    binary INTEGER,
+    FOREIGN KEY (id) REFERENCES link_target(id),
+    FOREIGN KEY (binary) REFERENCES file(ref)
+);
+```
+
+### 289. **link_parent**
+
+- **描述**: 表示链接父级。
+- **属性**:
+  - `element` (INTEGER, 主键): 元素的引用，引用自`element`表。
+  - `link_target` (INTEGER): 链接目标的引用，引用自`link_target`表。
+
+```sql
+CREATE TABLE link_parent (
+    element INTEGER PRIMARY KEY,
+    link_target INTEGER,
+    FOREIGN KEY (element) REFERENCES element(ref),
+    FOREIGN KEY (link_target) REFERENCES link_target(ref)
+);
+```
+
+### 290. **xmlEncoding**
+
+- **描述**: 表示XML文件的编码。
+- **属性**:
+  - `id` (INTEGER, 主键): 文件的唯一标识符，引用自`file`表。
+  - `encoding` (VARCHAR): 编码格式。
+
+```sql
+CREATE TABLE xmlEncoding (
+    id INTEGER PRIMARY KEY,
+    encoding VARCHAR(255),
+    FOREIGN KEY (id) REFERENCES file(ref)
+);
+```
+
+### 291. **xmlDTDs**
+
+- **描述**: 表示XML文档类型定义。
+- **属性**:
+  - `id` (INTEGER, 主键): DTD的唯一标识符。
+  - `root` (VARCHAR): 根元素名称。
+  - `publicId` (VARCHAR): 公共标识符。
+  - `systemId` (VARCHAR): 系统标识符。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlDTDs (
+    id INTEGER PRIMARY KEY,
+    root VARCHAR(255),
+    publicId VARCHAR(255),
+    systemId VARCHAR(255),
+    fileid INTEGER,
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 292. **xmlElements**
+
+- **描述**: 表示XML元素。
+- **属性**:
+  - `id` (INTEGER, 主键): 元素的唯一标识符。
+  - `name` (VARCHAR): 元素名称。
+  - `parentid` (INTEGER): 父元素的引用，引用自`xmlparent`表。
+  - `idx` (INTEGER): 元素索引。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlElements (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(255),
+    parentid INTEGER,
+    idx INTEGER,
+    fileid INTEGER,
+    FOREIGN KEY (parentid) REFERENCES xmlparent(ref),
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 293. **xmlAttrs**
+
+- **描述**: 表示XML属性。
+- **属性**:
+  - `id` (INTEGER, 主键): 属性的唯一标识符。
+  - `elementid` (INTEGER): 关联元素的引用，引用自`xmlelement`表。
+  - `name` (VARCHAR): 属性名称。
+  - `value` (VARCHAR): 属性值。
+  - `idx` (INTEGER): 属性索引。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlAttrs (
+    id INTEGER PRIMARY KEY,
+    elementid INTEGER,
+    name VARCHAR(255),
+    value VARCHAR(255),
+    idx INTEGER,
+    fileid INTEGER,
+    FOREIGN KEY (elementid) REFERENCES xmlelement(ref),
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 294. **xmlNs**
+
+- **描述**: 表示XML命名空间。
+- **属性**:
+  - `id` (INTEGER, 主键): 命名空间的唯一标识符。
+  - `prefixName` (VARCHAR): 前缀名称。
+  - `URI` (VARCHAR): 命名空间URI。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlNs (
+    id INTEGER PRIMARY KEY,
+    prefixName VARCHAR(255),
+    URI VARCHAR(255),
+    fileid INTEGER,
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 295. **xmlHasNs**
+
+- **描述**: 表示XML元素与命名空间的关联。
+- **属性**:
+  - `elementId` (INTEGER, 主键): 元素的引用，引用自`xmlnamespaceable`表。
+  - `nsId` (INTEGER): 命名空间的引用，引用自`xmlnamespace`表。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlHasNs (
+    elementId INTEGER PRIMARY KEY,
+    nsId INTEGER,
+    fileid INTEGER,
+    FOREIGN KEY (elementId) REFERENCES xmlnamespaceable(ref),
+    FOREIGN KEY (nsId) REFERENCES xmlnamespace(ref),
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 296. **xmlComments**
+
+- **描述**: 表示XML注释。
+- **属性**:
+  - `id` (INTEGER, 主键): 评论的唯一标识符。
+  - `text` (VARCHAR): 评论内容。
+  - `parentid` (INTEGER): 父元素的引用，引用自`xmlparent`表。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlComments (
+    id INTEGER PRIMARY KEY,
+    text VARCHAR(255),
+    parentid INTEGER,
+    fileid INTEGER,
+    FOREIGN KEY (parentid) REFERENCES xmlparent(ref),
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 297. **xmlChars**
+
+- **描述**: 表示XML字符数据。
+- **属性**:
+  - `id` (INTEGER, 主键): 字符数据的唯一标识符。
+  - `text` (VARCHAR): 字符数据内容。
+  - `parentid` (INTEGER): 父元素的引用，引用自`xmlparent`表。
+  - `idx` (INTEGER): 字符数据索引。
+  - `isCDATA` (INTEGER): 是否为CDATA。
+  - `fileid` (INTEGER): 关联文件的引用，引用自`file`表。
+
+```sql
+CREATE TABLE xmlChars (
+    id INTEGER PRIMARY KEY,
+    text VARCHAR(255),
+    parentid INTEGER,
+    idx INTEGER,
+    isCDATA INTEGER,
+    fileid INTEGER,
+    FOREIGN KEY (parentid) REFERENCES xmlparent(ref),
+    FOREIGN KEY (fileid) REFERENCES file(ref)
+);
+```
+
+### 298. **xmlparent**
+```
+@xmlparent = @file | @xmlelement; +-+
+```
+
+### 299. **xmlnamespaceable**
+```
+@xmlnamespaceable = @xmlelement | @xmlattribute; +-+
+```
+
+### 300. **xmllocations**
+
+- **描述**: 表示XML元素的位置信息。
+- **属性**:
+  - `xmlElement` (INTEGER, 主键): XML元素唯一标识符，引用自`xmllocatable`表。
+  - `location` (INTEGER, 主键): 位置唯一标识符，引用自`location_default`表。
+
+```sql
+CREATE TABLE xmllocations (
+    xmlElement INTEGER,
+    location INTEGER,
+    PRIMARY KEY (xmlElement, location),
+    FOREIGN KEY (xmlElement) REFERENCES xmllocatable(ref),
+    FOREIGN KEY (location) REFERENCES location_default(ref)
+);
+```
+
+### 301. **xmllocatable**
+```
+@xmllocatable = @xmlcharacters +-+
+              | @xmlelement
+              | @xmlcomment
+              | @xmlattribute
+              | @xmldtd
+              | @file
+              | @xmlnamespace;
+```
