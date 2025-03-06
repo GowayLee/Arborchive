@@ -55,6 +55,7 @@ bool Logger::loadConfig(const LoggerConfig &config) {
 
 void Logger::stop() {
   if (running_) {
+    LOG_INFO << "Stopping logger worker thread" << std::endl;
     running_ = false;
     queue_.stop(); // 通知队列终止
 
@@ -79,7 +80,8 @@ void Logger::stop() {
 
     if (log_file_.is_open())
       log_file_.close();
-  }
+  } else
+    LOG_WARNING << "Try to stop already stopped logger worker thread" << std::endl;
 }
 
 void Logger::log(LogMessage &&msg) {
