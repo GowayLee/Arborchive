@@ -1416,7 +1416,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 83. **vairable**
+### 83. **variable**
 ```
 @variable = @localscopevariable | @globalvariable | @membervariable; +-+
 ```
