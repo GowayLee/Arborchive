@@ -322,21 +322,16 @@ CREATE TABLE compilation_time (
   - `id` (INTEGER, 主键): 位置的ID。
   - `associated_id` (INTEGER, 外键): 子表id
   - `type` (INTEGER): 子表的类型
-    ```
-    case location.type:
-      1 = @location_stmt
-    | 2 = @location_expr
-    | 3 = @location_default
-    ;
-    ```
+    - 1: @location_stmt
+    - 2: @location_expr
+    - 3: @location_default
 - **示例**:
 
   ```sql
-  CREATE TABLE locations_default (
+  CREATE TABLE locations (
       id INTEGER PRIMARY KEY,
       associated_id INTEGER,
-      type TEXT,
-      CHECK (type IN ('locations_default', 'locations_stmt', 'locations_expr'))
+      type INTEGER,
   );
   ```
 
@@ -421,14 +416,18 @@ CREATE TABLE compilation_time (
 - **属性**:
   - `id` (INTEGER, 主键): 主键
   - `associated_id` (INTEGER, 外键): 元素的ID。
-  - `type` (TEXT): 元素的类型。
+  - `type` (INTEGER): 元素的类型。
+    - 1: @file
+    - 2: @function
+    - 3: @variable
+    - 4: @enumconstant
+    - 5: @xmllocatable
 - **示例**:
   ```sql
   CREATE TABLE sourceline (
       id INTEGER PRIMARY KEY,
       associated_id INTEGER,
-      type TEXT,
-      CHECK (type IN ('sourceline', 'file', 'function', 'variable', 'enumconstant', 'xmllocatable'))
+      type INTEGER,
   )
   ```
 
@@ -1425,7 +1424,7 @@ CREATE TABLE compilation_time (
 - **属性**:
 
   - `id` (INTEGER PRIMARY KEY): 主键
-  - `associate_id` (INTEGER): 关联的变量ID，用于标识变量的关联关系
+  - `associate_id` (INTEGER): 子表中的id
   - `type` (INTEGER): 子表的类型
     - 1: @loacalscopevariable
     - 2: @globalvariable
@@ -1455,7 +1454,7 @@ CREATE TABLE compilation_time (
 
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE localscopevariable (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER
@@ -1887,12 +1886,12 @@ CREATE TABLE compilation_time (
   - `id` (INTEGER): 主键
   - `associate_id` (INTEGER): 关联的变量ID
   - `type` (INTEGER): 类型
-    - 1: @localscopevariable
-    - 2: @parameter
+    - 1: @usertype
+    - 2: @decltype
 
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE user_or_decltype (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2127,7 +2126,7 @@ CREATE TABLE compilation_time (
     - 2: @concept_id
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE concept (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2607,7 +2606,7 @@ CREATE TABLE compilation_time (
     - 6: @decltype
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE type (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2660,7 +2659,7 @@ CREATE TABLE compilation_time (
     - 3: @namespace
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE enclosingfunction_child (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2783,7 +2782,7 @@ CREATE TABLE compilation_time (
     - 1: @usertype
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE declaredtype (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2813,7 +2812,7 @@ CREATE TABLE compilation_time (
     - 6: @concept_template
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE declaration (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2838,7 +2837,7 @@ CREATE TABLE compilation_time (
     - 4: @enumconstant
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE memeber (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2872,7 +2871,7 @@ CREATE TABLE compilation_time (
     - 8: @attribute_arg
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE locatable (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2892,7 +2891,7 @@ CREATE TABLE compilation_time (
     - 2: @usertype
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE namedscope (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2952,7 +2951,7 @@ CREATE TABLE compilation_time (
     - 21: @lambdacapture;
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE element (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -2971,7 +2970,7 @@ CREATE TABLE compilation_time (
     - 1: @element
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE exprparent (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
@@ -3112,7 +3111,7 @@ CREATE TABLE compilation_time (
     - 2: @namespace
 - **示例**:
   ```sql
-  CREATE TBALE variable (
+  CREATE TBALE namespacembr (
     id INTEGER PRIMARY KEY,
     associate_id INTEGER,
     type INTEGER,
