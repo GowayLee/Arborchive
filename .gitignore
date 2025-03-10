@@ -39,3 +39,4 @@ build/*
 
 # Project related
 ast.db
+.aider*
