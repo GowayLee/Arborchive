@@ -1,7 +1,9 @@
 #include "db/worker.h"
+#include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "util/logger/macros.h"
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 
 DatabaseWorker::DatabaseWorker(
@@ -15,16 +17,29 @@ DatabaseWorker::DatabaseWorker(
   if (!dbDir.empty() && !std::filesystem::exists(dbDir))
     std::filesystem::create_directories(dbDir);
 
+  // 检查数据库文件是否存在
+  if (!std::filesystem::exists(dbFilePath)) {
+    LOG_INFO << "Database file does not exist, creating new database: " << config.path << std::endl;
+  }
+
   if (sqlite3_open(config.path.c_str(), &db_) != SQLITE_OK) {
     LOG_ERROR << "Failed to open database: " << config.path << std::endl;
     throw std::runtime_error("Failed to open database");
-  } else
-    LOG_INFO << "Database opened successfully: " << config.path << std::endl;
+  } else {
+    if (std::filesystem::exists(dbFilePath)) {
+      LOG_INFO << "Database opened successfully: " << config.path << std::endl;
+    } else {
+      LOG_INFO << "New database created successfully: " << config.path << std::endl;
+    }
+  }
 
   configureDatabase(config);
+
+  // Create data tables
+  initializeDatabase();
 }
 
-void DatabaseWorker::configureDatabase(const DatabaseConfig &config) {
+void DatabaseWorker::configureDatabase(const DatabaseConfig &config) const {
   std::string cache_size_pragma =
       "PRAGMA cache_size=-" + std::to_string(config.cache_size_mb * 1024);
   LOG_DEBUG << "Setting cache size: " << cache_size_pragma << std::endl;
@@ -38,6 +53,38 @@ void DatabaseWorker::configureDatabase(const DatabaseConfig &config) {
   std::string synchronous_pragma = "PRAGMA synchronous=" + config.synchronous;
   LOG_DEBUG << "Setting synchronous mode: " << synchronous_pragma << std::endl;
   sqlite3_exec(db_, synchronous_pragma.c_str(), nullptr, nullptr, nullptr);
+}
+
+bool DatabaseWorker::initializeDatabase() const {
+  LOG_DEBUG << "Initializing database" << std::endl;
+
+  const std::vector<std::pair<std::string, TableCreationFunc>>
+      &tableCreationFuncs = TableRegistry::instance().getTables();
+
+  LOG_DEBUG << "Table creation function number: " << tableCreationFuncs.size()
+            << std::endl;
+
+  if (tableCreationFuncs.empty()) {
+    LOG_ERROR << "No table creation functions registered!" << std::endl;
+  }
+
+  char *errMsg = nullptr;
+
+  for (const auto &[tableName, func] : tableCreationFuncs) {
+    LOG_DEBUG << "Creating table: " << tableName << std::endl;
+
+    std::string sql = func();
+    int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg);
+
+    if (rc != SQLITE_OK) {
+      LOG_ERROR << "Error in creating table " << tableName << ": " << errMsg
+                << std::endl;
+      sqlite3_free(errMsg);
+      sqlite3_close(db_);
+      return false;
+    }
+  }
+  return true;
 }
 
 void DatabaseWorker::start() {

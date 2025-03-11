@@ -36,7 +36,7 @@
 .zed/*
 build/*
 .clangd
+.aider*
 
 # Project related
-ast.db
-.aider*
+ast.db*

@@ -16,7 +16,8 @@ private:
 
   void run();
   void processBatch(std::vector<std::unique_ptr<SQLModel>> &batch);
-  void configureDatabase(const DatabaseConfig &config);
+  void configureDatabase(const DatabaseConfig &config) const;
+  bool initializeDatabase() const;
 
 public:
   DatabaseWorker(ThreadSafeQueue<std::unique_ptr<SQLModel>> &queue,

@@ -13,6 +13,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.cc \
                   $(SRC_DIR)/interface/*.cc \
                   $(SRC_DIR)/util/*.cc \
                   $(SRC_DIR)/db/*.cc \
+                  $(SRC_DIR)/db/table_defines/*.cc \
                   $(SRC_DIR)/core/*.cc \
                   $(SRC_DIR)/core/processor/*.cc \
                   $(SRC_DIR)/model/*/*.cc)
