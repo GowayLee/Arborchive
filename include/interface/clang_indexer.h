@@ -17,14 +17,16 @@ public:
   }
 
   bool loadConfig(const Configuration &config);
-
   bool init();
 
   // 获取初始化后的CXIndex
   CXIndex getIndex() const;
   const std::string &getSourcePath() const;
-  const char* const* getCommandLineArgs() const;
+  const char *const *getCommandLineArgs() const;
   size_t getCommandLineArgsCount() const;
+
+  // 新增: 创建翻译单元
+  CXTranslationUnit createTranslationUnit(const std::string &source_path);
 
 private:
   ClangIndexer();
@@ -37,13 +39,10 @@ private:
   std::vector<std::string> flags;
 
   std::vector<std::string> args;
-  // Since clang_parseTranslationUnit() requires a const char* array
-  // We need to convert the args vector to a const char* array
-  std::vector<const char*> c_args;
+  std::vector<const char *> c_args;
 
   CXIndex index;
 
-  // 将配置转换为TransilationUnit构造函数的参数
   std::vector<std::string> convertToCommandLineArgs() const;
 };
 

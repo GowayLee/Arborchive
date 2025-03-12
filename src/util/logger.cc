@@ -48,6 +48,7 @@ bool Logger::loadConfig(const LoggerConfig &config) {
            << INDENT_LEFT
            << "Log level: " << levelToString(log_level_threshold_) << "\n"
            << INDENT_LEFT << "Batch size: " << batch_size_ << "\n"
+           << INDENT_LEFT << "Log to console: " << (is_to_console_ ? "Yes" : "No") << "\n"
            << INDENT_LEFT << "Log file: " << (is_to_file_ ? config.file : "N/A")
            << std::endl;
   return true;

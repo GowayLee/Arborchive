@@ -22,6 +22,12 @@ public:
   static DatabaseManager &getInstance();
   bool loadConfig(const DatabaseConfig &config);
   void pushModel(std::unique_ptr<SQLModel> model);
+
+  // 新增: 立即执行SQL的接口
+  bool executeImmediate(const std::string &sql);
+  // 新增: 获取最后插入ID的功能
+  int64_t getLastInsertId();
+
   void start();
   void stop();
 };
