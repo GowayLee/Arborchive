@@ -36,7 +36,12 @@ DatabaseWorker::DatabaseWorker(
   configureDatabase(config);
 
   // Create data tables
-  initializeDatabase();
+  if (initializeDatabase())
+    LOG_INFO << "Database initialized successfully" << std::endl;
+  else {
+    LOG_ERROR << "Failed to initialize database" << std::endl;
+    throw std::runtime_error("Failed to initialize database");
+  }
 }
 
 void DatabaseWorker::configureDatabase(const DatabaseConfig &config) const {
@@ -65,7 +70,7 @@ bool DatabaseWorker::initializeDatabase() const {
             << std::endl;
 
   if (tableCreationFuncs.empty()) {
-    LOG_ERROR << "No table creation functions registered!" << std::endl;
+    LOG_WARNING << "No table creation functions registered!" << std::endl;
   }
 
   char *errMsg = nullptr;

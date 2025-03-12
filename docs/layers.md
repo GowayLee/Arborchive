@@ -17,42 +17,31 @@ CodeQL数据库的表结构设计反映了C/C++代码的各个方面，从最基
 
 **第一阶段：核心基础 (Core Essentials)**
 
-以下是第一阶段应该包含的数据表，这是构建任何C/C++程序分析的基础。
-
-输出格式：`你的输出中的顺序序号 | 原序号. 表名 (中文表名)`
 
 ```
-1 | 4. compilation_compiling_files (编译文件)
-2 | 5. compilation_time (编译时间)
-3 | 6. diagnostic_for (诊断信息)
-4 | 7. compilation_finished (编译完成)
-5 | 8. externalData (外部数据)
-6 | 9. sourceLocationPrefix (源位置前缀)
-7 | 17. @location (位置)
-8 | 18. locations_default (默认位置)
-9 | 21. @sourceline (源行)
-10 | 22. numlines (行数)
-11 | 23. diagnostics (诊断信息)
-12 | 24. files (文件)
-13 | 25. folders (文件夹)
-14 | 161. comments (注释)
-15 | 162. commentbinding (注释绑定)
+1. compilations: 编译信息。编译单元及其配置。
+2. compilation_args: 编译参数。传递给编译器的命令行参数。
+3. compilation_build_mode: 编译模式(none/manual/auto)?
+5. compilation_time: 编译时间。
+7. compilation_finished: 编译完成。(CPU Seconds?)
+8. externalData: 记录在快照创建期间从CSV文件加载的外部数据。
+9. sourceLocationPrefix: 源码位置前缀
+16. extractor_version: 提取器版本。
+24. files: 文件。记录所有被分析的源文件和头文件。
+25. folders: 文件夹。记录源文件和头文件所在的文件夹。
 ```
 
-**第一阶段包含的数据表说明**
-
-1.  **compilation_compiling_files (编译文件):** 记录正在编译的文件。
-2.  **compilation_time (编译时间):** 记录编译时间。
-3.  **diagnostic_for (诊断信息):** 记录诊断信息与哪个实体相关。
-4.  **compilation_finished (编译完成):** 记录编译是否完成。
-5.  **externalData (外部数据):** 存储与外部数据的关联。
-6.  **sourceLocationPrefix (源位置前缀):** 存储源文件路径的前缀。
-7.  **@location (位置):** 表示代码中的位置。
-8.  **locations_default (默认位置):** 存储默认的位置信息。
-9.  **@sourceline (源行):** 表示代码所在的行。
-10. **numlines (行数):** 存储代码行数。
-11. **diagnostics (诊断信息):** 存储编译器的诊断信息（错误、警告等）。
-12. **files (文件):** 表示源文件。
-13. **folders (文件夹):** 表示文件所在的目录。
-14. **comments (注释):** 表示代码中的注释。
-15. **commentbinding (注释绑定):** 将注释绑定到代码元素。
+```
+281. preprocdirects: 预处理指令.
+288. includes: 记录文件之间的 #include 关系。
+289. link_targets: 链接目标。记录链接的二进制文件(file表)
+290. link_parent: 链接父级。
+291. xmlEncoding: XML 编码。记录XML文件的编码方式。
+292. xmlDTDs: XML DTDs。记录XML文件的DTD信息。
+293. xmlElements: XML 元素。记录XML文件的元素信息。
+294. xmlAttrs: XML 属性。记录XML文件的属性信息。
+295. xmlNs: XML 命名空间。记录XML文件的命名空间信息。
+296. xmlHasNs: XML 有命名空间。记录XML文件是否存在命名空间。
+297. xmlComments: XML 注释。记录XML文件中的注释信息。
+298. xmlChars: XML 字符。记录XML文件中的字符数据。
+```
