@@ -22,6 +22,29 @@ $ make help # 查看帮助信息
 $ ./build/demo <Target C/CPP File> # 运行
 ```
 
+### Makefile Commands
+The Makefile provides several useful commands for building and running the project:
+
+```bash
+# Build the project with default settings
+$ make
+
+# Build with debug flags enabled
+$ make debug
+
+# Build with release optimizations
+$ make release
+
+# Build and run the demo with test file
+$ make run
+
+# Clean up all build artifacts
+$ make clean
+
+# Show available make commands
+$ make help
+```
+
 ### Example
 使用 `./tests/slight.cc` 作为目标文件进行测试
 ```bash
