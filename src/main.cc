@@ -42,8 +42,11 @@ int main(int argc, char *argv[]) {
       return 1;
 
     // 初始化数据库连接
-    auto &dbManager =
-        DatabaseManager::getInstance(configLoader.getConfig().database);
+    auto &dbManager = DatabaseManager::getInstance();
+    if (!dbManager.loadConfig(configLoader.getConfig().database)) {
+      LOG_ERROR << "Failed to load database config" << std::endl;
+      return 1;
+    }
     dbManager.start();
 
     // Start parsing process

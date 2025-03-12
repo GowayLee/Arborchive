@@ -12,14 +12,15 @@ private:
   ThreadSafeQueue<std::unique_ptr<SQLModel>> queue_;
   std::unique_ptr<DatabaseWorker> worker_;
 
-  DatabaseManager(const DatabaseConfig &config);
+  DatabaseManager();
   ~DatabaseManager() = default;
 
   DatabaseManager(const DatabaseManager &) = delete;
   DatabaseManager &operator=(const DatabaseManager &) = delete;
 
 public:
-  static DatabaseManager &getInstance(const DatabaseConfig &config);
+  static DatabaseManager &getInstance();
+  bool loadConfig(const DatabaseConfig &config);
   void pushModel(std::unique_ptr<SQLModel> model);
   void start();
   void stop();

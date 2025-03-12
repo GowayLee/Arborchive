@@ -66,4 +66,7 @@ void ConfigLoader::mergeFromCli(const CLArgs &args) {
   config.logger.is_to_console = !args.quiet;
   LOG_DEBUG << "merged is_to_console: " << config.logger.is_to_console
             << std::endl;
+  config.compilation.working_directory = args.working_directory;
+  LOG_DEBUG << "merged working_directory: " << config.compilation.working_directory
+            << std::endl;
 }

@@ -19,6 +19,8 @@ defines = [         # 预定义宏
 
 cxx_standard = "c++17" # C++标准版本
 
+working_directory = "" # 当前工作目录，留空则自动获取
+
 flags = [              # 编译器标志
     "-fexceptions",
     "-Wno-deprecated",

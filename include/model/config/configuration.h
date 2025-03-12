@@ -17,6 +17,7 @@ struct CompilationConfig {
   std::vector<std::string> defines;
   std::string cxx_standard;
   std::vector<std::string> flags;
+  std::string working_directory;
 };
 
 // 数据库相关配置

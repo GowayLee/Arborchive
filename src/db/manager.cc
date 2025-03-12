@@ -1,11 +1,15 @@
 #include "db/manager.h"
 
-DatabaseManager::DatabaseManager(const DatabaseConfig &config)
-    : worker_(std::make_unique<DatabaseWorker>(queue_, config)) {}
+DatabaseManager::DatabaseManager() {}
 
-DatabaseManager &DatabaseManager::getInstance(const DatabaseConfig &config) {
-  static DatabaseManager instance(config);
+DatabaseManager &DatabaseManager::getInstance() {
+  static DatabaseManager instance;
   return instance;
+}
+
+bool DatabaseManager::loadConfig(const DatabaseConfig &config) {
+  worker_ = std::make_unique<DatabaseWorker>(queue_, config);
+  return true;
 }
 
 void DatabaseManager::pushModel(std::unique_ptr<SQLModel> model) {

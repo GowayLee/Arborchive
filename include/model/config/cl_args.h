@@ -10,6 +10,7 @@ struct CLArgs {
   bool quiet{false};
   bool show_help{false};
   bool show_version{false};
+  std::string working_directory;
 
   bool isValid() const {
     return !config_path.empty() && !source_path.empty() && !output_path.empty();

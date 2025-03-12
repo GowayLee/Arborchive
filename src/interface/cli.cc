@@ -1,12 +1,26 @@
 #include "interface/cli.h"
 #include "util/logger/macros.h"
 #include <algorithm>
+#include <codecvt>  // For std::codecvt_utf8
+#include <direct.h> // For _wgetcwd on Windows
 #include <iomanip>
 #include <iostream>
+#include <locale> // For std::wstring_convert
+
 
 void printBanner();
 
 void Cli::init(int argc, char *argv[]) {
+  // 获取当前工作目录
+  wchar_t cwd[PATH_MAX];
+  if (_wgetcwd(cwd, PATH_MAX) != nullptr) {
+    // 将宽字符转换为UTF-8字符串
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    options.working_directory = converter.to_bytes(cwd);
+  } else {
+    throw std::runtime_error("Failed to get current working directory");
+  }
+
   for (int i = 1; i < argc; ++i)
     args.push_back(argv[i]);
 
