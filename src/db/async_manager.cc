@@ -71,6 +71,23 @@ void AsyncDatabaseManager::stop() {
 }
 
 void AsyncDatabaseManager::clearDatabase() {
+  // {
+  //   // 清除sqlite_sequence表的内容（如果存在）
+  //   char *errMsg = nullptr;
+  //   int rc = sqlite3_exec(db_,
+  //                         "SELECT name FROM sqlite_master WHERE type='table'
+  //                         " "AND name='sqlite_sequence'", nullptr, nullptr,
+  //                         &errMsg);
+
+  //   if (rc == SQLITE_OK) {
+  //     if (!executeImmediate("DELETE FROM sqlite_sequence")) {
+  //       throw std::runtime_error("Failed to clear sqlite_sequence");
+  //     }
+  //   } else if (errMsg) {
+  //     sqlite3_free(errMsg);
+  //   }
+  // }
+
   // 清除所有用户表
   std::vector<std::string> tables;
   char *errMsg = nullptr;
@@ -99,10 +116,6 @@ void AsyncDatabaseManager::clearDatabase() {
     }
   }
 
-  // 清除sqlite_sequence表的内容
-  if (!executeImmediate("DELETE FROM sqlite_sequence")) {
-    throw std::runtime_error("Failed to clear sqlite_sequence");
-  }
   LOG_INFO << "Existing database cleared successfully: " << config_.path
            << std::endl;
 }
@@ -123,7 +136,7 @@ void AsyncDatabaseManager::workerLoop() {
     while (!queue_.empty()) {
       batch.push_back(std::move(queue_.front()));
       queue_.pop();
-      
+
       // 达到batch_size立即处理
       if (batch.size() >= config_.batch_size) {
         lock.unlock();
