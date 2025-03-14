@@ -65,10 +65,6 @@ DatabaseWorker::DatabaseWorker(
   configureDatabase(config);
   initializeDatabase();
 }
-DatabaseWorker::~DatabaseWorker() {
-  if (running_.load())
-    stop();
-}
 
 bool DatabaseWorker::executeImmediate(const std::string &sql) {
   char *errMsg = nullptr;
@@ -135,48 +131,29 @@ bool DatabaseWorker::initializeDatabase() const {
 
 void DatabaseWorker::start() {
   LOG_INFO << "Starting database worker thread" << std::endl;
-  running_.store(true);
   worker_thread_ = std::thread(&DatabaseWorker::run, this);
 }
 
 void DatabaseWorker::stop() {
   LOG_INFO << "Stopping database worker thread" << std::endl;
-  // 先设置停止标志并停止队列
-  running_.store(false);
   queue_.stop();
+  if (worker_thread_.joinable())
+    worker_thread_.join();
 
-  // 等待工作线程处理完剩余数据
-  if (worker_thread_.joinable()) {
-    if (worker_thread_.get_id() == std::thread::id()) {
-      std::cerr << "Error: worker_thread_ ID is invalid!" << std::endl;
-      return;
-      worker_thread_.join();
-    }
-  }
-
-  // 关闭数据库连接
-  if (db_) {
-    LOG_INFO << "Closing database connection..." << std::endl;
-
-    // 关闭数据库连接
-    int rc = sqlite3_close(db_);
-    if (rc != SQLITE_OK) {
-      LOG_ERROR << "Failed to close database connection: "
-                << sqlite3_errmsg(db_) << std::endl;
-    } else {
-      LOG_INFO << "Database connection closed successfully" << std::endl;
-    }
-    db_ = nullptr;
-  }
+  sqlite3_close(db_);
 }
 
 void DatabaseWorker::run() {
   std::vector<std::unique_ptr<SQLModel>> batch;
-  while (running_.load() || !queue_.empty()) {
-    batch.push_back(std::move(queue_.pop()));
-    if (batch.size() >= static_cast<std::size_t>(batch_size_)) {
-      processBatch(batch);
-      batch.clear();
+  while (!queue_.isStopped() || !queue_.empty()) {
+    try {
+      batch.push_back(std::move(queue_.pop()));
+      if (batch.size() >= static_cast<std::size_t>(batch_size_)) {
+        processBatch(batch);
+        batch.clear();
+      }
+    } catch (const std::runtime_error &e) {
+      break;
     }
   }
   if (!batch.empty())
@@ -193,37 +170,22 @@ void DatabaseWorker::processBatch(
     return;
   }
 
-  try {
-    for (const auto &model : batch) {
-      if (!model) {
-        std::cout << "Null model in batch, skipping" << std::endl;
-        continue;
-      }
-      std::string sql = model->serialize();
-      LOG_DEBUG << "Executing SQL: " << sql << std::endl;
-      rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg);
-      if (rc != SQLITE_OK) {
-        LOG_ERROR << "SQL execution failed: " << errMsg << std::endl;
-        sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
-        sqlite3_free(errMsg);
-        throw std::runtime_error("SQL execution failed");
-      }
-    }
-
-    rc = sqlite3_exec(db_, "COMMIT", nullptr, nullptr, &errMsg);
+  for (const auto &model : batch) {
+    std::string sql = model->serialize();
+    LOG_DEBUG << "Executing SQL: " << sql << std::endl;
+    rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg);
     if (rc != SQLITE_OK) {
-      LOG_ERROR << "Failed to commit transaction: " << errMsg << std::endl;
+      LOG_ERROR << "SQL execution failed: " << errMsg << std::endl;
+      sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
       sqlite3_free(errMsg);
-      throw std::runtime_error("Failed to commit transaction");
-    } else {
-      std::cout << "Transaction committed successfully" << std::endl;
+      return;
     }
-  } catch (const std::exception &e) {
-    LOG_ERROR << "Error processing batch: " << e.what() << std::endl;
-    batch.clear();
-    LOG_DEBUG << "Batch cleared after error" << std::endl;
-    throw;
   }
-  batch.clear();
-  std::cout << "Batch cleared successfully" << std::endl;
+
+  rc = sqlite3_exec(db_, "COMMIT", nullptr, nullptr, &errMsg);
+  if (rc != SQLITE_OK) {
+    LOG_ERROR << "Failed to commit transaction: " << errMsg << std::endl;
+    sqlite3_free(errMsg);
+  } else
+    LOG_INFO << "Transaction committed successfully" << std::endl;
 }

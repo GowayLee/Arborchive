@@ -34,8 +34,10 @@ public:
   }
 
   void stop() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    stopped_ = true;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      stopped_ = true;
+    }
     cond_.notify_all(); // 唤醒所有等待线程
   }
 
