@@ -11,12 +11,15 @@ ClangIndexer::~ClangIndexer() {
 }
 
 bool ClangIndexer::loadConfig(const Configuration &config) {
+  // 根据配置文件设置相应的成员变量
   sourcePath = config.general.source_path;
   includePaths = config.compilation.include_paths;
   defines = config.compilation.defines;
   cxxStandard = config.compilation.cxx_standard;
   flags = config.compilation.flags;
   LOG_INFO << "ClangIndexer configuration loaded" << std::endl;
+
+  // initialize
   return init();
 }
 
@@ -37,42 +40,23 @@ bool ClangIndexer::init() {
   }
 
   args = convertToCommandLineArgs();
+
+  // Convert args to C-style strings,
   for (const auto &arg : args)
     c_args.push_back(arg.c_str());
+
+  // CXTranslationUnit tu = clang_parseTranslationUnit(
+  //     index, sourcePath.c_str(), c_args.data(), c_args.size(), nullptr, 0,
+  //     CXTranslationUnit_None);
+
+  // Display converted args in log
+  for (const auto &arg : args)
+    LOG_DEBUG << "Arg: " << arg << std::endl;
 
   return true;
 }
 
 CXIndex ClangIndexer::getIndex() const { return index; }
-
-CXTranslationUnit
-ClangIndexer::createTranslationUnit(const std::string &source_path) {
-  CXTranslationUnit tu = clang_parseTranslationUnit(
-      index, source_path.c_str(), c_args.data(),
-      static_cast<int>(c_args.size()), nullptr, 0, CXTranslationUnit_None);
-
-  if (!tu) {
-    LOG_ERROR << "Failed to create translation unit for: " << source_path
-              << std::endl;
-    return nullptr;
-  }
-
-  unsigned num_diags = clang_getNumDiagnostics(tu);
-  if (num_diags > 0) {
-    LOG_WARNING << "Translation unit has " << num_diags << " diagnostics"
-                << std::endl;
-    for (unsigned i = 0; i < num_diags; ++i) {
-      CXDiagnostic diag = clang_getDiagnostic(tu, i);
-      CXString diag_str =
-          clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
-      LOG_WARNING << clang_getCString(diag_str) << std::endl;
-      clang_disposeString(diag_str);
-      clang_disposeDiagnostic(diag);
-    }
-  }
-
-  return tu;
-}
 
 std::vector<std::string> ClangIndexer::convertToCommandLineArgs() const {
   std::vector<std::string> args;

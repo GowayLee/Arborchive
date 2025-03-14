@@ -59,7 +59,7 @@ bool ConfigLoader::loadFromFile(const std::string &config_file) {
 
 void ConfigLoader::mergeFromCli(const CLArgs &args) {
   config.general.source_path = args.source_path;
-  LOG_DEBUG << "merged source_path: " << config.general.source_path << std::endl;
+  LOG_INFO << "merged source_path: " << config.general.source_path << std::endl;
   config.general.output_path = args.output_path;
   LOG_DEBUG << "merged output_path: " << config.general.output_path
             << std::endl;

@@ -1,7 +1,7 @@
 #include "db/worker.h"
+#include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "util/logger/macros.h"
-#include "db/table_defines.h"
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -19,8 +19,7 @@ DatabaseWorker::DatabaseWorker(
 
   // 检查数据库文件是否存在
   if (!std::filesystem::exists(dbFilePath)) {
-    LOG_INFO << "Database file does not exist, creating new database: "
-             << config.path << std::endl;
+    LOG_INFO << "Database file does not exist, creating new database: " << config.path << std::endl;
   }
 
   if (sqlite3_open(config.path.c_str(), &db_) != SQLITE_OK) {
@@ -30,28 +29,19 @@ DatabaseWorker::DatabaseWorker(
     if (std::filesystem::exists(dbFilePath)) {
       LOG_INFO << "Database opened successfully: " << config.path << std::endl;
     } else {
-      LOG_INFO << "New database created successfully: " << config.path
-               << std::endl;
+      LOG_INFO << "New database created successfully: " << config.path << std::endl;
     }
   }
 
   configureDatabase(config);
-  initializeDatabase();
-}
 
-bool DatabaseWorker::executeImmediate(const std::string &sql) {
-  char *errMsg = nullptr;
-  int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg);
-  if (rc != SQLITE_OK) {
-    LOG_ERROR << "Immediate execution failed: " << errMsg << std::endl;
-    sqlite3_free(errMsg);
-    return false;
+  // Create data tables
+  if (initializeDatabase())
+    LOG_INFO << "Database initialized successfully" << std::endl;
+  else {
+    LOG_ERROR << "Failed to initialize database" << std::endl;
+    throw std::runtime_error("Failed to initialize database");
   }
-  return true;
-}
-
-int64_t DatabaseWorker::getLastInsertId() {
-  return sqlite3_last_insert_rowid(db_);
 }
 
 void DatabaseWorker::configureDatabase(const DatabaseConfig &config) const {

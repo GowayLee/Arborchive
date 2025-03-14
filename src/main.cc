@@ -30,15 +30,18 @@ int main(int argc, char *argv[]) {
     } else
       LOG_INFO << "Config file: " << clargs.config_path
                << " loaded successfully" << std::endl;
-    configLoader.mergeFromCli(clargs);
+    configLoader.mergeFromCli(clargs); // 从命令行参数加载配置, 覆盖默认配置
 
+    // 加载日志配置
     if (!logger.loadConfig(configLoader.getConfig().logger))
       return 1;
 
+    // 初始化libclang
     auto &clangIndexer = ClangIndexer::getInstance();
     if (!clangIndexer.loadConfig(configLoader.getConfig()))
       return 1;
 
+    // 初始化数据库连接
     auto &dbManager = DatabaseManager::getInstance();
     if (!dbManager.loadConfig(configLoader.getConfig().database)) {
       LOG_ERROR << "Failed to load database config" << std::endl;
@@ -46,10 +49,11 @@ int main(int argc, char *argv[]) {
     }
     dbManager.start();
 
-    // 创建翻译单元并解析
+    // Start parsing process
     Router &router = Router::getInstance();
-    router.processCompilation(configLoader.getConfig());
+    router.parseAST(configLoader.getConfig().general.source_path);
 
+    // Manually stop worker threads
     dbManager.stop();
     logger.stop();
     return 0;
