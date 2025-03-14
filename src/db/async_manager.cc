@@ -113,18 +113,47 @@ void AsyncDatabaseManager::workerLoop() {
 
   while (!stopped_ || !queue_.empty()) {
     std::unique_lock<std::mutex> lock(mutex_);
-    cond_.wait(lock, [this] { return !queue_.empty() || stopped_; });
 
-    while (!queue_.empty() && batch.size() < config_.batch_size) {
+    // 等待新数据或停止信号
+    if (queue_.empty() && !stopped_) {
+      cond_.wait(lock);
+    }
+
+    // 收集批量数据，直到达到batch_size或队列为空
+    while (!queue_.empty()) {
       batch.push_back(std::move(queue_.front()));
       queue_.pop();
+      
+      // 达到batch_size立即处理
+      if (batch.size() >= config_.batch_size) {
+        lock.unlock();
+        processBatch(batch);
+        batch.clear();
+        lock.lock();
+      }
     }
 
     lock.unlock();
+  }
+
+  // 处理停止后剩余的队列数据
+  if (stopped_) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    while (!queue_.empty()) {
+      batch.push_back(std::move(queue_.front()));
+      queue_.pop();
+
+      if (batch.size() >= config_.batch_size) {
+        lock.unlock();
+        processBatch(batch);
+        batch.clear();
+        lock.lock();
+      }
+    }
 
     if (!batch.empty()) {
+      lock.unlock();
       processBatch(batch);
-      batch.clear();
     }
   }
 }
