@@ -4,17 +4,17 @@
 #include "model/config/configuration.h"
 #include "model/sql/sql_model.h"
 #include "util/thread_safe_queue.h"
+#include <atomic>
 #include <memory>
 #include <sqlite3.h>
 #include <thread>
 #include <vector>
 
-
 class DatabaseWorker {
 public:
   DatabaseWorker(ThreadSafeQueue<std::unique_ptr<SQLModel>> &queue,
                  const DatabaseConfig &config);
-  ~DatabaseWorker() = default;
+  ~DatabaseWorker();
 
   void start();
   void stop();
@@ -34,6 +34,7 @@ private:
   sqlite3 *db_;
   std::thread worker_thread_;
   int batch_size_;
+  std::atomic<bool> running_{false};
 };
 
 #endif // _DATABASE_WORKER_H_

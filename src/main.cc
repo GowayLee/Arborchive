@@ -48,10 +48,13 @@ int main(int argc, char *argv[]) {
 
     // 创建翻译单元并解析
     Router &router = Router::getInstance();
-    router.processCompilation(configLoader.getConfig());
+    // router.processCompilation(configLoader.getConfig());
 
     dbManager.stop();
+    std::cout << "main: stop logger" << std::endl;
     logger.stop();
+
+    std::cout << "Done" << std::endl;
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Fatal error: " << e.what() << std::endl;

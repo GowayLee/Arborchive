@@ -1,7 +1,7 @@
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -Iinclude -g
+CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -Iinclude
 LDFLAGS ?= -lclang -lsqlite3
-DEBUG_FLAG ?= -D_DEBUG_
+DEBUG_FLAG ?= -D_DEBUG_ -g -O0
 RELEASE_FLAGS ?= -O2
 
 TARGET = build/demo
