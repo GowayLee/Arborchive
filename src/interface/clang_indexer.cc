@@ -58,6 +58,35 @@ bool ClangIndexer::init() {
 
 CXIndex ClangIndexer::getIndex() const { return index; }
 
+CXTranslationUnit
+ClangIndexer::createTranslationUnit(const std::string &source_path) {
+  CXTranslationUnit tu = clang_parseTranslationUnit(
+      index, source_path.c_str(), c_args.data(),
+      static_cast<int>(c_args.size()), nullptr, 0, CXTranslationUnit_None);
+
+  if (!tu) {
+    LOG_ERROR << "Failed to create translation unit for: " << source_path
+              << std::endl;
+    return nullptr;
+  }
+
+  unsigned num_diags = clang_getNumDiagnostics(tu);
+  if (num_diags > 0) {
+    LOG_WARNING << "Translation unit has " << num_diags << " diagnostics"
+                << std::endl;
+    for (unsigned i = 0; i < num_diags; ++i) {
+      CXDiagnostic diag = clang_getDiagnostic(tu, i);
+      CXString diag_str =
+          clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
+      LOG_WARNING << clang_getCString(diag_str) << std::endl;
+      clang_disposeString(diag_str);
+      clang_disposeDiagnostic(diag);
+    }
+  }
+
+  return tu;
+}
+
 std::vector<std::string> ClangIndexer::convertToCommandLineArgs() const {
   std::vector<std::string> args;
 

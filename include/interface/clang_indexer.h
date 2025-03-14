@@ -23,8 +23,10 @@ public:
   // 获取初始化后的CXIndex
   CXIndex getIndex() const;
   const std::string &getSourcePath() const;
-  const char* const* getCommandLineArgs() const;
+  const char *const *getCommandLineArgs() const;
   size_t getCommandLineArgsCount() const;
+
+  CXTranslationUnit createTranslationUnit(const std::string &source_path);
 
 private:
   ClangIndexer();
@@ -39,7 +41,7 @@ private:
   std::vector<std::string> args;
   // Since clang_parseTranslationUnit() requires a const char* array
   // We need to convert the args vector to a const char* array
-  std::vector<const char*> c_args;
+  std::vector<const char *> c_args;
 
   CXIndex index;
 

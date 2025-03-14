@@ -1,5 +1,5 @@
 #include "core/router.h"
-#include "db/manager.h"
+#include "db/async_manager.h"
 #include "interface/clang_indexer.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
@@ -42,16 +42,13 @@ int main(int argc, char *argv[]) {
       return 1;
 
     // 初始化数据库连接
-    auto &dbManager = DatabaseManager::getInstance();
-    if (!dbManager.loadConfig(configLoader.getConfig().database)) {
-      LOG_ERROR << "Failed to load database config" << std::endl;
-      return 1;
-    }
+    AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
+    dbManager.loadConfig(configLoader.getConfig().database);
     dbManager.start();
 
     // Start parsing process
     Router &router = Router::getInstance();
-    router.parseAST(configLoader.getConfig().general.source_path);
+    router.processCompilation(configLoader.getConfig());
 
     // Manually stop worker threads
     dbManager.stop();

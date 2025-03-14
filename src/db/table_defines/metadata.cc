@@ -2,7 +2,7 @@
 
 std::string createMetaDataTables() {
   return R"(
-    CREATE TABLE IF NOT EXISTS externalData (
+    CREATE TABLE IF NOT EXISTS external_data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path INTEGER,
       column INTEGER,

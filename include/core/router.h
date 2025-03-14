@@ -1,8 +1,7 @@
 #ifndef _ROUTER_H_
 #define _ROUTER_H_
 
-#include "core/processor/base_processor.h"
-#include "interface/clang_indexer.h"
+#include "model/config/configuration.h"
 #include <clang-c/Index.h>
 #include <string>
 
@@ -15,7 +14,9 @@ public:
     static Router instance;
     return instance;
   }
-  void parseAST(const std::string &filename);
+
+  void parseAST(CXTranslationUnit tu);
+  void processCompilation(const Configuration &config);
 
 private:
   ~Router() = default;

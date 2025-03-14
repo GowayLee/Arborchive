@@ -30,7 +30,7 @@ flags = [              # 编译器标志
 # 数据库连接参数
 
 path = "tests/ast.db"
-batch_size = 1000        # 批量写入记录数
+batch_size = 50         # 批量写入记录数
 cache_size_mb = 64       # SQLite缓存大小（MB）
 journal_mode = "WAL"     # 日志模式
 synchronous = "NORMAL"   # 同步模式
