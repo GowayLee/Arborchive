@@ -1,7 +1,7 @@
 #include "db/worker.h"
-#include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "util/logger/macros.h"
+#include "db/table_defines.h"
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -26,40 +26,13 @@ DatabaseWorker::DatabaseWorker(
   if (sqlite3_open(config.path.c_str(), &db_) != SQLITE_OK) {
     LOG_ERROR << "Failed to open database: " << config.path << std::endl;
     throw std::runtime_error("Failed to open database");
-  }
-  if (std::filesystem::exists(dbFilePath)) {
-    LOG_WARNING << "Database already exists: " << config.path
-                << ". All existing data will be cleared!" << std::endl;
-
-    // 清除所有用户表
-    std::vector<std::string> tables;
-    sqlite3_exec(
-        db_,
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE "
-        "'sqlite_%'",
-        [](void *data, int argc, char **argv, char **colName) -> int {
-          auto *tables = static_cast<std::vector<std::string> *>(data);
-          tables->push_back(argv[0]);
-          return 0;
-        },
-        &tables, nullptr);
-
-    for (const auto &table : tables) {
-      std::string dropSql = "DROP TABLE " + table;
-      if (!executeImmediate(dropSql)) {
-        throw std::runtime_error("Failed to clear existing database");
-      }
-    }
-
-    // 清除sqlite_sequence表的内容
-    if (!executeImmediate("DELETE FROM sqlite_sequence")) {
-      throw std::runtime_error("Failed to clear sqlite_sequence");
-    }
-    LOG_INFO << "Existing database cleared successfully: " << config.path
-             << std::endl;
   } else {
-    LOG_INFO << "New database created successfully: " << config.path
-             << std::endl;
+    if (std::filesystem::exists(dbFilePath)) {
+      LOG_INFO << "Database opened successfully: " << config.path << std::endl;
+    } else {
+      LOG_INFO << "New database created successfully: " << config.path
+               << std::endl;
+    }
   }
 
   configureDatabase(config);
