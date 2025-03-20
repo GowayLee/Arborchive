@@ -4,12 +4,11 @@
 #ifdef _WIN32
 #include <direct.h> // For _wgetcwd on Windows
 #else
-#include <unistd.h> // For getcwd on Linux
 #include <limits.h> // For PATH_MAX on Linux
+#include <unistd.h> // For getcwd on Linux
 #endif
 #include <iomanip>
 #include <iostream>
-
 
 void printBanner();
 
@@ -21,12 +20,14 @@ void Cli::init(int argc, char *argv[]) {
     // 将宽字符转换为UTF-8字符串
     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
     options.working_directory = converter.to_bytes(cwd);
+  }
 #else
   char cwd[PATH_MAX];
   if (getcwd(cwd, PATH_MAX) != nullptr) {
     options.working_directory = std::string(cwd);
+  }
 #endif
-  } else {
+  else {
     throw std::runtime_error("Failed to get current working directory");
   }
 
@@ -126,10 +127,14 @@ int Cli::process() {
 }
 
 void printBanner() {
-    std::cout << "         /\\                .\n";
-    std::cout << "     _  / |               /                               /       .-.\n";
-    std::cout << "    (  /  |  .  ).--.    /-.    .-._.   ).--.  .-.       /-.      `-'  )   .-.   .-.\n";
-    std::cout << "     `/.__|_.' /        /   )  (   )   /      (         /   |    /    (   /    ./.-'_\n";
-    std::cout << " .:' /    |   /       .'`--'`-  `-'   /        `---' _.'    | _.(__.   \\_/     (__.'\n";
-    std::cout << "(__.'     `-' \n\n";
+  std::cout << "         /\\                .\n";
+  std::cout << "     _  / |               /                               /    "
+               "   .-.\n";
+  std::cout << "    (  /  |  .  ).--.    /-.    .-._.   ).--.  .-.       /-.   "
+               "   `-'  )   .-.   .-.\n";
+  std::cout << "     `/.__|_.' /        /   )  (   )   /      (         /   |  "
+               "  /    (   /    ./.-'_\n";
+  std::cout << " .:' /    |   /       .'`--'`-  `-'   /        `---' _.'    | "
+               "_.(__.   \\_/     (__.'\n";
+  std::cout << "(__.'     `-' \n\n";
 }
