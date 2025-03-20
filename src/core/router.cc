@@ -12,7 +12,7 @@ void Router::processCompilation(const Configuration &config) {
   // 创建编译记录
   AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
   auto compilation_model =
-      std::make_unique<CompilationModel>(config.general.source_path);
+      std::make_unique<CompilationModel>(config.compilation.working_directory);
   dbManager.executeImmediate(std::move(compilation_model->serialize()));
   int compilation_id = dbManager.getLastInsertId();
 

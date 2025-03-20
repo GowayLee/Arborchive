@@ -25,6 +25,7 @@ void Cli::init(int argc, char *argv[]) {
   char cwd[PATH_MAX];
   if (getcwd(cwd, PATH_MAX) != nullptr) {
     options.working_directory = std::string(cwd);
+    std::cout << options.working_directory << std::endl;
   }
 #endif
   else {

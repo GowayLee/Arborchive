@@ -172,7 +172,6 @@ void AsyncDatabaseManager::workerLoop() {
 }
 
 bool AsyncDatabaseManager::executeImmediate(const std::string &sql) {
-  LOG_DEBUG << "Executing immediate: " << sql << std::endl;
   if (db_ == nullptr) {
     LOG_ERROR << "Databse has not been open: " << config_.path << std::endl;
     return false;
