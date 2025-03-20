@@ -176,6 +176,7 @@ bool AsyncDatabaseManager::executeImmediate(const std::string &sql) {
     LOG_ERROR << "Databse has not been open: " << config_.path << std::endl;
     return false;
   }
+  LOG_DEBUG << "Executing SQL: " << sql << std::endl;
 
   char *errMsg = nullptr;
   int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg);
@@ -184,8 +185,7 @@ bool AsyncDatabaseManager::executeImmediate(const std::string &sql) {
   if (!success) {
     LOG_ERROR << "SQL execution failed: " << errMsg << std::endl;
     sqlite3_free(errMsg);
-  } else
-    LOG_DEBUG << "Executed SQL: " << sql << std::endl;
+  }
 
   return success;
 }
@@ -262,6 +262,7 @@ void AsyncDatabaseManager::processBatch(std::vector<QueueItem> &batch) {
 
   for (const auto &item : batch) {
     std::string sql = item.model->serialize();
+    LOG_DEBUG << "Executing SQL: " << sql << std::endl;
     if (sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg) !=
         SQLITE_OK) {
       LOG_ERROR << "SQL execution failed: " << errMsg << std::endl;
@@ -269,7 +270,6 @@ void AsyncDatabaseManager::processBatch(std::vector<QueueItem> &batch) {
       sqlite3_free(errMsg);
       return;
     }
-    LOG_DEBUG << "Executed SQL: " << sql << std::endl;
   }
 
   if (sqlite3_exec(db_, "COMMIT", nullptr, nullptr, &errMsg) != SQLITE_OK) {
