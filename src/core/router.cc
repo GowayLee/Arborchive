@@ -2,6 +2,7 @@
 #include "core/processor/base_processor.h"
 #include "db/async_manager.h"
 #include "interface/clang_indexer.h"
+#include "model/sql/compilation_finished_model.h"
 #include "model/sql/compilation_model.h"
 #include "model/sql/compilation_time_model.h"
 #include "util/hires_timer.h"
@@ -46,6 +47,15 @@ void Router::processCompilation(const Configuration &config) {
                      extractor_timer.cpu_time());
   create_time_record(CompilationTimeKind::ExtractorElapsed,
                      extractor_timer.elapsed());
+
+  // 记录编译完成信息
+  auto finished_model =
+      std::make_unique<CompilationFinishedModel>(compilation_id);
+  finished_model->setCpuSeconds(frontend_timer.cpu_time() +
+                                extractor_timer.cpu_time());
+  finished_model->setElapsedSeconds(frontend_timer.elapsed() +
+                                    extractor_timer.elapsed());
+  dbManager.pushModel(std::move(finished_model));
 }
 
 void Router::parseAST(CXTranslationUnit tu) {
