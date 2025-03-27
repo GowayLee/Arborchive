@@ -35,9 +35,8 @@ void LocationProcessor::processStatement(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  uint64_t id = clang_hashCursor(cursor);
-  auto model = std::make_unique<LocationStmtModel>(
-      id, 0, start_line, start_column, end_line, end_column);
+  auto model = std::make_unique<LocationStmtModel>(0, start_line, start_column,
+                                                   end_line, end_column);
   db_manager_.pushModel(std::move(model));
 
   LOG_DEBUG << "Recorded statement location: " << start_line << ":"
@@ -57,9 +56,8 @@ void LocationProcessor::processExpression(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  uint64_t id = clang_hashCursor(cursor);
-  auto model = std::make_unique<LocationExprModel>(
-      id, 0, start_line, start_column, end_line, end_column);
+  auto model = std::make_unique<LocationExprModel>(0, start_line, start_column,
+                                                   end_line, end_column);
   db_manager_.pushModel(std::move(model));
 
   LOG_DEBUG << "Recorded expression location: " << start_line << ":"
