@@ -15,6 +15,7 @@ public:
 
   void recordArguments(const std::vector<std::string> &flags);
   void recordTime(CompilationTimeKind kind, double seconds);
+  void recordFile(const std::string &file);
   void finalize(double total_cpu, double total_elapsed);
 
 private:

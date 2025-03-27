@@ -5,6 +5,7 @@
 #include "interface/clang_indexer.h"
 #include "util/hires_timer.h"
 #include "util/logger/macros.h"
+#include <filesystem>
 #include <memory>
 
 void Router::processCompilation(const Configuration &config) {
@@ -14,8 +15,10 @@ void Router::processCompilation(const Configuration &config) {
   // 创建编译记录
   recorder.createCompilation(config.compilation.working_directory);
 
-  // 记录编译参数
+  // 记录编译参数, 文件名
   recorder.recordArguments(config.compilation.flags);
+  recorder.recordFile(
+      std::filesystem::path(config.general.source_path).filename().string());
 
   HighResTimer frontend_timer;
   frontend_timer.start();

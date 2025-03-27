@@ -3,6 +3,8 @@
 #include "model/sql/compilation_finished_model.h"
 #include "model/sql/compilation_model.h"
 #include "model/sql/compilation_time_model.h"
+#include "model/sql/container_model.h"
+#include <memory>
 
 CompilationRecorder::CompilationRecorder(AsyncDatabaseManager &db)
     : db_manager_(db), compilation_id_(-1) {}
@@ -11,7 +13,9 @@ int CompilationRecorder::createCompilation(
     const std::string &working_directory) {
   auto compilation_model =
       std::make_unique<CompilationModel>(working_directory);
-  db_manager_.executeImmediate(std::move(compilation_model->serialize())); // FIXME: Align executeImmediate with pushModel
+  db_manager_.executeImmediate(std::move(
+      compilation_model
+          ->serialize())); // FIXME: Align executeImmediate with pushModel
   compilation_id_ = db_manager_.getLastInsertId();
   return compilation_id_;
 }
@@ -32,6 +36,11 @@ void CompilationRecorder::recordTime(CompilationTimeKind kind, double seconds) {
                                                       time_record_seq_++);
   model->setKind(kind);
   model->setDuration(seconds);
+  db_manager_.pushModel(std::move(model));
+}
+
+void CompilationRecorder::recordFile(const std::string &file) {
+  auto model = std::make_unique<FileModel>(file);
   db_manager_.pushModel(std::move(model));
 }
 
