@@ -4,6 +4,7 @@
 #include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "model/sql/sql_model.h"
+#include "util/thread_safe_queue.h"
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -12,7 +13,6 @@
 #include <sqlite3.h>
 #include <thread>
 
-
 class AsyncDatabaseManager {
 private:
   struct QueueItem {
@@ -20,10 +20,7 @@ private:
     uint64_t sequence_id; // 用于保证顺序
   };
 
-  std::queue<QueueItem> queue_;
-  mutable std::mutex mutex_;
-  std::condition_variable cond_;
-  std::atomic<bool> stopped_{false};
+  ThreadSafeQueue<QueueItem> queue_;
   std::atomic<uint64_t> sequence_counter_{0};
 
   DatabaseConfig config_;
@@ -39,8 +36,8 @@ private:
 
   // 单例模式实现
   AsyncDatabaseManager();
-  AsyncDatabaseManager(const AsyncDatabaseManager&) = delete;
-  AsyncDatabaseManager& operator=(const AsyncDatabaseManager&) = delete;
+  AsyncDatabaseManager(const AsyncDatabaseManager &) = delete;
+  AsyncDatabaseManager &operator=(const AsyncDatabaseManager &) = delete;
 
 public:
   static AsyncDatabaseManager &getInstance();

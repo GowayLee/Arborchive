@@ -17,11 +17,7 @@ AsyncDatabaseManager &AsyncDatabaseManager::getInstance() {
 }
 
 void AsyncDatabaseManager::pushModel(std::unique_ptr<SQLModel> model) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (stopped_)
-    throw std::runtime_error("AsyncDatabaseManager is stopped");
   queue_.push({std::move(model), sequence_counter_++});
-  cond_.notify_one();
 }
 
 void AsyncDatabaseManager::start() {
@@ -61,11 +57,7 @@ void AsyncDatabaseManager::start() {
 }
 
 void AsyncDatabaseManager::stop() {
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    stopped_ = true;
-  }
-  cond_.notify_all();
+  queue_.stop();
   if (worker_thread_.joinable())
     worker_thread_.join();
 }
@@ -97,6 +89,8 @@ void AsyncDatabaseManager::clearDatabase() {
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE "
       "'sqlite_%'",
       [](void *data, int argc, char **argv, char **colName) -> int {
+        (void)argc;
+        (void)colName;
         auto *tables = static_cast<std::vector<std::string> *>(data);
         tables->push_back(argv[0]);
         return 0;
@@ -124,50 +118,46 @@ void AsyncDatabaseManager::workerLoop() {
   std::vector<QueueItem> batch;
   batch.reserve(config_.batch_size);
 
-  while (!stopped_ || !queue_.empty()) {
-    std::unique_lock<std::mutex> lock(mutex_);
+  try {
+    while (!queue_.isStopped() || !queue_.empty()) {
+      // 收集批量数据
+      while (batch.size() < config_.batch_size) {
+        try {
+          batch.push_back(queue_.pop());
+        } catch (const std::runtime_error &e) {
+          // 队列已停止且为空
+          break;
+        }
+      }
 
-    // 等待新数据或停止信号
-    if (queue_.empty() && !stopped_) {
-      cond_.wait(lock);
-    }
-
-    // 收集批量数据，直到达到batch_size或队列为空
-    while (!queue_.empty()) {
-      batch.push_back(std::move(queue_.front()));
-      queue_.pop();
-
-      // 达到batch_size立即处理
-      if (batch.size() >= config_.batch_size) {
-        lock.unlock();
+      if (!batch.empty()) {
         processBatch(batch);
         batch.clear();
-        lock.lock();
       }
     }
 
-    lock.unlock();
-  }
-
-  // 处理停止后剩余的队列数据
-  if (stopped_) {
-    std::unique_lock<std::mutex> lock(mutex_);
+    // 处理停止后剩余的队列数据
     while (!queue_.empty()) {
-      batch.push_back(std::move(queue_.front()));
-      queue_.pop();
-
-      if (batch.size() >= config_.batch_size) {
-        lock.unlock();
-        processBatch(batch);
-        batch.clear();
-        lock.lock();
+      try {
+        batch.push_back(queue_.pop());
+        if (batch.size() >= config_.batch_size) {
+          processBatch(batch);
+          batch.clear();
+        }
+      } catch (const std::runtime_error &e) {
+        break;
       }
     }
 
     if (!batch.empty()) {
-      lock.unlock();
       processBatch(batch);
     }
+  } catch (...) {
+    // 处理任何未预期的异常
+    if (!batch.empty()) {
+      processBatch(batch);
+    }
+    throw;
   }
 }
 
