@@ -18,9 +18,9 @@ public:
   void finalize(double total_cpu, double total_elapsed);
 
 private:
-  int compilation_id_;
   AsyncDatabaseManager &db_manager_;
+  int compilation_id_;
   int time_record_seq_ = 0;
 };
 
-#endif // CORE_COMPILATION_RECORDER_H
+#endif // _CORE_COMPILATION_RECORDER_H_

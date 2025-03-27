@@ -58,6 +58,8 @@ void Router::parseAST(CXTranslationUnit tu) {
 
 CXChildVisitResult Router::visitCursor(CXCursor cursor, CXCursor parent,
                                        CXClientData client_data) {
+  (void)parent;
+  (void)client_data;
   LOG_DEBUG << "Visiting cursor of kind: " << clang_getCursorKind(cursor)
             << std::endl;
   auto handlerIt = BaseProcessor::registry.find(clang_getCursorKind(cursor));
