@@ -8,14 +8,7 @@
 
 class ClassDeclProcessor : public BaseProcessor {
 public:
-  void handle(CXCursor cursor) override {
-    std::string functionName =
-        clang_getCString(clang_getCursorSpelling(cursor));
-    LOG_DEBUG << "Handling Class Declaration: " << functionName << std::endl;
-  }
+  void handle(CXCursor cursor) override;
 };
-
-// 注册处理器
-REGISTER_PROCESSOR(ClassDeclProcessor, CXCursor_ClassDecl);
 
 #endif // _CLASS_PROCESSOR_H_

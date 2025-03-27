@@ -62,8 +62,8 @@ CXChildVisitResult Router::visitCursor(CXCursor cursor, CXCursor parent,
   (void)client_data;
   LOG_DEBUG << "Visiting cursor of kind: " << clang_getCursorKind(cursor)
             << std::endl;
-  auto handlerIt = BaseProcessor::registry.find(clang_getCursorKind(cursor));
-  if (handlerIt != BaseProcessor::registry.end()) {
+  auto handlerIt = BaseProcessor::registry().find(clang_getCursorKind(cursor));
+  if (handlerIt != BaseProcessor::registry().end()) {
     auto handler = handlerIt->second();
     handler->handle(cursor); // 调用处理器
     LOG_DEBUG << "Handler successfully processed cursor of kind: "
