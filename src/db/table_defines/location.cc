@@ -11,10 +11,10 @@ std::string createLocationTables() {
     CREATE TABLE IF NOT EXISTS locations_default (
       id INTEGER PRIMARY KEY,
       container INTEGER,
-      startLine INTEGER NOT NULL,
-      startColumn INTEGER NOT NULL,
-      endLine INTEGER NOT NULL,
-      endColumn INTEGER NOT NULL,
+      start_line INTEGER NOT NULL,
+      start_column INTEGER NOT NULL,
+      end_line INTEGER NOT NULL,
+      end_column INTEGER NOT NULL,
       FOREIGN KEY (id) REFERENCES locations(id),
       FOREIGN KEY (container) REFERENCES container(id)
     );
@@ -22,10 +22,10 @@ std::string createLocationTables() {
     CREATE TABLE IF NOT EXISTS locations_stmt (
       id INTEGER PRIMARY KEY,
       container INTEGER,
-      startLine INTEGER NOT NULL,
-      startColumn INTEGER NOT NULL,
-      endLine INTEGER NOT NULL,
-      endColumn INTEGER NOT NULL,
+      start_line INTEGER NOT NULL,
+      start_column INTEGER NOT NULL,
+      end_line INTEGER NOT NULL,
+      end_column INTEGER NOT NULL,
       FOREIGN KEY (id) REFERENCES locations(id),
       FOREIGN KEY (container) REFERENCES container(id)
     );
@@ -33,10 +33,10 @@ std::string createLocationTables() {
     CREATE TABLE IF NOT EXISTS locations_expr (
       id INTEGER PRIMARY KEY,
       container INTEGER,
-      startLine INTEGER NOT NULL,
-      startColumn INTEGER NOT NULL,
-      endLine INTEGER NOT NULL,
-      endColumn INTEGER NOT NULL,
+      start_line INTEGER NOT NULL,
+      start_column INTEGER NOT NULL,
+      end_line INTEGER NOT NULL,
+      end_column INTEGER NOT NULL,
       FOREIGN KEY (id) REFERENCES locations(id),
       FOREIGN KEY (container) REFERENCES container(id)
     );

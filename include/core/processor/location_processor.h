@@ -3,6 +3,7 @@
 
 #include "core/processor/base_processor.h"
 #include "model/sql/location_model.h"
+#include "db/async_manager.h"
 #include <clang-c/Index.h>
 #include <memory>
 
@@ -12,6 +13,7 @@ public:
   void handle(CXCursor cursor) override = 0;
 
 protected:
+  AsyncDatabaseManager &db_manager_ = AsyncDatabaseManager::getInstance();
   void processStatement(CXCursor cursor);
   void processExpression(CXCursor cursor);
 };

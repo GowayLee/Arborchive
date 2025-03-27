@@ -11,7 +11,7 @@ int CompilationRecorder::createCompilation(
     const std::string &working_directory) {
   auto compilation_model =
       std::make_unique<CompilationModel>(working_directory);
-  db_manager_.executeImmediate(std::move(compilation_model->serialize()));
+  db_manager_.executeImmediate(std::move(compilation_model->serialize())); // FIXME: Align executeImmediate with pushModel
   compilation_id_ = db_manager_.getLastInsertId();
   return compilation_id_;
 }

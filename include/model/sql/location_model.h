@@ -35,7 +35,7 @@ public:
     setField("end_column", end_column);
   }
 
-  std::string getTableName() const override { return "location_default"; }
+  std::string getTableName() const override { return "locations_default"; }
 
   std::string serialize() const override {
     return "INSERT INTO " + getTableName() +
@@ -49,80 +49,51 @@ public:
 
 class LocationStmtModel : public SQLModel {
 public:
-  LocationStmtModel(uint64_t id, uint64_t container,
-                    const std::string &stmt_type, uint32_t start_line,
+  LocationStmtModel(uint64_t id, uint64_t container, uint32_t start_line,
                     uint16_t start_column, uint32_t end_line,
                     uint16_t end_column) {
     setField("id", id);
     setField("container", container);
-    setField("stmt_type", "'" + escapeString(stmt_type) + "'");
     setField("start_line", start_line);
     setField("start_column", start_column);
     setField("end_line", end_line);
     setField("end_column", end_column);
   }
 
-  std::string getTableName() const override { return "location_stmt"; }
+  std::string getTableName() const override { return "locations_stmt"; }
 
   std::string serialize() const override {
     return "INSERT INTO " + getTableName() +
-           " (id, container, stmt_type, start_line, start_column, end_line, "
+           " (id, container, start_line, start_column, end_line, "
            "end_column) VALUES (" +
            fields_.at("id") + ", " + fields_.at("container") + ", " +
-           fields_.at("stmt_type") + ", " + fields_.at("start_line") + ", " +
-           fields_.at("start_column") + ", " + fields_.at("end_line") + ", " +
-           fields_.at("end_column") + ")";
-  }
-
-private:
-  std::string escapeString(const std::string &str) {
-    std::string escaped = str;
-    size_t pos = 0;
-    while ((pos = escaped.find("'", pos)) != std::string::npos) {
-      escaped.replace(pos, 1, "''");
-      pos += 2;
-    }
-    return escaped;
+           fields_.at("start_line") + ", " + fields_.at("start_column") + ", " +
+           fields_.at("end_line") + ", " + fields_.at("end_column") + ")";
   }
 };
 
 class LocationExprModel : public SQLModel {
 public:
-  LocationExprModel(uint64_t id, uint64_t container,
-                    const std::string &expr_type, const std::string &eval_type,
-                    uint32_t start_line, uint16_t start_column,
-                    uint32_t end_line, uint16_t end_column) {
+  LocationExprModel(uint64_t id, uint64_t container, uint32_t start_line,
+                    uint16_t start_column, uint32_t end_line,
+                    uint16_t end_column) {
     setField("id", id);
     setField("container", container);
-    setField("expr_type", "'" + escapeString(expr_type) + "'");
-    setField("eval_type", "'" + escapeString(eval_type) + "'");
     setField("start_line", start_line);
     setField("start_column", start_column);
     setField("end_line", end_line);
     setField("end_column", end_column);
   }
 
-  std::string getTableName() const override { return "location_expr"; }
+  std::string getTableName() const override { return "locations_expr"; }
 
   std::string serialize() const override {
     return "INSERT INTO " + getTableName() +
-           " (id, container, expr_type, eval_type, start_line, start_column, "
-           "end_line, end_column) VALUES (" +
+           " (id, container, start_line, start_column, end_line, end_column) "
+           "VALUES (" +
            fields_.at("id") + ", " + fields_.at("container") + ", " +
-           fields_.at("expr_type") + ", " + fields_.at("eval_type") + ", " +
            fields_.at("start_line") + ", " + fields_.at("start_column") + ", " +
            fields_.at("end_line") + ", " + fields_.at("end_column") + ")";
-  }
-
-private:
-  std::string escapeString(const std::string &str) {
-    std::string escaped = str;
-    size_t pos = 0;
-    while ((pos = escaped.find("'", pos)) != std::string::npos) {
-      escaped.replace(pos, 1, "''");
-      pos += 2;
-    }
-    return escaped;
   }
 };
 

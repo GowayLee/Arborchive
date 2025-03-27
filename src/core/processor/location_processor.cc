@@ -3,6 +3,8 @@
 #include "util/logger/macros.h"
 #include <clang-c/Index.h>
 #include <iostream>
+#include <memory>
+#include <utility>
 
 // 实现DeclStmtProcessor的handle方法
 void DeclStmtProcessor::handle(CXCursor cursor) { processStatement(cursor); }
@@ -34,8 +36,9 @@ void LocationProcessor::processStatement(CXCursor cursor) {
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
   uint64_t id = clang_hashCursor(cursor);
-  LocationStmtModel model(id, 0, "stmt", start_line, start_column, end_line,
-                          end_column);
+  auto model = std::make_unique<LocationStmtModel>(
+      id, 0, start_line, start_column, end_line, end_column);
+  db_manager_.pushModel(std::move(model));
 
   LOG_DEBUG << "Recorded statement location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column
@@ -55,8 +58,9 @@ void LocationProcessor::processExpression(CXCursor cursor) {
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
   uint64_t id = clang_hashCursor(cursor);
-  LocationExprModel model(id, 0, "expr", "type", start_line, start_column,
-                          end_line, end_column);
+  auto model = std::make_unique<LocationExprModel>(
+      id, 0, start_line, start_column, end_line, end_column);
+  db_manager_.pushModel(std::move(model));
 
   LOG_DEBUG << "Recorded expression location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column
