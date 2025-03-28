@@ -4,6 +4,7 @@
 #include "model/sql/compilation_model.h"
 #include "model/sql/compilation_time_model.h"
 #include "model/sql/container_model.h"
+#include <cstdio>
 #include <memory>
 
 CompilationRecorder::CompilationRecorder(AsyncDatabaseManager &db)
@@ -40,8 +41,11 @@ void CompilationRecorder::recordTime(CompilationTimeKind kind, double seconds) {
 }
 
 void CompilationRecorder::recordFile(const std::string &file) {
-  auto model = std::make_unique<FileModel>(file);
-  db_manager_.pushModel(std::move(model));
+  auto fileModel = std::make_unique<FileModel>(file);
+  auto containerModel = std::make_unique<ContainerModel>(
+      ContainerType::File, fileModel->getLastId());
+  db_manager_.pushModel(std::move(fileModel));
+  db_manager_.pushModel(std::move(containerModel));
 }
 
 void CompilationRecorder::finalize(double total_cpu, double total_elapsed) {

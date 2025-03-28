@@ -1,7 +1,13 @@
 #include "db/table_defines.h"
 
-std::string createFilesTables() {
+std::string createContainersTables() {
   return R"(
+    CREATE TABLE IF NOT EXISTS container (
+      id INTEGER PRIMARY KEY,
+      associated_id INTEGER NOT NULL,
+      type INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS files (
       id INTEGER PRIMARY KEY,
       name TEXT
@@ -14,4 +20,4 @@ std::string createFilesTables() {
   )";
 }
 
-REGISTER_TABLE(FilesTables, createFilesTables);
+REGISTER_TABLE(FilesTables, createContainersTables);

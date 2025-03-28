@@ -8,7 +8,7 @@
 class LocationModel : public SQLModel {
 public:
   explicit LocationModel(uint32_t type, uint64_t associated_id) {
-    setField("id", SQLModel::generateId(getTableName()));
+    setField("id", generateId());
     setField("type", type);
     setField("associated_id", associated_id);
   }
@@ -27,7 +27,7 @@ public:
   LocationDefaultModel(uint64_t container, uint32_t start_line,
                        uint16_t start_column, uint32_t end_line,
                        uint16_t end_column) {
-    setField("id", SQLModel::generateId(getTableName()));
+    setField("id", generateId());
     setField("container", container);
     setField("start_line", start_line);
     setField("start_column", start_column);
@@ -52,7 +52,7 @@ public:
   LocationStmtModel(uint64_t container, uint32_t start_line,
                     uint16_t start_column, uint32_t end_line,
                     uint16_t end_column) {
-    setField("id", SQLModel::generateId(getTableName()));
+    setField("id", generateId());
     setField("container", container);
     setField("start_line", start_line);
     setField("start_column", start_column);
@@ -77,7 +77,7 @@ public:
   LocationExprModel(uint64_t container, uint32_t start_line,
                     uint16_t start_column, uint32_t end_line,
                     uint16_t end_column) {
-    setField("id", SQLModel::generateId(getTableName()));
+    setField("id", generateId());
     setField("container", container);
     setField("start_line", start_line);
     setField("start_column", start_column);

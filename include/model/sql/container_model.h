@@ -2,12 +2,15 @@
 #define _CONTAINER_MODEL_H_
 
 #include "model/sql/sql_model.h"
+#include <cstdint>
+
+enum class ContainerType { File = 1, Folder = 2 };
 
 class ContainerModel : public SQLModel {
 public:
-  ContainerModel(uint32_t type, uint64_t associated_id) {
-    setField("id", SQLModel::generateId(getTableName()));
-    setField("type", type);
+  ContainerModel(ContainerType type, uint64_t associated_id) {
+    setField("id", generateId());
+    setField("type", static_cast<int>(type));
     setField("associated_id", associated_id);
   }
 
@@ -23,7 +26,7 @@ public:
 class FileModel : public SQLModel {
 public:
   FileModel(const std::string &name) {
-    setField("id", SQLModel::generateId(getTableName()));
+    setField("id", generateId());
     setField("name", name);
   }
 
