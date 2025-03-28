@@ -53,13 +53,13 @@ CodeQL数据库的表结构设计反映了C/C++代码的各个方面，从最基
 **第二阶段：基本语法 (Basic Syntax)**
 
 ```
-17. @location: 源码位置范围，记录代码元素的位置信息
+17. @location: 源码位置范围，记录代码元素的位置信息 (x)
 18. locations_default: 默认位置信息
 19. locations_stmt: 语句位置信息  
 20. locations_expr: 表达式位置信息
 21. @sourceline: 源码行号定位
 23. diagnostics: 编译器诊断信息
-26. @container: 容器关系，如函数体包含语句
+26. @container: 容器关系(file/folder)
 161. comments: 代码注释信息
 170. exprparents: 表达式父子关系
 181. varbind: 变量绑定关系

@@ -19,7 +19,7 @@ public:
     setField("associated_id", associated_id);
   }
 
-  std::string getTableName() const override { return "location"; }
+  std::string getTableName() const override { return "locations"; }
 };
 
 class LocationDefaultModel : public SQLModel {
