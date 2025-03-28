@@ -6,23 +6,18 @@
 #include <memory>
 #include <utility>
 
-// 实现DeclStmtProcessor的handle方法
 void DeclStmtProcessor::handle(CXCursor cursor) { processStatement(cursor); }
 
-// 实现CompoundStmtProcessor的handle方法
 void CompoundStmtProcessor::handle(CXCursor cursor) {
   processStatement(cursor);
 }
 
-// 实现DeclRefExprProcessor的handle方法
 void DeclRefExprProcessor::handle(CXCursor cursor) {
   processExpression(cursor);
 }
 
-// 实现CallExprProcessor的handle方法
 void CallExprProcessor::handle(CXCursor cursor) { processExpression(cursor); }
 
-// 保留原有的LocationProcessor方法实现
 void LocationProcessor::processStatement(CXCursor cursor) {
   CXSourceRange range = clang_getCursorExtent(cursor);
   CXSourceLocation start = clang_getRangeStart(range);
@@ -35,9 +30,12 @@ void LocationProcessor::processStatement(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  auto model = std::make_unique<LocationStmtModel>(0, start_line, start_column,
-                                                   end_line, end_column);
-  db_manager_.pushModel(std::move(model));
+  auto locStmtModel = std::make_unique<LocationStmtModel>(
+      0, start_line, start_column, end_line, end_column);
+  auto locModel = std::make_unique<LocationModel>(LocationType::location_stmt,
+                                                  locStmtModel->getLastId());
+  db_manager_.pushModel(std::move(locStmtModel));
+  db_manager_.pushModel(std::move(locModel));
 
   LOG_DEBUG << "Recorded statement location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column
@@ -56,9 +54,12 @@ void LocationProcessor::processExpression(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  auto model = std::make_unique<LocationExprModel>(0, start_line, start_column,
-                                                   end_line, end_column);
-  db_manager_.pushModel(std::move(model));
+  auto locExprModel = std::make_unique<LocationExprModel>(
+      0, start_line, start_column, end_line, end_column);
+  auto locModel = std::make_unique<LocationModel>(LocationType::location_expr,
+                                                  locExprModel->getLastId());
+  db_manager_.pushModel(std::move(locExprModel));
+  db_manager_.pushModel(std::move(locModel));
 
   LOG_DEBUG << "Recorded expression location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column

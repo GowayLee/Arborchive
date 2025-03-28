@@ -4,7 +4,7 @@
 #include "model/sql/sql_model.h"
 #include <cstdint>
 
-enum class ContainerType { File = 1, Folder = 2 };
+enum class ContainerType { File = 0, Folder = 1 };
 
 class ContainerModel : public SQLModel {
 public:
