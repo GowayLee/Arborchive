@@ -2,9 +2,7 @@
 #define _CORE_COMPILATION_RECORDER_H_
 
 #include "db/async_manager.h"
-#include "model/sql/compilation_args_model.h"
-#include "model/sql/compilation_finished_model.h"
-#include "model/sql/compilation_time_model.h"
+#include "model/sql/compilation_model.h"
 #include <string>
 #include <vector>
 

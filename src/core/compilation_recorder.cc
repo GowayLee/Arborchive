@@ -1,8 +1,4 @@
 #include "core/compilation_recorder.h"
-#include "model/sql/compilation_args_model.h"
-#include "model/sql/compilation_finished_model.h"
-#include "model/sql/compilation_model.h"
-#include "model/sql/compilation_time_model.h"
 #include "model/sql/container_model.h"
 #include <cstdio>
 #include <memory>

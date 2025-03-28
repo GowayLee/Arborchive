@@ -17,10 +17,10 @@ public:
 
   std::string getTableName() const override { return "classes"; }
 
-  std::string serialize() const override {
-    return "INSERT INTO classes (name, namespace) VALUES ('" +
-           fields_.at("name") + "', '" + fields_.at("namespace") + "')";
-  }
+  // std::string serialize() const override {
+  //   return "INSERT INTO classes (name, namespace) VALUES ('" +
+  //          fields_.at("name") + "', '" + fields_.at("namespace") + "')";
+  // }
 };
 
 #endif // _CLASS_MODEL_H_

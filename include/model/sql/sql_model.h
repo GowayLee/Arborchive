@@ -13,7 +13,30 @@ class SQLModel {
 public:
   virtual ~SQLModel() = default;
   virtual std::string getTableName() const = 0;
-  virtual std::string serialize() const = 0;
+  std::string serialize() const {
+    if (fields_.empty()) {
+      LOG_WARNING << "Table: " << getTableName() << ": No fields to serialize"
+                  << std::endl;
+      return "";
+    }
+    // 动态构建字段列表和值列表
+    std::string fieldList;
+    std::string valueList;
+
+    for (const auto &[field, value] : fields_) {
+      fieldList += field + ",";
+      valueList += value + ",";
+    }
+    // 去除末尾逗号
+    if (!fieldList.empty()) {
+      fieldList.pop_back();
+    }
+    if (!valueList.empty()) {
+      valueList.pop_back();
+    }
+    return "INSERT INTO " + getTableName() + " (" + fieldList + ") VALUES (" +
+           valueList + ")";
+  }
 
   uint64_t generateId() const {
     return IDGenerator::generateId(getTableName());
