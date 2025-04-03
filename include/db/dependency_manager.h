@@ -2,6 +2,7 @@
 #define _DEPENDENCY_MANAGER_H_
 
 #include "model/sql/sql_model.h"
+#include "model/dependency/base_dep.h"
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -12,7 +13,7 @@ public:
 
   void processPendingModels();
 
-  void addPendingModel(std::shared_ptr<SQLModel> model);
+  void addPendingModelDep(std::unique_ptr<BaseDep> dep);
   void clear();
 
 private:
@@ -21,7 +22,7 @@ private:
   DependencyManager &operator=(const DependencyManager &) = delete;
 
   mutable std::mutex mutex_;
-  std::vector<std::shared_ptr<SQLModel>> pending_models_;
+  std::vector<std::unique_ptr<BaseDep>> pending_models_;
 };
 
 #endif // _DEPENDENCY_MANAGER_H_

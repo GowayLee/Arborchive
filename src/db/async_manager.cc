@@ -180,15 +180,6 @@ bool AsyncDatabaseManager::executeImmediate(const std::string &sql) {
   return success;
 }
 
-int64_t AsyncDatabaseManager::getLastInsertId() {
-  if (db_ == nullptr) {
-    LOG_ERROR << "Databse has not been open: " << config_.path << std::endl;
-    return 0;
-  }
-  int64_t lastId = sqlite3_last_insert_rowid(db_);
-  return lastId;
-}
-
 void AsyncDatabaseManager::configureDatabase() {
   std::string cache_size_pragma =
       "PRAGMA cache_size=-" + std::to_string(config_.cache_size_mb * 1024);

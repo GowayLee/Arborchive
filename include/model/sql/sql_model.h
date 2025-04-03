@@ -7,15 +7,12 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 
 class SQLModel {
 public:
   virtual ~SQLModel() = default;
+  SQLModel() = default;
   virtual std::string getTableName() const = 0;
-
-  virtual bool try_solve_dependence() { return true; }
-  virtual bool checkDependencies() const { return true; }
 
   std::string serialize() const {
     if (fields_.empty()) {
@@ -51,6 +48,15 @@ public:
 
   template <typename T> void setField(const std::string &name, const T &value) {
     fields_[name] = std::to_string(value);
+  }
+
+  std::string getField(const std::string &name) const {
+    auto it = fields_.find(name);
+    if (it != fields_.end())
+      return it->second;
+    LOG_WARNING << "Table: " << getTableName() << ": Field " << name
+                << " not found" << std::endl;
+    return "";
   }
 
   // Specialization for string type
