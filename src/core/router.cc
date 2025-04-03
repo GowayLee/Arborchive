@@ -2,6 +2,7 @@
 #include "core/compilation_recorder.h"
 #include "core/processor/base_processor.h"
 #include "db/async_manager.h"
+#include "db/dependency_manager.h"
 #include "interface/clang_indexer.h"
 #include "util/hires_timer.h"
 #include "util/logger/macros.h"
@@ -57,6 +58,9 @@ void Router::parseAST(CXTranslationUnit tu) {
 
   CXCursor cursor = clang_getTranslationUnitCursor(tu);
   clang_visitChildren(cursor, visitCursor, nullptr);
+
+  auto &dep_manager = DependencyManager::getInstance();
+  dep_manager.processPendingModels();
 }
 
 CXChildVisitResult Router::visitCursor(CXCursor cursor, CXCursor parent,

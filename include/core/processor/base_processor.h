@@ -1,12 +1,16 @@
 #ifndef _BASE_PROCESSOR_H_
 #define _BASE_PROCESSOR_H_
 
+#include "db/dependency_manager.h"
 #include <clang-c/Index.h>
 #include <functional>
 #include <map>
 #include <memory>
 
 class BaseProcessor {
+protected:
+  DependencyManager &dep_manager_ = DependencyManager::getInstance();
+
 public:
   using FactoryFunc = std::function<std::unique_ptr<BaseProcessor>()>;
 

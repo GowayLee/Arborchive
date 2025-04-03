@@ -13,6 +13,10 @@ class SQLModel {
 public:
   virtual ~SQLModel() = default;
   virtual std::string getTableName() const = 0;
+
+  virtual bool try_solve_dependence() { return true; }
+  virtual bool checkDependencies() const { return true; }
+
   std::string serialize() const {
     if (fields_.empty()) {
       LOG_WARNING << "Table: " << getTableName() << ": No fields to serialize"
