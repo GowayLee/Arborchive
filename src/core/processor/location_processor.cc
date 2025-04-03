@@ -30,9 +30,9 @@ void LocationProcessor::processStatement(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  auto locStmtModel = std::make_unique<LocationStmtModel>(
+  auto locStmtModel = std::make_shared<LocationStmtModel>(
       0, start_line, start_column, end_line, end_column);
-  auto locModel = std::make_unique<LocationModel>(LocationType::location_stmt,
+  auto locModel = std::make_shared<LocationModel>(LocationType::location_stmt,
                                                   locStmtModel->getLastId());
   db_manager_.pushModel(std::move(locStmtModel));
   db_manager_.pushModel(std::move(locModel));
@@ -54,11 +54,12 @@ void LocationProcessor::processExpression(CXCursor cursor) {
   unsigned end_line, end_column;
   clang_getSpellingLocation(end, nullptr, &end_line, &end_column, nullptr);
 
-  auto locExprModel = std::make_unique<LocationExprModel>(
+  auto locExprModel = std::make_shared<LocationExprModel>(
       0, start_line, start_column, end_line, end_column);
-  auto locModel = std::make_unique<LocationModel>(LocationType::location_expr,
+  auto locModel = std::make_shared<LocationModel>(LocationType::location_expr,
                                                   locExprModel->getLastId());
-  db_manager_.pushModel(std::move(locExprModel));
+
+  db_manager_.pushModel(std::move(locExprModel)); // Delete ptr locExprModel
   db_manager_.pushModel(std::move(locModel));
 
   LOG_DEBUG << "Recorded expression location: " << start_line << ":"

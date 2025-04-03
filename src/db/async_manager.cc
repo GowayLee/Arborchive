@@ -16,7 +16,7 @@ AsyncDatabaseManager &AsyncDatabaseManager::getInstance() {
   return instance;
 }
 
-void AsyncDatabaseManager::pushModel(std::unique_ptr<SQLModel> model) {
+void AsyncDatabaseManager::pushModel(std::shared_ptr<SQLModel> model) {
   queue_.push({std::move(model), sequence_counter_++});
 }
 

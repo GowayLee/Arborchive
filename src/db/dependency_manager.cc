@@ -10,7 +10,7 @@ DependencyManager &DependencyManager::getInstance() {
 void DependencyManager::addPendingModel(std::shared_ptr<SQLModel> model) {
   std::lock_guard<std::mutex> lock(mutex_);
   pending_models_.push_back(model);
-  LOG_DEBUG << "Added pending model to dependency manager";
+  LOG_DEBUG << "Added pending model to dependency manager" << std::endl;
 }
 
 void DependencyManager::processPendingModels() {
@@ -19,9 +19,9 @@ void DependencyManager::processPendingModels() {
     for (auto &model : pending_models_) {
       if (model->try_solve_dependence()) {
         successModels.push_back(model);
-        LOG_DEBUG << "Successfully resolved dependencies for model";
+        LOG_DEBUG << "Successfully resolved dependencies for model" << std::endl;
       } else
-        LOG_DEBUG << "Failed to resolve dependencies for model";
+        LOG_DEBUG << "Failed to resolve dependencies for model" << std::endl;
     }
 
     pending_models_.erase(successModels.begin(), successModels.end());
@@ -37,5 +37,5 @@ void DependencyManager::processPendingModels() {
 void DependencyManager::clear() {
   std::lock_guard<std::mutex> lock(mutex_);
   pending_models_.clear();
-  LOG_DEBUG << "Cleared all pending models from dependency manager";
+  LOG_DEBUG << "Cleared all pending models from dependency manager" << std::endl;
 }

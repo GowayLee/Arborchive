@@ -8,7 +8,7 @@
 enum class LocationType {
   location_stmt = 0,
   location_expr = 1,
-  location_default = 3
+  location_default = 2
 };
 
 class LocationModel : public SQLModel {

@@ -16,7 +16,7 @@
 class AsyncDatabaseManager {
 private:
   struct QueueItem {
-    std::unique_ptr<SQLModel> model;
+    std::shared_ptr<SQLModel> model;
     uint64_t sequence_id; // 用于保证顺序
   };
 
@@ -43,7 +43,7 @@ public:
   static AsyncDatabaseManager &getInstance();
   void loadConfig(const DatabaseConfig &config);
 
-  void pushModel(std::unique_ptr<SQLModel> model);
+  void pushModel(std::shared_ptr<SQLModel> model);
   void start();
   void stop();
 
