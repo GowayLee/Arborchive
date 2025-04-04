@@ -14,11 +14,13 @@ public:
       : BaseDep(std::move(sql_model)) {}
 
   virtual bool solve_dependence() const override {
-    LOG_DEBUG << "Start solve dependence for " << sql_model_->getTableName() << std::endl;
+    LOG_DEBUG << "Start solve dependence for " << sql_model_->getTableName()
+              << std::endl;
     auto &db = AsyncDatabaseManager::getInstance();
 
     if (dependencies_.empty()) {
-      LOG_ERROR << "No dependencies found for " << sql_model_->getTableName() << std::endl;
+      LOG_ERROR << "No dependencies found for " << sql_model_->getTableName()
+                << std::endl;
       return false;
     }
     auto &dep = dependencies_[0];

@@ -75,7 +75,10 @@ public:
 
   // Specialization for string type
   void setField(const std::string &name, const std::string &value) {
-    fields_[name] = "'" + value + "'"; // Add quotes for strings
+    if (!value.empty() && value.front() == '\'' && value.back() == '\'')
+      fields_[name] = value; // Already quoted, use as-is
+    else
+      fields_[name] = "'" + value + "'"; // Add quotes for strings
   }
 
 protected:
