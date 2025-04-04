@@ -14,11 +14,12 @@ protected:
     std::string original_type;
   };
 
-  std::shared_ptr<SQLModel> sql_model_;
+  std::unique_ptr<SQLModel> sql_model_;
   std::vector<DependencyItem> dependencies_;
 
 public:
-  BaseDep(std::shared_ptr<SQLModel> sql_model) : sql_model_(sql_model) {}
+  BaseDep(std::unique_ptr<SQLModel> &&sql_model)
+      : sql_model_(std::move(sql_model)) {}
 
   template <typename T>
   void setDependency(const std::string &table, const std::string &field,

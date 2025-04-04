@@ -1,22 +1,19 @@
 #ifndef _DATABASE_ASYNC_MANAGER_H_
 #define _DATABASE_ASYNC_MANAGER_H_
 
-#include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "model/sql/sql_model.h"
 #include "util/thread_safe_queue.h"
 #include <atomic>
-#include <condition_variable>
 #include <memory>
-#include <mutex>
-#include <queue>
 #include <sqlite3.h>
+#include <string>
 #include <thread>
 
 class AsyncDatabaseManager {
 private:
   struct QueueItem {
-    std::shared_ptr<SQLModel> model;
+    std::string sql;
     uint64_t sequence_id; // 用于保证顺序
   };
 
@@ -43,7 +40,8 @@ public:
   static AsyncDatabaseManager &getInstance();
   void loadConfig(const DatabaseConfig &config);
 
-  void pushModel(std::shared_ptr<SQLModel> model);
+  void pushModel(const std::string &sql);
+  void flush();
   void start();
   void stop();
 
@@ -65,8 +63,12 @@ public:
           if (col_name && col_value)
             model->setField(col_name, std::string(col_value));
         }
-        results.push_back(model);
+        results.push_back(std::move(model));
       }
+      // LOG_DEBUG << "SQL execution successful: " << sql << std::endl;
+      // LOG_DEBUG << "Query find " << results.size() << std::endl;
+      std::cout << "SQL execution successful: " << sql << std::endl;
+      std::cout << "Query find " << results.size() << std::endl;
       sqlite3_finalize(stmt);
     } else
       LOG_ERROR << "SQL execution failed: " << sql << std::endl;

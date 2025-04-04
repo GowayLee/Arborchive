@@ -1,4 +1,5 @@
 #include "db/async_manager.h"
+#include "db/table_defines.h"
 #include "model/config/configuration.h"
 #include "util/logger/macros.h"
 #include <filesystem>
@@ -16,8 +17,8 @@ AsyncDatabaseManager &AsyncDatabaseManager::getInstance() {
   return instance;
 }
 
-void AsyncDatabaseManager::pushModel(std::shared_ptr<SQLModel> model) {
-  queue_.push({std::move(model), sequence_counter_++});
+void AsyncDatabaseManager::pushModel(const std::string &sql) {
+  queue_.push({sql, sequence_counter_++});
 }
 
 void AsyncDatabaseManager::start() {
@@ -60,6 +61,20 @@ void AsyncDatabaseManager::stop() {
   queue_.stop();
   if (worker_thread_.joinable())
     worker_thread_.join();
+}
+
+void AsyncDatabaseManager::flush() {
+  // 停止队列以处理所有待处理SQL
+  queue_.stop();
+
+  // 等待工作线程完成
+  if (worker_thread_.joinable())
+    worker_thread_.join();
+  // 恢复队列状态
+  queue_.resume();
+
+  // 重新启动工作线程
+  worker_thread_ = std::thread(&AsyncDatabaseManager::workerLoop, this);
 }
 
 void AsyncDatabaseManager::clearDatabase() {
@@ -242,9 +257,8 @@ void AsyncDatabaseManager::processBatch(std::vector<QueueItem> &batch) {
   }
 
   for (const auto &item : batch) {
-    std::string sql = item.model->serialize();
-    LOG_DEBUG << "Executing SQL: " << sql << std::endl;
-    if (sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errMsg) !=
+    LOG_DEBUG << "Executing SQL: " << item.sql << std::endl;
+    if (sqlite3_exec(db_, item.sql.c_str(), nullptr, nullptr, &errMsg) !=
         SQLITE_OK) {
       LOG_ERROR << "SQL execution failed: " << errMsg << std::endl;
       sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);

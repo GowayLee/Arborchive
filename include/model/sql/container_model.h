@@ -15,12 +15,6 @@ public:
   }
 
   std::string getTableName() const override { return "container"; }
-
-  // std::string serialize() const override {
-  //   return "INSERT INTO " + getTableName() +
-  //          " (id, type, associated_id) VALUES (" + fields_.at("id") + ", " +
-  //          fields_.at("type") + ", " + fields_.at("associated_id") + ")";
-  // }
 };
 
 class FileModel : public SQLModel {
@@ -30,12 +24,9 @@ public:
     setField("name", name);
   }
 
-  std::string getTableName() const override { return "files"; }
+  FileModel() = default;
 
-  // std::string serialize() const override {
-  //   return "INSERT INTO " + getTableName() + " (id, name) " + "VALUES (" +
-  //          fields_.at("id") + ", " + fields_.at("name") + ")";
-  // }
+  std::string getTableName() const override { return "files"; }
 };
 
 #endif // _CONAINTER_MODEL_H_

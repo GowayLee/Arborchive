@@ -8,38 +8,36 @@ DependencyManager &DependencyManager::getInstance() {
   return instance;
 }
 
-void DependencyManager::addPendingModelDep(std::unique_ptr<BaseDep> dep) {
+void DependencyManager::addPendingModelDep(std::unique_ptr<BaseDep> &&dep) {
   std::lock_guard<std::mutex> lock(mutex_);
-  pending_models_.push_back(dep);
-  LOG_DEBUG << "Added pending model: " << dep->getName()
-            << " to dependency manager" << std::endl;
+  LOG_DEBUG << "Added pending model: " << dep->getName() << std::endl;
+  pending_models_.push_back(std::move(dep));
 }
 
 void DependencyManager::processPendingModels() {
   std::lock_guard<std::mutex> lock(mutex_);
+  LOG_DEBUG << "Processing pending models" << std::endl;
   while (true) {
-    std::vector<std::unique_ptr<BaseDep>> successModels;
-    size_t preSize = pending_models_.size();
+    std::vector<std::unique_ptr<BaseDep>> failModels;
     for (auto &model : pending_models_) {
       if (model->solve_dependence()) {
-        successModels.push_back(model);
         LOG_DEBUG << "Successfully resolved dependencies for model: "
                   << model->getName() << std::endl;
       } else
         LOG_DEBUG << "Failed to resolve dependencies for model: "
                   << model->getName() << std::endl;
+      failModels.push_back(std::move(model));
     }
 
-    pending_models_.erase(successModels.begin(), successModels.end());
-    size_t postSize = pending_models_.size();
-    if (postSize == 0) {
-      LOG_DEBUG << "Finished processing pending models" << std::endl;
+    std::cout << "nihao" << std::endl;
+    if (failModels.size() == pending_models_.size()) {
+      LOG_ERROR << "Failed to resolve dependencies for some models"
+                << std::endl;
       clear();
       break;
     }
-    if (preSize == postSize) {
-      LOG_ERROR << "Failed to resolve dependencies for some models"
-                << std::endl;
+    if (failModels.size() == 0) {
+      LOG_DEBUG << "Finished processing pending models" << std::endl;
       clear();
       break;
     }

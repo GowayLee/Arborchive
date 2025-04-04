@@ -13,11 +13,13 @@ enum class LocationType {
 
 class LocationModel : public SQLModel {
 public:
-  explicit LocationModel(LocationType type, uint64_t associated_id) {
+  LocationModel(LocationType type, uint64_t associated_id) {
     setField("id", generateId());
     setField("type", static_cast<int>(type));
     setField("associated_id", associated_id);
   }
+
+  LocationModel() = default;
 
   std::string getTableName() const override { return "locations"; }
 };
@@ -35,6 +37,8 @@ public:
     setField("end_column", end_column);
   }
 
+  LocationDefaultModel() = default;
+
   std::string getTableName() const override { return "locations_default"; }
 };
 
@@ -51,6 +55,8 @@ public:
     setField("end_column", end_column);
   }
 
+  LocationStmtModel() = default;
+
   std::string getTableName() const override { return "locations_stmt"; }
 };
 
@@ -66,6 +72,8 @@ public:
     setField("end_line", end_line);
     setField("end_column", end_column);
   }
+
+  LocationExprModel() = default;
 
   std::string getTableName() const override { return "locations_expr"; }
 };

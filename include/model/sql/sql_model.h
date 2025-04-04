@@ -14,29 +14,43 @@ public:
   SQLModel() = default;
   virtual std::string getTableName() const = 0;
 
-  std::string serialize() const {
+  std::string insert_sql() const {
     if (fields_.empty()) {
       LOG_WARNING << "Table: " << getTableName() << ": No fields to serialize"
                   << std::endl;
       return "";
     }
-    // 动态构建字段列表和值列表
+    // 生成INSERT语句
     std::string fieldList;
     std::string valueList;
-
     for (const auto &[field, value] : fields_) {
       fieldList += field + ",";
       valueList += value + ",";
     }
-    // 去除末尾逗号
-    if (!fieldList.empty()) {
+    if (!fieldList.empty())
       fieldList.pop_back();
-    }
-    if (!valueList.empty()) {
+    if (!valueList.empty())
       valueList.pop_back();
-    }
     return "INSERT INTO " + getTableName() + " (" + fieldList + ") VALUES (" +
            valueList + ")";
+  }
+
+  std::string update_sql() const {
+    if (fields_.empty()) {
+      LOG_WARNING << "Table: " << getTableName() << ": No fields to serialize"
+                  << std::endl;
+      return "";
+    }
+    // 生成UPDATE语句
+    std::string update_sql = "UPDATE " + getTableName() + " SET ";
+    for (const auto &[field, value] : fields_) {
+      if (field != "id") { // 跳过ID字段
+        update_sql += field + "=" + value + ",";
+      }
+    }
+    update_sql.pop_back(); // 移除末尾逗号
+    update_sql += " WHERE id=" + getField("id");
+    return update_sql;
   }
 
   uint64_t generateId() const {

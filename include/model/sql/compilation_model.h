@@ -20,6 +20,8 @@ public:
     setField("num", num);
   }
 
+  CompilationArgsModel() = default;
+
   std::string getTableName() const override { return "compilation_args"; }
 
   void setArg(const std::string &arg) { setField("arg", arg); }
@@ -39,6 +41,8 @@ public:
     setField("num", file_num);
   }
 
+  CompilationTimeModel() = default;
+
   std::string getTableName() const override { return "compilation_time"; }
 
   void setKind(CompilationTimeKind kind) {
@@ -53,6 +57,8 @@ public:
   CompilationFinishedModel(int compilation_id) {
     setField("id", compilation_id);
   }
+
+  CompilationFinishedModel() = default;
 
   std::string getTableName() const override { return "compilation_finished"; }
 

@@ -13,7 +13,7 @@ public:
 
   void processPendingModels();
 
-  void addPendingModelDep(std::unique_ptr<BaseDep> dep);
+  void addPendingModelDep(std::unique_ptr<BaseDep> &&dep);
   void clear();
 
 private:

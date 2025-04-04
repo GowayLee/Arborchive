@@ -59,8 +59,8 @@ void Router::parseAST(CXTranslationUnit tu) {
   CXCursor cursor = clang_getTranslationUnitCursor(tu);
   clang_visitChildren(cursor, visitCursor, nullptr);
 
-  auto &dep_manager = DependencyManager::getInstance();
-  dep_manager.processPendingModels();
+  AsyncDatabaseManager::getInstance().flush();
+  DependencyManager::getInstance().processPendingModels();
 }
 
 CXChildVisitResult Router::visitCursor(CXCursor cursor, CXCursor parent,

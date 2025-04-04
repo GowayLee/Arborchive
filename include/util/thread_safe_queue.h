@@ -55,6 +55,12 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     return stopped_;
   }
+
+  void resume() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    stopped_ = false;
+    cond_.notify_all();
+  }
 };
 
 #endif // _THREAD_SAFE_QUEUE_H_
