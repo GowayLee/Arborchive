@@ -65,10 +65,8 @@ public:
         }
         results.push_back(std::move(model));
       }
-      // LOG_DEBUG << "SQL execution successful: " << sql << std::endl;
-      // LOG_DEBUG << "Query find " << results.size() << std::endl;
-      std::cout << "SQL execution successful: " << sql << std::endl;
-      std::cout << "Query find " << results.size() << std::endl;
+      LOG_DEBUG << "SQL execution successful: " << sql << std::endl;
+      LOG_DEBUG << "Query find " << results.size() << std::endl;
       sqlite3_finalize(stmt);
     } else
       LOG_ERROR << "SQL execution failed: " << sql << std::endl;

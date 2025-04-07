@@ -23,30 +23,32 @@ void DependencyManager::processPendingModels() {
       if (model->solve_dependence()) {
         LOG_DEBUG << "Successfully resolved dependencies for model: "
                   << model->getName() << std::endl;
-      } else
+      } else {
         LOG_DEBUG << "Failed to resolve dependencies for model: "
                   << model->getName() << std::endl;
-      failModels.push_back(std::move(model));
+        failModels.push_back(std::move(model));
+      }
     }
 
-    std::cout << "nihao" << std::endl;
+    LOG_DEBUG << "Now pending models: " << pending_models_.size() << std::endl;
     if (failModels.size() == pending_models_.size()) {
-      LOG_ERROR << "Failed to resolve dependencies for some models"
+      LOG_ERROR << "Failed to resolve dependencies for some models, try to "
+                   "solve in the next turn."
                 << std::endl;
       clear();
-      break;
+      return;
     }
     if (failModels.size() == 0) {
       LOG_DEBUG << "Finished processing pending models" << std::endl;
       clear();
-      break;
+      return;
     }
+    pending_models_ = std::move(failModels);
   }
   LOG_ERROR << "Failed to resolve dependencies for all models" << std::endl;
 }
 
 void DependencyManager::clear() {
-  std::lock_guard<std::mutex> lock(mutex_);
   pending_models_.clear();
   LOG_DEBUG << "Cleared all pending models from dependency manager"
             << std::endl;
