@@ -1,9 +1,9 @@
 #include "core/router.h"
+#include "core/ast_visitor.h"
 #include "core/compilation_recorder.h"
-#include "core/processor/base_processor.h"
 #include "db/async_manager.h"
 #include "db/dependency_manager.h"
-#include "interface/clang_indexer.h"
+#include "interface/clang_ast_manager.h"
 #include "util/hires_timer.h"
 #include "util/logger/macros.h"
 #include <filesystem>
@@ -24,9 +24,8 @@ void Router::processCompilation(const Configuration &config) {
   HighResTimer frontend_timer;
   frontend_timer.start();
 
-  // Create translation unit
-  auto tu = ClangIndexer::getInstance().createTranslationUnit(
-      config.general.source_path);
+  // 使用ClangASTManager处理AST
+  ClangASTManager::getInstance().loadConfig(config);
 
   // 记录前端耗时
   recorder.recordTime(CompilationTimeKind::FrontendCpu,
@@ -37,7 +36,8 @@ void Router::processCompilation(const Configuration &config) {
   // 解析AST
   HighResTimer extractor_timer;
   extractor_timer.start();
-  parseAST(tu);
+
+  parseAST(config.general.source_path);
 
   // 记录解析耗时
   recorder.recordTime(CompilationTimeKind::ExtractorCpu,
@@ -50,34 +50,16 @@ void Router::processCompilation(const Configuration &config) {
                     frontend_timer.elapsed() + extractor_timer.elapsed());
 }
 
-void Router::parseAST(CXTranslationUnit tu) {
-  if (!tu) {
-    std::cerr << "Invalid translation unit" << std::endl;
-    return;
-  }
+void Router::parseAST(const std::string &source_path) {
+  // 使用C++ API处理AST
+  ClangASTManager::getInstance().processAST(
+      source_path, [this](clang::ASTContext &context) { // 这里定义具体的AST处理逻辑
+        // 创建并运行AST访问者
+        ASTVisitor visitor(context);
+        visitor.TraverseDecl(context.getTranslationUnitDecl());
 
-  CXCursor cursor = clang_getTranslationUnitCursor(tu);
-  clang_visitChildren(cursor, visitCursor, nullptr);
-
-  AsyncDatabaseManager::getInstance().flush();
-  DependencyManager::getInstance().processPendingModels();
-}
-
-CXChildVisitResult Router::visitCursor(CXCursor cursor, CXCursor parent,
-                                       CXClientData client_data) {
-  (void)parent;
-  (void)client_data;
-  LOG_DEBUG << "Visiting cursor of kind: " << clang_getCursorKind(cursor)
-            << std::endl;
-  auto handlerIt = BaseProcessor::registry().find(clang_getCursorKind(cursor));
-  if (handlerIt != BaseProcessor::registry().end()) {
-    auto handler = handlerIt->second();
-    handler->handle(cursor); // 调用处理器
-    LOG_DEBUG << "Handler successfully processed cursor of kind: "
-              << clang_getCursorKind(cursor) << std::endl;
-  } else {
-    LOG_WARNING << "No handler found for cursor kind: "
-                << clang_getCursorKind(cursor) << std::endl;
-  }
-  return CXChildVisit_Recurse; // 继续遍历子节点
+        // 处理完成，刷新数据库并处理待处理的模型
+        AsyncDatabaseManager::getInstance().flush();
+        DependencyManager::getInstance().processPendingModels();
+      });
 }

@@ -2,7 +2,7 @@
 #define _ROUTER_H_
 
 #include "model/config/configuration.h"
-#include <clang-c/Index.h>
+#include <clang/AST/ASTContext.h>
 #include <string>
 
 class Router {
@@ -15,15 +15,13 @@ public:
     return instance;
   }
 
-  void parseAST(CXTranslationUnit tu);
   void processCompilation(const Configuration &config);
 
 private:
   ~Router() = default;
   Router() = default;
 
-  static CXChildVisitResult visitCursor(CXCursor cursor, CXCursor parent,
-                                        CXClientData client_data);
+  void parseAST(const std::string &source_path);
 };
 
 #endif // _ROUTER_H_
