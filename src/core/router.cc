@@ -5,9 +5,7 @@
 #include "db/dependency_manager.h"
 #include "interface/clang_ast_manager.h"
 #include "util/hires_timer.h"
-#include "util/logger/macros.h"
 #include <filesystem>
-#include <memory>
 
 void Router::processCompilation(const Configuration &config) {
   AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
@@ -53,7 +51,8 @@ void Router::processCompilation(const Configuration &config) {
 void Router::parseAST(const std::string &source_path) {
   // 使用C++ API处理AST
   ClangASTManager::getInstance().processAST(
-      source_path, [this](clang::ASTContext &context) { // 这里定义具体的AST处理逻辑
+      source_path,
+      [this](clang::ASTContext &context) { // 这里定义具体的AST处理逻辑
         // 创建并运行AST访问者
         ASTVisitor visitor(context);
         visitor.TraverseDecl(context.getTranslationUnitDecl());

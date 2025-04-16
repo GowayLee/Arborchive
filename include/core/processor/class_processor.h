@@ -8,7 +8,11 @@
 
 class ClassDeclProcessor : public BaseProcessor {
 public:
-  void handle(CXCursor cursor) override;
+  void process(const clang::SourceLocation beginLoc,
+               const clang::SourceLocation endLoc);
+  ClassDeclProcessor(clang::ASTContext *ast_context)
+      : BaseProcessor(ast_context) {};
+  ~ClassDeclProcessor() = default;
 };
 
 #endif // _CLASS_PROCESSOR_H_

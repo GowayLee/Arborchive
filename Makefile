@@ -1,6 +1,14 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -Iinclude -g
-LDFLAGS ?= -lclang -lsqlite3
+
+# 使用llvm-config获取编译标志和链接标志
+LLVM_CONFIG ?= llvm-config
+LLVM_CXXFLAGS = $(shell $(LLVM_CONFIG) --cxxflags)
+LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --ldflags)
+
+CLANG_LIBS = $(shell $(LLVM_CONFIG) --libs core)
+
+LDFLAGS ?= $(CLANG_LIBS) $(LLVM_LDFLAGS) -lsqlite3
 DEBUG_FLAG ?= -D_DEBUG_ -O0
 RELEASE_FLAGS ?= -O2
 
@@ -24,11 +32,11 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -MMD -MP -c $< -o $@
 
 -include $(OBJS:.o=.d)
 

@@ -2,7 +2,6 @@
 #define _ROUTER_H_
 
 #include "model/config/configuration.h"
-#include <clang/AST/ASTContext.h>
 #include <string>
 
 class Router {

@@ -1,15 +1,18 @@
 #ifndef _AST_VISITOR_H_
 #define _AST_VISITOR_H_
 
-#include "core/processor/base_processor.h"
+#include "core/processor/location_processor.h"
+#include "core/processor/class_processor.h"
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
-#include <vector>
 
 class ASTVisitor : public clang::RecursiveASTVisitor<ASTVisitor> {
 private:
   clang::ASTContext &context_;
-  std::vector<std::unique_ptr<BaseProcessor>> processors_;
+
+  ////// Processors /////////
+  std::unique_ptr<LocationProcessor> location_processor_ = nullptr;
+  std::unique_ptr<ClassDeclProcessor> class_decl_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext &context);

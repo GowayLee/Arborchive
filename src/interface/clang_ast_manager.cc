@@ -13,7 +13,7 @@ public:
       : callback(std::move(cb)), context(ctx) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
-    callback(context); // FIXME: ?
+    callback(Context); // FIXME: ?
   }
 
 private:

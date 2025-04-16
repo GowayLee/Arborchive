@@ -1,31 +1,19 @@
 #ifndef _BASE_PROCESSOR_H_
 #define _BASE_PROCESSOR_H_
 
+#include "db/async_manager.h"
 #include "db/dependency_manager.h"
-#include <clang-c/Index.h>
-#include <functional>
-#include <map>
-#include <memory>
+#include <clang/AST/ASTContext.h>
 
 class BaseProcessor {
 protected:
   DependencyManager &dep_manager_ = DependencyManager::getInstance();
+  AsyncDatabaseManager &db_manager_ = AsyncDatabaseManager::getInstance();
+  clang::ASTContext *ast_context_ = nullptr;
 
 public:
-  using FactoryFunc = std::function<std::unique_ptr<BaseProcessor>()>;
-
-  virtual void handle(CXCursor cursor) = 0;
-
-  // 获取注册表实例
-  static std::map<CXCursorKind, FactoryFunc> &registry() {
-    static std::map<CXCursorKind, FactoryFunc> instance;
-    return instance;
-  }
-
-  // 注册处理器工厂函数
-  static void registerProcessor(CXCursorKind kind, FactoryFunc factory) {
-    registry().emplace(kind, std::move(factory));
-  }
+  BaseProcessor(clang::ASTContext *ast_context) : ast_context_(ast_context) {};
+  ~BaseProcessor() = default;
 };
 
 #endif // _BASE_PROCESSOR_H_

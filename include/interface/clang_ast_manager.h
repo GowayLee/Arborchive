@@ -2,7 +2,7 @@
 #define _CLANG_AST_MANAGER_H_
 
 #include "model/config/configuration.h"
-#include <clang/Frontend/CompilerInstance.h>
+#include <clang/AST/ASTContext.h>
 #include <memory>
 #include <string>
 #include <vector>

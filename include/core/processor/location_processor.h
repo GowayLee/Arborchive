@@ -2,41 +2,15 @@
 #define _LOCATION_PROCESSOR_H_
 
 #include "core/processor/base_processor.h"
-#include "model/sql/location_model.h"
-#include "db/async_manager.h"
-#include <clang-c/Index.h>
-#include <memory>
+#include <clang/Basic/SourceLocation.h>
 
 class LocationProcessor : public BaseProcessor {
 public:
-  virtual ~LocationProcessor() = default;
-  void handle(CXCursor cursor) override = 0;
-
-protected:
-  AsyncDatabaseManager &db_manager_ = AsyncDatabaseManager::getInstance();
-  void processStatement(CXCursor cursor);
-  void processExpression(CXCursor cursor);
-};
-
-// 导出所有具体的处理器类
-class DeclStmtProcessor : public LocationProcessor {
-public:
-  void handle(CXCursor cursor) override;
-};
-
-class CompoundStmtProcessor : public LocationProcessor {
-public:
-  void handle(CXCursor cursor) override;
-};
-
-class DeclRefExprProcessor : public LocationProcessor {
-public:
-  void handle(CXCursor cursor) override;
-};
-
-class CallExprProcessor : public LocationProcessor {
-public:
-  void handle(CXCursor cursor) override;
+  void process(const clang::SourceLocation beginLoc,
+               const clang::SourceLocation endLoc);
+  LocationProcessor(clang::ASTContext *ast_context)
+      : BaseProcessor(ast_context) {};
+  ~LocationProcessor() = default;
 };
 
 #endif // _LOCATION_PROCESSOR_H_

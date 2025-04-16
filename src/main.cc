@@ -1,6 +1,5 @@
 #include "core/router.h"
 #include "db/async_manager.h"
-#include "interface/clang_indexer.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
 #include "model/config/cl_args.h"
@@ -34,11 +33,6 @@ int main(int argc, char *argv[]) {
 
     // 加载日志配置
     if (!logger.loadConfig(configLoader.getConfig().logger))
-      return 1;
-
-    // 初始化libclang
-    auto &clangIndexer = ClangIndexer::getInstance();
-    if (!clangIndexer.loadConfig(configLoader.getConfig()))
       return 1;
 
     // 初始化数据库连接
