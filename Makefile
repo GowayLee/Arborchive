@@ -1,14 +1,14 @@
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -Iinclude -g
+CXXFLAGS ?= -Wall -Wextra -pedantic -Iinclude -g
 
 # 使用llvm-config获取编译标志和链接标志
 LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS = $(shell $(LLVM_CONFIG) --cxxflags)
 LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --ldflags)
 
-CLANG_LIBS = $(shell $(LLVM_CONFIG) --libs core)
+CLANG_LDFLAGS = $(shell $(LLVM_CONFIG) --libs core) -lclang-cpp
 
-LDFLAGS ?= $(CLANG_LIBS) $(LLVM_LDFLAGS) -lsqlite3
+LDFLAGS ?= $(CLANG_LDFLAGS) $(LLVM_LDFLAGS) -lsqlite3
 DEBUG_FLAG ?= -D_DEBUG_ -O0
 RELEASE_FLAGS ?= -O2
 
@@ -17,28 +17,39 @@ SRC_DIR = src
 OBJ_DIR = build/obj
 INCLUDE_DIR = include
 
-SRCS = $(wildcard $(SRC_DIR)/*.cc \
-                  $(SRC_DIR)/interface/*.cc \
-                  $(SRC_DIR)/util/*.cc \
-                  $(SRC_DIR)/db/*.cc \
-                  $(SRC_DIR)/db/table_defines/*.cc \
-                  $(SRC_DIR)/core/*.cc \
-                  $(SRC_DIR)/core/processor/*.cc \
-                  $(SRC_DIR)/model/*/*.cc)
+# 将源文件分为两组：需要LLVM标志的和不需要的
+LLVM_SRCS = $(wildcard $(SRC_DIR)/core/*.cc \
+                       $(SRC_DIR)/core/processor/*.cc)
 
-OBJS = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(SRCS))
+NORMAL_SRCS = $(wildcard $(SRC_DIR)/*.cc \
+                         $(SRC_DIR)/interface/*.cc \
+                         $(SRC_DIR)/util/*.cc \
+                         $(SRC_DIR)/db/*.cc \
+                         $(SRC_DIR)/db/table_defines/*.cc \
+                         $(SRC_DIR)/model/*/*.cc)
+
+# 生成对应的目标文件路径
+LLVM_OBJS = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(LLVM_SRCS))
+NORMAL_OBJS = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(NORMAL_SRCS))
+ALL_OBJS = $(LLVM_OBJS) $(NORMAL_OBJS)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(ALL_OBJS)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+# 使用LLVM标志编译核心文件
+$(OBJ_DIR)/core/%.o: $(SRC_DIR)/core/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -MMD -MP -c $< -o $@
 
--include $(OBJS:.o=.d)
+# 不使用LLVM标志编译其他文件
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(ALL_OBJS:.o=.d)
 
 debug: CXXFLAGS += $(DEBUG_FLAG)
 debug: all

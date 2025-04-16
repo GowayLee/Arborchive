@@ -1,8 +1,8 @@
 #ifndef _AST_VISITOR_H_
 #define _AST_VISITOR_H_
 
-#include "core/processor/location_processor.h"
 #include "core/processor/class_processor.h"
+#include "core/processor/location_processor.h"
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
 

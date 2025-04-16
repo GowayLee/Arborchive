@@ -1,4 +1,4 @@
-#include "interface/clang_ast_manager.h"
+#include "core/clang_ast_manager.h"
 #include "util/logger/macros.h"
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/CompilationDatabase.h>
