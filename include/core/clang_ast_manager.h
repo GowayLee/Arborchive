@@ -3,6 +3,7 @@
 
 #include "model/config/configuration.h"
 #include <clang/AST/ASTContext.h>
+#include <clang/Frontend/CompilerInstance.h>
 #include <memory>
 #include <string>
 #include <vector>
