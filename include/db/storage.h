@@ -2,6 +2,7 @@
 #define _STORAGE_H_
 
 #include "../third_party/sqlite_orm.h"
+#include "model/config/configuration.h"
 #include "table_init.h"
 #include <memory>
 
@@ -17,9 +18,9 @@ public:
   }
 
   // initialize ORM
-  inline void initialize(const std::string &sqliteDbPath = "") {
-    if (!sqliteDbPath.empty())
-      _sqliteDbPath = sqliteDbPath;
+  inline void initialize(const DatabaseConfig config) {
+    if (!config.path.empty())
+      _sqliteDbPath = config.path;
 
     _storage =
         std::make_unique<Storage::StorageType>(initStorage(_sqliteDbPath));
