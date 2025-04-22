@@ -83,13 +83,18 @@ bool ClangASTManager::processAST(
   int argc = args.size();
   std::vector<const char *> argv;
 
+  // 转换参数为C风格字符串数组
   for (const auto &arg : args)
     argv.push_back(arg.c_str());
 
+  // 创建编译数据库
   std::string errorMsg;
   std::unique_ptr<clang::tooling::FixedCompilationDatabase> compdbPtr =
       clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
           argc, argv.data(), errorMsg);
+
+  if (!errorMsg.empty())
+    LOG_DEBUG << "Compilation database message: " << errorMsg << std::endl;
 
   if (!compdbPtr) {
     LOG_ERROR << "Failed to create compilation database: " << errorMsg
@@ -112,19 +117,31 @@ bool ClangASTManager::processAST(
 std::vector<std::string> ClangASTManager::convertToCommandLineArgs() const {
   std::vector<std::string> args;
 
+  // clang++ by default
+  args.push_back("clang++");
+
+  // FixedCompilationDatabase::loadFromCommandLine所需的
+  args.push_back("--");
+
+  // inlude PATH
   for (const auto &path : includePaths)
     args.push_back("-I" + path);
 
+  // Macro def
   for (const auto &def : defines)
     args.push_back("-D" + def);
 
+  // cpp std
   if (!cxxStandard.empty())
     args.push_back("-std=" + cxxStandard);
 
+  // Other compilation flags
   args.insert(args.end(), flags.begin(), flags.end());
 
   // 显示已转换的参数
+  LOG_DEBUG << "Command line arguments:" << std::endl;
   for (const auto &arg : args)
     LOG_DEBUG << "Arg: " << arg << std::endl;
+
   return args;
 }
