@@ -1,10 +1,9 @@
 #ifndef _TABLE_INIT_H_
 #define _TABLE_INIT_H_
 
-#include "../third_party/sqlite_orm.h"
 #include "table_defs/compilation.h"
+#include "table_defs/container.h"
 #include "table_defs/location.h"
-
 
 using namespace sqlite_orm;
 
@@ -23,7 +22,11 @@ inline auto initStorage(const std::string &path) {
       LocTableFn::locations(),
       LocTableFn::locations_default(),
       LocTableFn::locations_stmt(),
-      LocTableFn::locations_expr()
+      LocTableFn::locations_expr(),
+      // Container Tables
+      ContainerTableFn::container(),
+      ContainerTableFn::files(),
+      ContainerTableFn::folders()
     );
   // clang-format on
 }

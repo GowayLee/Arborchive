@@ -1,14 +1,12 @@
-#ifndef _CORE_COMPILATION_RECORDER_H_
-#define _CORE_COMPILATION_RECORDER_H_
+#ifndef _CORE_COMP_RECORDER_H_
+#define _CORE_COMP_RECORDER_H_
 
-#include "db/async_manager.h"
-#include "model/sql/compilation_model.h"
+#include "model/db/compilation.h"
 #include <string>
 #include <vector>
 
-class CompilationRecorder {
+class CompRecorder {
 public:
-  CompilationRecorder(AsyncDatabaseManager &db);
   int createCompilation(const std::string &working_directory);
 
   void recordArguments(const std::vector<std::string> &flags);
@@ -16,10 +14,21 @@ public:
   void recordFile(const std::string &file);
   void finalize(double total_cpu, double total_elapsed);
 
+  static CompRecorder &getInstance() {
+    static CompRecorder instance;
+    return instance;
+  }
+
+  ~CompRecorder() = default;
+
+  CompRecorder(const CompRecorder &) = delete;
+
+  CompRecorder &operator=(const CompRecorder &) = delete;
+
 private:
-  AsyncDatabaseManager &db_manager_;
+  CompRecorder() = default;
   int compilation_id_;
   int time_record_seq_ = 0;
 };
 
-#endif // _CORE_COMPILATION_RECORDER_H_
+#endif // _CORE_COMP_RECORDER_H_

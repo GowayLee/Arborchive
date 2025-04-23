@@ -3,6 +3,13 @@
 
 #include <string>
 
+enum class CompilationTimeKind {
+  FrontendCpu = 1,
+  FrontendElapsed = 2,
+  ExtractorCpu = 3,
+  ExtractorElapsed = 4
+};
+
 namespace DbModel {
 
 struct Compilation {

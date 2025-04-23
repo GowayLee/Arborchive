@@ -1,7 +1,6 @@
 #ifndef _DEPENDENCY_MANAGER_H_
 #define _DEPENDENCY_MANAGER_H_
 
-#include "model/sql/sql_model.h"
 #include "model/dependency/base_dep.h"
 #include <memory>
 #include <mutex>

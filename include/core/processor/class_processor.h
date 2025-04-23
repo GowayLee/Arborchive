@@ -3,7 +3,6 @@
 
 #include "core/processor/base_processor.h"
 #include "util/logger/macros.h"
-#include <clang-c/Index.h>
 #include <iostream>
 
 class ClassDeclProcessor : public BaseProcessor {

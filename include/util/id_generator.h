@@ -4,39 +4,56 @@
 #include "util/logger/macros.h"
 #include <atomic>
 #include <mutex>
-#include <string>
+#include <type_traits>
+#include <typeindex>
 #include <unordered_map>
+
+#define GENID(type) IDGenerator::generateId<DbModel::type>()
 
 class IDGenerator {
 private:
   static std::mutex mutex_;
-  static std::unordered_map<std::string, std::atomic<uint64_t>> table_ids_;
+  static std::unordered_map<std::type_index, std::atomic<int>> type_ids_;
+
+  template <typename T> static std::type_index getTypeIndex() {
+    return std::type_index(typeid(T));
+  }
 
 public:
-  static uint64_t generateId(const std::string &table_name) {
+  template <typename T> static int generateId() {
+    static_assert(std::is_member_pointer<decltype(&T::id)>::value,
+                  "Model must have an 'id' member");
+
     std::lock_guard<std::mutex> lock(mutex_);
-    auto &id_generator = table_ids_[table_name];
+    auto &id_generator = type_ids_[getTypeIndex<T>()];
     if (id_generator == 0) {
-      LOG_INFO << "Initializing first ID for table: " << table_name
+      LOG_INFO << "Initializing first ID for type: " << typeid(T).name()
                << std::endl;
       id_generator = 1;
     }
-    uint64_t new_id = id_generator.fetch_add(1);
-    LOG_DEBUG << "Generated new ID " << new_id << " for table: " << table_name
-              << std::endl;
+    int new_id = id_generator.fetch_add(1);
+    LOG_DEBUG << "Generated new ID " << new_id
+              << " for type: " << typeid(T).name() << std::endl;
     return new_id;
   }
 
-  static uint64_t getLastGeneratedId(const std::string &table_name) {
+  template <typename T> static int getLastGeneratedId() {
+    static_assert(std::is_member_pointer<decltype(&T::id)>::value,
+                  "Model must have an 'id' member");
+
     std::lock_guard<std::mutex> lock(mutex_);
-    auto it = table_ids_.find(table_name);
-    if (it == table_ids_.end()) {
-      LOG_WARNING << "No IDs generated yet for table: " << table_name
+    auto it = type_ids_.find(getTypeIndex<T>());
+    if (it == type_ids_.end()) {
+      LOG_WARNING << "No IDs generated yet for type: " << typeid(T).name()
                   << std::endl;
       return 0;
     }
-    uint64_t last_id = it->second.load();
+    int last_id = it->second.load();
     return last_id > 0 ? last_id - 1 : 0;
+  }
+
+  template <typename T> static void generateAndSetId(const T &model) {
+    model.id = generateId<T>();
   }
 };
 #endif // _ID_GENERATOR_H_
