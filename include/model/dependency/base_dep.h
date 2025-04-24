@@ -1,7 +1,6 @@
 #ifndef _BASE_DEP_H_
 #define _BASE_DEP_H_
 
-#include "model/sql/sql_model.h"
 #include <memory>
 #include <typeinfo>
 

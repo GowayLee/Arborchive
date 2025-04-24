@@ -2,14 +2,11 @@
 #include "core/ast_visitor.h"
 #include "core/clang_ast_manager.h"
 #include "core/compilation_recorder.h"
-#include "db/async_manager.h"
-#include "db/dependency_manager.h"
 #include "util/hires_timer.h"
 #include <filesystem>
 
 void Router::processCompilation(const Configuration &config) {
-  AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
-  CompilationRecorder recorder(dbManager);
+  CompRecorder &recorder = CompRecorder::getInstance();
 
   // 创建编译记录
   recorder.createCompilation(config.compilation.working_directory);
@@ -26,10 +23,8 @@ void Router::processCompilation(const Configuration &config) {
   ClangASTManager::getInstance().loadConfig(config);
 
   // 记录前端耗时
-  recorder.recordTime(CompilationTimeKind::FrontendCpu,
-                      frontend_timer.cpu_time());
-  recorder.recordTime(CompilationTimeKind::FrontendElapsed,
-                      frontend_timer.elapsed());
+  recorder.recordTime(CompTimeKind::FrontendCpu, frontend_timer.cpu_time());
+  recorder.recordTime(CompTimeKind::FrontendElapsed, frontend_timer.elapsed());
 
   // 解析AST
   HighResTimer extractor_timer;
@@ -38,9 +33,8 @@ void Router::processCompilation(const Configuration &config) {
   parseAST(config.general.source_path);
 
   // 记录解析耗时
-  recorder.recordTime(CompilationTimeKind::ExtractorCpu,
-                      extractor_timer.cpu_time());
-  recorder.recordTime(CompilationTimeKind::ExtractorElapsed,
+  recorder.recordTime(CompTimeKind::ExtractorCpu, extractor_timer.cpu_time());
+  recorder.recordTime(CompTimeKind::ExtractorElapsed,
                       extractor_timer.elapsed());
 
   // 完成记录
@@ -58,7 +52,7 @@ void Router::parseAST(const std::string &source_path) {
         visitor.TraverseDecl(context.getTranslationUnitDecl());
 
         // 处理完成，刷新数据库并处理待处理的模型
-        AsyncDatabaseManager::getInstance().flush();
-        DependencyManager::getInstance().processPendingModels();
+        // AsyncDatabaseManager::getInstance().flush();
+        // DependencyManager::getInstance().processPendingModels();
       });
 }

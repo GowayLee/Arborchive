@@ -1,14 +1,11 @@
 #ifndef _BASE_PROCESSOR_H_
 #define _BASE_PROCESSOR_H_
 
-#include "db/async_manager.h"
-#include "db/dependency_manager.h"
 #include <clang/AST/ASTContext.h>
 
 class BaseProcessor {
 protected:
-  DependencyManager &dep_manager_ = DependencyManager::getInstance();
-  AsyncDatabaseManager &db_manager_ = AsyncDatabaseManager::getInstance();
+  // DependencyManager &dep_manager_ = DependencyManager::getInstance();
   clang::ASTContext *ast_context_ = nullptr;
 
 public:
