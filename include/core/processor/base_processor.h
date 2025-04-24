@@ -5,7 +5,6 @@
 
 class BaseProcessor {
 protected:
-  // DependencyManager &dep_manager_ = DependencyManager::getInstance();
   clang::ASTContext *ast_context_ = nullptr;
 
 public:

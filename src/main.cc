@@ -1,5 +1,4 @@
 #include "core/router.h"
-// #include "db/async_manager.h"
 #include "db/storage_facade.h"
 #include "interface/cli.h"
 #include "interface/config_loader.h"
@@ -37,9 +36,6 @@ int main(int argc, char *argv[]) {
       return 1;
 
     // 初始化数据库连接
-    // AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
-    // dbManager.loadConfig(configLoader.getConfig().database);
-    // dbManager.start();
     STG.initOrm(configLoader.getConfig().database);
 
     // Start parsing process
@@ -47,7 +43,6 @@ int main(int argc, char *argv[]) {
     router.processCompilation(configLoader.getConfig());
 
     // Manually stop worker threads
-    // dbManager.stop();
     logger.stop();
     return 0;
   } catch (const std::exception &e) {

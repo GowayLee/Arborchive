@@ -16,15 +16,5 @@ void StorageFacade::transaction(const std::function<bool()> &f) {
   storage->transaction(f);
 }
 
+// Instantiations of template methods defined here
 #include "storage_facade_instantiations.inc"
-// // 显式实例化所有被调用的模板特化
-// // clang-format off
-// template void StorageFacade::insertClassObj<DbModel::Compilation&>(DbModel::Compilation&);
-// template void StorageFacade::insertClassObj<DbModel::CompilationArg&>(DbModel::CompilationArg&);
-// template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::CompilationTime&);
-// template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
-// template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
-// template void StorageFacade::insertClassObj<DbModel::CompilationFinished&>(DbModel::CompilationFinished&);
-// template void StorageFacade::insertClassObj<DbModel::LocationStmt&>(DbModel::LocationStmt&);
-// template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
-// // clang-format on
