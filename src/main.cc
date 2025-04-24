@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     // AsyncDatabaseManager &dbManager = AsyncDatabaseManager::getInstance();
     // dbManager.loadConfig(configLoader.getConfig().database);
     // dbManager.start();
-    StorageFacade::initOrm(configLoader.getConfig().database);
+    STG.initOrm(configLoader.getConfig().database);
 
     // Start parsing process
     Router &router = Router::getInstance();

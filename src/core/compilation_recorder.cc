@@ -11,7 +11,7 @@ using namespace DbModel;
 
 int CompRecorder::createCompilation(const std::string &working_directory) {
   Compilation comp_model = {GENID(Compilation), working_directory};
-  StorageFacade::insertClassObj(comp_model);
+  STG.insertClassObj(comp_model);
   return compilation_id_ = comp_model.id;
   // auto compilation_model =
   //     std::make_unique<CompilationModel>(working_directory);
@@ -23,16 +23,16 @@ void CompRecorder::recordArguments(const std::vector<std::string> &flags) {
   for (const auto &arg : flags) {
     CompilationArg comp_arg = {compilation_id_, arg_num++};
     comp_arg.arg = arg;
-    StorageFacade::insertClassObj(comp_arg);
+    STG.insertClassObj(comp_arg);
     // auto args_model =
     //     std::make_unique<CompilationArgsModel>(compilation_id_, arg_num++);
   }
 }
 
-void CompRecorder::recordTime(CompilationTimeKind kind, double seconds) {
+void CompRecorder::recordTime(CompTimeKind kind, double seconds) {
   CompilationTime comp_time = {compilation_id_, time_record_seq_,
                                static_cast<int>(kind), seconds};
-  StorageFacade::insertClassObj(comp_time);
+  STG.insertClassObj(comp_time);
   // auto model = std::make_unique<CompilationTimeModel>(compilation_id_,
   //                                                     time_record_seq_++);
   // model->setKind(kind);
@@ -45,8 +45,8 @@ void CompRecorder::recordFile(const std::string &file) {
   File file_model = {GENID(File), file};
   Container container_model = {GENID(Container), file_model.id,
                                static_cast<int>(ContainerType::File)};
-  StorageFacade::insertClassObj(file_model);
-  StorageFacade::insertClassObj(container_model);
+  STG.insertClassObj(file_model);
+  STG.insertClassObj(container_model);
   // auto fileModel = std::make_unique<FileModel>(file);
   // auto containerModel = std::make_unique<ContainerModel>(
   //     ContainerType::File, fileModel->getLastId());
@@ -57,7 +57,7 @@ void CompRecorder::recordFile(const std::string &file) {
 void CompRecorder::finalize(double total_cpu, double total_elapsed) {
   CompilationFinished finshed_model = {GENID(CompilationFinished), total_cpu,
                                        total_elapsed};
-  StorageFacade::insertClassObj(finshed_model);
+  STG.insertClassObj(finshed_model);
   // auto finished_model =
   //     std::make_unique<CompilationFinishedModel>(compilation_id_);
   // finished_model->setCpuSeconds(total_cpu);

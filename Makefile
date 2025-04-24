@@ -1,6 +1,8 @@
 CXX ?= g++
 CXXFLAGS ?= -Wall -Wextra -pedantic -Iinclude -g
 
+PY = python3
+
 # 使用llvm-config获取编译标志和链接标志
 LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS = $(shell $(LLVM_CONFIG) --cxxflags)
@@ -16,6 +18,7 @@ TARGET = build/demo
 SRC_DIR = src
 OBJ_DIR = build/obj
 INCLUDE_DIR = include
+SCRIPT_DIR = scripts
 
 # 将源文件分为两组：需要LLVM标志的和不需要的
 LLVM_SRCS = $(wildcard $(SRC_DIR)/core/*.cc \
@@ -25,7 +28,6 @@ NORMAL_SRCS = $(wildcard $(SRC_DIR)/*.cc \
                          $(SRC_DIR)/interface/*.cc \
                          $(SRC_DIR)/util/*.cc \
                          $(SRC_DIR)/db/*.cc \
-                         $(SRC_DIR)/db/table_defines/*.cc \
                          $(SRC_DIR)/model/*/*.cc)
 
 # 生成对应的目标文件路径
@@ -44,10 +46,17 @@ $(OBJ_DIR)/core/%.o: $(SRC_DIR)/core/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -MMD -MP -c $< -o $@
 
+# 生成实例化代码
+src/db/storage_facade_instantiations.inc: $(wildcard include/model/db/*.h) $(SCRIPT_DIR)/generate_instantiations.py
+	$(PY) $(SCRIPT_DIR)/generate_instantiations.py
+
 # 不使用LLVM标志编译其他文件
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+# 使目标文件依赖于生成的实例化代码
+$(OBJ_DIR)/db/storage_facade.o: src/db/storage_facade_instantiations.inc
 
 -include $(ALL_OBJS:.o=.d)
 

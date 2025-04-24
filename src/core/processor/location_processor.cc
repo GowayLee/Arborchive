@@ -64,8 +64,8 @@ void LocationProcessor::process(const clang::SourceLocation beginLoc,
   // // 保存到数据库
   // db_manager_.pushModel(locStmtModel->insert_sql());
   // db_manager_.pushModel(locModel->insert_sql());
-  StorageFacade::insertClassObj(locStmtModel);
-  StorageFacade::insertClassObj(locModel);
+  STG.insertClassObj(locStmtModel);
+  STG.insertClassObj(locModel);
 
   // 创建依赖关系
   // auto locDep = std::make_unique<LocationDep>(std::move(locStmtModel));

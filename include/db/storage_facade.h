@@ -2,24 +2,30 @@
 #define _STORAGE_FACADE_H_
 
 #include "model/config/configuration.h"
-#include "storage.h"
+#include <functional>
+#include <memory>
+
+#define STG StorageFacade::getInstance()
 
 class StorageFacade {
 public:
-  static void initOrm(const DatabaseConfig config) {
-    Storage::getInstance().initialize(config);
+  static StorageFacade &getInstance() {
+    static StorageFacade instance;
+    return instance;
   }
 
-  template <typename T> static inline void insertClassObj(T &&obj) {
-    auto storage = Storage::getInstance().getStorage();
-    auto statement = storage->prepare(replace(std::forward<T>(obj)));
-    storage->execute(statement);
-  }
+  void initOrm(const DatabaseConfig config);
 
-  static inline void transaction(const std::function<bool()> &f) {
-    auto storage = Storage::getInstance().getStorage();
-    storage->transaction(f);
-  }
+  template <typename T> void insertClassObj(T &&obj);
+
+  void transaction(const std::function<bool()> &f);
+
+  ~StorageFacade() = default;
+  StorageFacade(const StorageFacade &) = delete;
+  StorageFacade &operator=(const StorageFacade &) = delete;
+
+private:
+  StorageFacade() = default;
 };
 
 #endif // _STORAGE_FACADE_H_
