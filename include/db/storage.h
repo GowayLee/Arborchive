@@ -4,6 +4,8 @@
 #include "../third_party/sqlite_orm.h"
 #include "model/config/configuration.h"
 #include "table_init.h"
+#include "util/logger/macros.h"
+#include <filesystem>
 #include <memory>
 
 using namespace sqlite_orm;
@@ -21,6 +23,26 @@ public:
   inline void initialize(const DatabaseConfig config) {
     if (!config.path.empty())
       _sqliteDbPath = config.path;
+
+    // 检查并清空现有数据库文件
+    if (std::filesystem::exists(_sqliteDbPath)) {
+      LOG_WARNING << "Database file already existed, try to remove..."
+                  << std::endl;
+      try {
+        std::filesystem::remove(_sqliteDbPath);
+      } catch (const std::filesystem::filesystem_error &e) {
+        throw std::runtime_error("Failed to remove existing database file: " +
+                                 std::string(e.what()));
+      }
+      LOG_INFO << "Remove old database file" << std::endl;
+    }
+    LOG_INFO << "Create new database file: " << _sqliteDbPath << std::endl;
+
+    // 确保目录存在
+    std::filesystem::path dbPath(_sqliteDbPath);
+    if (!dbPath.parent_path().empty()) {
+      std::filesystem::create_directories(dbPath.parent_path());
+    }
 
     _storage =
         std::make_unique<Storage::StorageType>(initStorage(_sqliteDbPath));
