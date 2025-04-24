@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum class CompilationTimeKind {
+enum class CompTimeKind {
   FrontendCpu = 1,
   FrontendElapsed = 2,
   ExtractorCpu = 3,

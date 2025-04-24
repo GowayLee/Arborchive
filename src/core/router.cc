@@ -23,10 +23,8 @@ void Router::processCompilation(const Configuration &config) {
   ClangASTManager::getInstance().loadConfig(config);
 
   // 记录前端耗时
-  recorder.recordTime(CompilationTimeKind::FrontendCpu,
-                      frontend_timer.cpu_time());
-  recorder.recordTime(CompilationTimeKind::FrontendElapsed,
-                      frontend_timer.elapsed());
+  recorder.recordTime(CompTimeKind::FrontendCpu, frontend_timer.cpu_time());
+  recorder.recordTime(CompTimeKind::FrontendElapsed, frontend_timer.elapsed());
 
   // 解析AST
   HighResTimer extractor_timer;
@@ -35,9 +33,8 @@ void Router::processCompilation(const Configuration &config) {
   parseAST(config.general.source_path);
 
   // 记录解析耗时
-  recorder.recordTime(CompilationTimeKind::ExtractorCpu,
-                      extractor_timer.cpu_time());
-  recorder.recordTime(CompilationTimeKind::ExtractorElapsed,
+  recorder.recordTime(CompTimeKind::ExtractorCpu, extractor_timer.cpu_time());
+  recorder.recordTime(CompTimeKind::ExtractorElapsed,
                       extractor_timer.elapsed());
 
   // 完成记录
