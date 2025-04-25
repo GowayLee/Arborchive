@@ -9,9 +9,24 @@
 
 using namespace DbModel;
 
+void LocationProcessor::processDefault(const clang::SourceLocation beginLoc,
+                                       const clang::SourceLocation endLoc) {
+  process(beginLoc, endLoc, LocationType::Default);
+}
+
+void LocationProcessor::processStmt(const clang::SourceLocation beginLoc,
+                                    const clang::SourceLocation endLoc) {
+  process(beginLoc, endLoc, LocationType::STMT);
+}
+
+void LocationProcessor::processExpr(const clang::SourceLocation beginLoc,
+                                    const clang::SourceLocation endLoc) {
+  process(beginLoc, endLoc, LocationType::EXPR);
+}
 // 处理方法实现
 void LocationProcessor::process(const clang::SourceLocation beginLoc,
-                                const clang::SourceLocation endLoc) {
+                                const clang::SourceLocation endLoc,
+                                const LocationType type) {
   if (!ast_context_) {
     LOG_ERROR << "AST context not set" << std::endl;
     return;
@@ -49,30 +64,43 @@ void LocationProcessor::process(const clang::SourceLocation beginLoc,
   // 创建位置模型
   // FIXME: Currently, only one source file will be parsed, so container_id here
   // is always 0
-  LocationStmt locStmtModel = {
-      GENID(LocationStmt),          0,
-      static_cast<int>(start_line), static_cast<int>(start_column),
-      static_cast<int>(end_line),   static_cast<int>(end_column)};
-  Location locModel = {GENID(Location), locStmtModel.id};
+  Location locModel;
+  switch (type) {
+  case LocationType::Default: {
+    LocationDefault locDefaultModel = {
+        GENID(LocationDefault),       0,
+        static_cast<int>(start_line), static_cast<int>(start_column),
+        static_cast<int>(end_line),   static_cast<int>(end_column)};
+    locModel = {GENID(Location), locDefaultModel.id};
 
-  // auto locStmtModel = std::make_unique<LocationStmtModel>(
-  //     0, start_line, start_column, end_line, end_column);
-  // auto locModel =
-  // std::make_unique<LocationModel>(LocationType::location_stmt,
-  //                                                 locStmtModel->getLastId());
+    STG.insertClassObj(locDefaultModel);
+    STG.insertClassObj(locModel);
+    break;
+  }
+  case LocationType::STMT: {
+    LocationStmt locStmtModel = {
+        GENID(LocationStmt),          0,
+        static_cast<int>(start_line), static_cast<int>(start_column),
+        static_cast<int>(end_line),   static_cast<int>(end_column)};
+    locModel = {GENID(Location), locStmtModel.id};
 
-  // // 保存到数据库
-  // db_manager_.pushModel(locStmtModel->insert_sql());
-  // db_manager_.pushModel(locModel->insert_sql());
-  STG.insertClassObj(locStmtModel);
-  STG.insertClassObj(locModel);
+    STG.insertClassObj(locStmtModel);
+    STG.insertClassObj(locModel);
+    break;
+  }
+  case LocationType::EXPR: {
+    LocationExpr locExprModel = {
+        GENID(LocationExpr),          0,
+        static_cast<int>(start_line), static_cast<int>(start_column),
+        static_cast<int>(end_line),   static_cast<int>(end_column)};
+    locModel = {GENID(Location), locExprModel.id};
 
-  // 创建依赖关系
-  // auto locDep = std::make_unique<LocationDep>(std::move(locStmtModel));
-  // locDep->setDependency("files", "name", filename);
-
-  // DependencyManager::getInstance().addPendingModelDep(
-  //     std::unique_ptr<LocationDep>(std::move(locDep)));
+    STG.insertClassObj(locExprModel);
+    STG.insertClassObj(locModel);
+    break;
+  }
+  locModelId = locModel.id;
+  }
 
   LOG_DEBUG << "Recorded statement location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column
