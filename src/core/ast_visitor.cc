@@ -17,10 +17,22 @@ void ASTVisitor::initProcessors() {
 bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *stmt) {
   LOG_DEBUG << "Visiting DeclStmt" << std::endl;
 
-  location_processor_->process(stmt->getBeginLoc(), stmt->getEndLoc());
+  location_processor_->processStmt(stmt->getBeginLoc(), stmt->getEndLoc());
 
   return true;
 }
+
+bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) { return true; }
+
+bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) { return true; }
+
+bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) { return true; }
+
+bool ASTVisitor::VisitEnumDecl(clang::EnumConstantDecl *decl) { return true; }
+
+bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
+
+bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *decl) { return true; }
 
 bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *stmt) {
   LOG_DEBUG << "Visiting CompoundStmt" << std::endl;
@@ -42,18 +54,6 @@ bool ASTVisitor::VisitCallExpr(clang::CallExpr *expr) {
 
 bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
   LOG_DEBUG << "Visiting CXXRecordDecl" << std::endl;
-
-  return true;
-}
-
-bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
-  LOG_DEBUG << "Visiting FunctionDecl" << std::endl;
-
-  return true;
-}
-
-bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
-  LOG_DEBUG << "Visiting VarDecl" << std::endl;
 
   return true;
 }

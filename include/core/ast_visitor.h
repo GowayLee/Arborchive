@@ -21,8 +21,13 @@ public:
 
   // 声明类型
   bool VisitCXXRecordDecl(clang::CXXRecordDecl *decl);
+
   bool VisitFunctionDecl(clang::FunctionDecl *decl);
+  bool VisitTypeDecl(clang::TypeDecl *decl);
   bool VisitVarDecl(clang::VarDecl *decl);
+  bool VisitEnumDecl(clang::EnumConstantDecl *decl);
+  bool VisitFriendDecl(clang::FriendDecl *decl);
+  bool VisitTemplateDecl(clang::TemplateDecl *decl);
 
   // 语句类型
   bool VisitDeclStmt(clang::DeclStmt *stmt);
