@@ -4,11 +4,12 @@
 #include <string>
 
 enum class DeclType {
-  DECLARED_TYPE = 1,
-  VARIABLE = 2,
-  ENUM_CONSTANT = 3,
-  FRIEND_DECL = 4,
-  CONCEPT_TEMPLATE = 5
+  FUNCTION = 1,
+  DECLARED_TYPE = 2,
+  VARIABLE = 3,
+  ENUM_CONSTANT = 4,
+  FRIEND_DECL = 5,
+  CONCEPT_TEMPLATE = 6
 };
 
 namespace DbModel {

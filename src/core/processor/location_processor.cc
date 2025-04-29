@@ -99,8 +99,8 @@ void LocationProcessor::process(const clang::SourceLocation beginLoc,
     STG.insertClassObj(locModel);
     break;
   }
-  locModelId = locModel.id;
   }
+  locModelId = locModel.id;
 
   LOG_DEBUG << "Recorded statement location: " << start_line << ":"
             << start_column << "-" << end_line << ":" << end_column

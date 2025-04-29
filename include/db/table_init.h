@@ -4,6 +4,7 @@
 #include "table_defs/compilation.h"
 #include "table_defs/container.h"
 #include "table_defs/declaration.h"
+#include "table_defs/function.h"
 #include "table_defs/location.h"
 
 using namespace sqlite_orm;
@@ -29,7 +30,8 @@ inline auto initStorage(const std::string &path) {
       ContainerTableFn::files(),
       ContainerTableFn::folders(),
       // Declaration Tables
-      DeclTableFn::declarations()
+      DeclTableFn::declarations(),
+      FuncTableFn::functions()
     );
   // clang-format on
 }

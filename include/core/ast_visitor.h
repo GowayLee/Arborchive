@@ -2,6 +2,7 @@
 #define _AST_VISITOR_H_
 
 #include "core/processor/class_processor.h"
+#include "core/processor/function_processor.h"
 #include "core/processor/location_processor.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -14,6 +15,7 @@ private:
   ////// Processors /////////
   std::unique_ptr<LocationProcessor> location_processor_ = nullptr;
   std::unique_ptr<ClassDeclProcessor> class_decl_processor_ = nullptr;
+  std::unique_ptr<FunctionProcessor> function_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext &context);
@@ -23,7 +25,14 @@ public:
   // 声明类型
   bool VisitCXXRecordDecl(clang::CXXRecordDecl *decl);
 
-  bool VisitFunctionDecl(clang::FunctionDecl *decl);
+  // Function Family
+  // bool VisitFunctionDecl(clang::FunctionDecl *decl);
+  // bool VisitCXXMethodDecl(clang::CXXMethodDecl *decl);
+  bool VisitCXXConstructorDecl(clang::CXXConstructorDecl *decl);
+  bool VisitCXXDestructorDecl(clang::CXXDestructorDecl *decl);
+  bool VisitCXXConversionDecl(clang::CXXConversionDecl *decl);
+  bool VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl *decl);
+
   bool VisitTypeDecl(clang::TypeDecl *decl);
   bool VisitVarDecl(clang::VarDecl *decl);
   bool VisitEnumDecl(clang::EnumDecl *decl);
