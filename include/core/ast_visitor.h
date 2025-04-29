@@ -3,6 +3,7 @@
 
 #include "core/processor/class_processor.h"
 #include "core/processor/location_processor.h"
+#include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
 
@@ -25,7 +26,7 @@ public:
   bool VisitFunctionDecl(clang::FunctionDecl *decl);
   bool VisitTypeDecl(clang::TypeDecl *decl);
   bool VisitVarDecl(clang::VarDecl *decl);
-  bool VisitEnumDecl(clang::EnumConstantDecl *decl);
+  bool VisitEnumDecl(clang::EnumDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
 

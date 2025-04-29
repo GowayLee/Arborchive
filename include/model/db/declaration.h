@@ -13,7 +13,7 @@ enum class DeclType {
 
 namespace DbModel {
 
-struct Declration {
+struct Declaration {
   int id;
   int associated_id;
   int type;

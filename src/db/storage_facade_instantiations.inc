@@ -6,6 +6,7 @@ template void StorageFacade::insertClassObj<DbModel::CompilationBuildMode&>(DbMo
 template void StorageFacade::insertClassObj<DbModel::CompilationFinished&>(DbModel::CompilationFinished&);
 template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::CompilationTime&);
 template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
+template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);

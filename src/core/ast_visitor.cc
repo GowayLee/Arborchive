@@ -28,7 +28,7 @@ bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) { return true; }
 
 bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) { return true; }
 
-bool ASTVisitor::VisitEnumDecl(clang::EnumConstantDecl *decl) { return true; }
+bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
 
