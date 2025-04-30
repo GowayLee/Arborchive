@@ -47,6 +47,25 @@ LocIdPair *SrcLocRecorder::processExpr(const Stmt *stmt,
                  context);
 }
 
+LocIdPair *SrcLocRecorder::processDefault(const Decl *decl,
+                                          const ASTContext *context) {
+
+  return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::DEFAULT,
+                 context);
+}
+
+LocIdPair *SrcLocRecorder::processStmt(const Decl *decl,
+                                       const ASTContext *context) {
+  return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::STMT,
+                 context);
+}
+
+LocIdPair *SrcLocRecorder::processExpr(const Decl *decl,
+                                       const ASTContext *context) {
+  return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::EXPR,
+                 context);
+}
+
 // 处理方法实现
 LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
                                    const SourceLocation endLoc,
