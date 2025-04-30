@@ -9,6 +9,8 @@ template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Contai
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
+template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
+template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
 template void StorageFacade::insertClassObj<DbModel::Function&>(DbModel::Function&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
 template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::LocationDefault&);

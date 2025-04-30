@@ -31,7 +31,10 @@ inline auto initStorage(const std::string &path) {
       ContainerTableFn::folders(),
       // Declaration Tables
       DeclTableFn::declarations(),
-      FuncTableFn::functions()
+      // Function Tables
+      FuncTableFn::functions(),
+      FuncTableFn::fun_decls(),
+      FuncTableFn::fun_def()
     );
   // clang-format on
 }

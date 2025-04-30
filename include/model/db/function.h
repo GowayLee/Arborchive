@@ -22,6 +22,18 @@ struct Function {
   int kind;
 };
 
+struct FunDecl {
+  int id;
+  int function;
+  int type_id;
+  std::string name;
+  int location;
+};
+
+struct FunDef {
+  int id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_
