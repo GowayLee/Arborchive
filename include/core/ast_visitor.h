@@ -26,7 +26,7 @@ public:
   bool VisitCXXRecordDecl(clang::CXXRecordDecl *decl);
 
   // Function Family
-  // bool VisitFunctionDecl(clang::FunctionDecl *decl);
+  bool VisitFunctionDecl(clang::FunctionDecl *decl);
   // bool VisitCXXMethodDecl(clang::CXXMethodDecl *decl);
   bool VisitCXXConstructorDecl(clang::CXXConstructorDecl *decl);
   bool VisitCXXDestructorDecl(clang::CXXDestructorDecl *decl);

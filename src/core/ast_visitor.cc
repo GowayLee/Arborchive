@@ -23,31 +23,43 @@ bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *stmt) {
   return true;
 }
 
-// bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) { return true;
-// } bool ASTVisitor::VisitCXXMethodDecl(clang::CXXMethodDecl *decl) { return
-// true; }
+bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
+
+  LOG_DEBUG << "Visiting Base Function: " << decl->getNameAsString()
+            << std::endl;
+
+  // Hereby, function will process function of @operator @builtin_function,
+  // @user_defined_function, @normal_function
+  function_processor_->routerProcess(decl);
+  return true;
+}
+
 bool ASTVisitor::VisitCXXConstructorDecl(clang::CXXConstructorDecl *decl) {
-  LOG_DEBUG << "Visiting DeclStmt" << std::endl;
+  LOG_DEBUG << "Visiting Constructor Function: " << decl->getNameAsString()
+            << std::endl;
 
   function_processor_->processCXXConstructor(decl);
 
   return true;
 }
 bool ASTVisitor::VisitCXXDestructorDecl(clang::CXXDestructorDecl *decl) {
-  LOG_DEBUG << "Visiting DeclStmt" << std::endl;
+  LOG_DEBUG << "Visiting Destructor Function: " << decl->getNameAsString()
+            << std::endl;
 
   function_processor_->processCXXDestructor(decl);
   return true;
 }
 bool ASTVisitor::VisitCXXConversionDecl(clang::CXXConversionDecl *decl) {
-  LOG_DEBUG << "Visiting DeclStmt" << std::endl;
+  LOG_DEBUG << "Visiting Conversion Function: " << decl->getNameAsString()
+            << std::endl;
 
   function_processor_->processCXXConversion(decl);
   return true;
 }
 bool ASTVisitor::VisitCXXDeductionGuideDecl(
     clang::CXXDeductionGuideDecl *decl) {
-  LOG_DEBUG << "Visiting DeclStmt" << std::endl;
+  LOG_DEBUG << "Visiting Deduction Guide Function: " << decl->getNameAsString()
+            << std::endl;
 
   function_processor_->processCXXDeductionGuide(decl);
   return true;
