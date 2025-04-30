@@ -1,5 +1,6 @@
 #include "core/ast_visitor.h"
-#include "core/processor/location_processor.h"
+// #include "core/processor/location_processor.h"
+#include "core/srcloc_recorder.h"
 #include "util/logger/macros.h"
 #include <memory>
 
@@ -8,7 +9,7 @@ ASTVisitor::ASTVisitor(clang::ASTContext &context) : context_(context) {
 }
 
 void ASTVisitor::initProcessors() {
-  location_processor_ = std::make_unique<LocationProcessor>(&context_);
+  // location_processor_ = std::make_unique<LocationProcessor>(&context_);
   class_decl_processor_ = std::make_unique<ClassDeclProcessor>(&context_);
   function_processor_ = std::make_unique<FunctionProcessor>(&context_);
 }
@@ -18,7 +19,8 @@ void ASTVisitor::initProcessors() {
 bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *stmt) {
   LOG_DEBUG << "Visiting DeclStmt" << std::endl;
 
-  location_processor_->processStmt(stmt->getBeginLoc(), stmt->getEndLoc());
+  // location_processor_->processStmt(stmt->getBeginLoc(), stmt->getEndLoc());
+  SrcLocRecorder::processStmt(cast<Stmt>(stmt), &context_);
 
   return true;
 }

@@ -3,7 +3,7 @@
 
 #include "core/processor/class_processor.h"
 #include "core/processor/function_processor.h"
-#include "core/processor/location_processor.h"
+// #include "core/processor/location_processor.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
@@ -13,7 +13,7 @@ private:
   clang::ASTContext &context_;
 
   ////// Processors /////////
-  std::unique_ptr<LocationProcessor> location_processor_ = nullptr;
+  // std::unique_ptr<LocationProcessor> location_processor_ = nullptr;
   std::unique_ptr<ClassDeclProcessor> class_decl_processor_ = nullptr;
   std::unique_ptr<FunctionProcessor> function_processor_ = nullptr;
 
