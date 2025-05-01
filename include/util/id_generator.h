@@ -32,8 +32,8 @@ public:
       id_generator = 1;
     }
     int new_id = id_generator.fetch_add(1);
-    LOG_DEBUG << "Generated new ID " << new_id
-              << " for type: " << typeid(T).name() << std::endl;
+    // LOG_DEBUG << "Generated new ID " << new_id
+    //           << " for type: " << typeid(T).name() << std::endl;
     return new_id;
   }
 

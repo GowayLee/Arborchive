@@ -89,7 +89,7 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) const {
     llvm::StringRef name = decl->getName();
 
     // Check is starts with "__builtin__"
-    if (name.starts_with("__builtin__")) {
+    if (name.starts_with("__builtin__")) { // FIXME: may be official API support?
       processBuiltinFunc(cast<FunctionDecl>(decl));
       return;
     }
