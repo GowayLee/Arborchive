@@ -8,9 +8,9 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
+  auto &logger = Logger::getInstance();
+  logger.init();
   try {
-    auto &logger = Logger::getInstance();
-    logger.init();
 
     auto &cli = Cli::getInstance();
     cli.init(argc, argv);
@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     logger.stop();
     return 0;
   } catch (const std::exception &e) {
+    logger.stop();
     std::cerr << "Fatal error: " << e.what() << std::endl;
     return 1;
   }

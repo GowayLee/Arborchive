@@ -1,17 +1,24 @@
 #include "core/processor/function_processor.h"
+#include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
 #include "util/id_generator.h"
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
+#include <clang/AST/StmtCXX.h>
 
 using namespace clang;
 
 // Create base function struct and return id
 int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
                                       const FuncType type) const {
-  DbModel::Function function = {GENID(Function), decl->getNameAsString(),
-                                static_cast<int>(type)};
+  LocIdPair *locIdPair =
+      SrcLocRecorder::processDefault(cast<Decl>(decl), ast_context_);
+  std::string name = decl->getNameAsString();
+  DbModel::Function function = {GENID(Function), name, static_cast<int>(type)};
+  DbModel::FunDecl fun_decl = {GENID(FunDecl), function.id, 0, name,
+                               locIdPair->spec_id};
+
   STG.insertClassObj(function);
   return function.id;
 }
