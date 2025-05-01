@@ -73,10 +73,10 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
                                    const ASTContext *context) {
   const auto &sourceManager = context->getSourceManager();
 
-  if (beginLoc.isInvalid() || endLoc.isInvalid()) {
-    LOG_WARNING << "Invalid source location for statement" << std::endl;
-    return nullptr;
-  }
+  // if (beginLoc.isInvalid() || endLoc.isInvalid()) {
+  //   std::cout << "Invalid source location for statement" << std::endl;
+  //   return nullptr;
+  // }
 
   // 获取开始位置信息
   const unsigned start_line = sourceManager.getSpellingLineNumber(beginLoc);
@@ -95,14 +95,12 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
     // 使用较新Clang版本中通用的方法获取文件名
     llvm::StringRef fileName = sourceManager.getFilename(beginLoc);
     filename = std::filesystem::path(fileName.str()).filename().string();
-  } else {
-    LOG_WARNING << "Could not determine file for statement" << std::endl;
-    return nullptr;
-  }
+  } else
+    LOG_WARNING << "Could not determine file for statement, use default value" << std::endl;
 
   // 创建位置模型
   // FIXME: Currently, only one source file will be parsed, so container_id here
-  // is always 0
+  // is always 0. Update: Can use variable `filename`
   Location locModel;
   LocIdPair *result = nullptr;
 
@@ -144,10 +142,6 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
     break;
   }
   }
-
-  LOG_DEBUG << "Recorded statement location: " << start_line << ":"
-            << start_column << "-" << end_line << ":" << end_column
-            << std::endl;
 
   return result;
 }

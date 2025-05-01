@@ -53,20 +53,35 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) const {
   }
 
   // Determine isBuiltin
-  llvm::StringRef name = decl->getName();
-  if (decl->getBuiltinID() != 0 || name.starts_with("__builtin__")) {
+
+  // Check isBuiltin without nameValid
+  if (decl->getBuiltinID() != 0) {
     processBuiltinFunc(cast<FunctionDecl>(decl));
     return;
   }
 
-  // Determine isUserDefinedLiteral
-  if (name.find("operator\"\"") == 0) { // FIXME: maybe official API support?
-    processUserDefinedLiteral(cast<FunctionDecl>(decl));
-    return;
+  // Check isBuiltin with nameValid
+  if (decl->getIdentifier() != nullptr) {
+    llvm::StringRef name = decl->getName();
+
+    // Check is starts with "__builtin__"
+    if (name.starts_with("__builtin__")) {
+      processBuiltinFunc(cast<FunctionDecl>(decl));
+      return;
+    }
+
+    // Check isUserDefinedLiteral
+    if (name.find("operator\"\"") == 0) { // FIXME: maybe official API support?
+      processUserDefinedLiteral(cast<FunctionDecl>(decl));
+      return;
+    }
+  } else {
+    LOG_DEBUG << "Function has no identifier, skipping name-based checks"
+              << std::endl;
   }
 
   // Otherwise, isNormalFunction
-  processUserDefinedLiteral(cast<FunctionDecl>(decl));
+  processNormalFunc(cast<FunctionDecl>(decl));
 }
 
 void FunctionProcessor::processBuiltinFunc(

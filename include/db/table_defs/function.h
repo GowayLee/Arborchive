@@ -35,7 +35,7 @@ inline auto fun_def() {
 
 inline auto function_return_type() {
   return make_table(
-      "funtcion_return_type",
+      "function_return_type",
       make_column("id", &DbModel::FuncRetType::id),
       make_column("return_type", &DbModel::FuncRetType::return_type));
 }
