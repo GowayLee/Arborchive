@@ -7,8 +7,6 @@
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
 
-using namespace clang;
-
 // Create base function struct and return id
 int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
                                       const FuncType type) const {

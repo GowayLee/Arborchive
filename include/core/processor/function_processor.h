@@ -5,25 +5,26 @@
 #include "model/db/function.h"
 #include <iostream>
 
+using namespace clang;
+
 class FunctionProcessor : public BaseProcessor {
 public:
-  void routerProcess(const clang::FunctionDecl *decl) const;
-  void processCXXConstructor(const clang::CXXConstructorDecl *decl) const;
-  void processCXXDestructor(const clang::CXXDestructorDecl *decl) const;
-  void processCXXConversion(const clang::CXXConversionDecl *decl) const;
-  void processCXXDeductionGuide(const clang::CXXDeductionGuideDecl *decl) const;
-  void processOperatorFunc(const clang::FunctionDecl *decl) const;
-  void processBuiltinFunc(const clang::FunctionDecl *decl) const;
-  void processUserDefinedLiteral(const clang::FunctionDecl *decl) const;
-  void processNormalFunc(const clang::FunctionDecl *decl) const;
+  void routerProcess(const FunctionDecl *decl) const;
+  void processCXXConstructor(const CXXConstructorDecl *decl) const;
+  void processCXXDestructor(const CXXDestructorDecl *decl) const;
+  void processCXXConversion(const CXXConversionDecl *decl) const;
+  void processCXXDeductionGuide(const CXXDeductionGuideDecl *decl) const;
+  void processOperatorFunc(const FunctionDecl *decl) const;
+  void processBuiltinFunc(const FunctionDecl *decl) const;
+  void processUserDefinedLiteral(const FunctionDecl *decl) const;
+  void processNormalFunc(const FunctionDecl *decl) const;
 
-  FunctionProcessor(clang::ASTContext *ast_context)
-      : BaseProcessor(ast_context) {};
+  FunctionProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~FunctionProcessor() = default;
 
 private:
-  int handleBaseFunc(const clang::FunctionDecl *decl,
-                     const FuncType type) const;
+  int handleBaseFunc(const FunctionDecl *decl, const FuncType type) const;
+  void checkBasicInfo(const FunctionDecl *decl, int funcId) const;
 };
 
 #endif // _FUNCTION_PROCESSOR_H_
