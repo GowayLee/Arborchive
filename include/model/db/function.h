@@ -34,6 +34,11 @@ struct FunDef {
   int id;
 };
 
+struct FuncRetType {
+  int id;
+  int return_type;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_

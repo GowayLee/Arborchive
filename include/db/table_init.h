@@ -6,6 +6,7 @@
 #include "table_defs/declaration.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
+#include "table_defs/type.h"
 
 using namespace sqlite_orm;
 
@@ -34,7 +35,10 @@ inline auto initStorage(const std::string &path) {
       // Function Tables
       FuncTableFn::functions(),
       FuncTableFn::fun_decls(),
-      FuncTableFn::fun_def()
+      FuncTableFn::fun_def(),
+      FuncTableFn::function_return_type(),
+      // Type Tables
+      TypeTableFn::types()
     );
   // clang-format on
 }

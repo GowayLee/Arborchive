@@ -2,24 +2,40 @@
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
+#include "model/db/type.h"
 #include "util/id_generator.h"
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
-#include <clang/AST/StmtCXX.h>
 
 using namespace clang;
 
 // Create base function struct and return id
 int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
                                       const FuncType type) const {
-  LocIdPair *locIdPair =
-      SrcLocRecorder::processDefault(cast<Decl>(decl), ast_context_);
+  LocIdPair *locIdPair = PROC_DEFT(cast<Decl>(decl), ast_context_);
   std::string name = decl->getNameAsString();
   DbModel::Function function = {GENID(Function), name, static_cast<int>(type)};
-  DbModel::FunDecl fun_decl = {GENID(FunDecl), function.id, 0, name,
+
+  // Check Type cache for Id for returnType
+  std::string typeKey =
+      DbModel::Type::makeKey(decl->getReturnType(), decl->getASTContext());
+  LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
+  int typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    typeId = *cachedId;
+  else {
+    LOG_DEBUG << "Type cache entry not found, push to pending model queue"
+              << std::endl;
+    // TODO: Dependency Manager...
+  }
+
+  DbModel::FunDecl fun_decl = {GENID(FunDecl), function.id, typeId, name,
                                locIdPair->spec_id};
+  DbModel::FuncRetType func_ret_type = {function.id, typeId};
 
   STG.insertClassObj(function);
+  STG.insertClassObj(fun_decl);
+  STG.insertClassObj(func_ret_type);
   return function.id;
 }
 
@@ -61,13 +77,23 @@ void FunctionProcessor::processBuiltinFunc(
 }
 
 void FunctionProcessor::processUserDefinedLiteral(
-    const clang::FunctionDecl *decl) const {}
+    const clang::FunctionDecl *decl) const {
+
+  int id =
+      handleBaseFunc(cast<FunctionDecl>(decl), FuncType::USER_DEFINED_LITERAL);
+}
 
 void FunctionProcessor::processOperatorFunc(
-    const clang::FunctionDecl *decl) const {}
+    const clang::FunctionDecl *decl) const {
+
+  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::OPERATOR);
+}
 
 void FunctionProcessor::processNormalFunc(
-    const clang::FunctionDecl *decl) const {}
+    const clang::FunctionDecl *decl) const {
+
+  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::NORM_FUNC);
+}
 
 void FunctionProcessor::processCXXConstructor(
     const CXXConstructorDecl *decl) const {

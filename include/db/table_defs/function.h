@@ -33,6 +33,13 @@ inline auto fun_def() {
       make_column("id", &DbModel::FunDef::id, primary_key()));
 }
 
+inline auto function_return_type() {
+  return make_table(
+      "funtcion_return_type",
+      make_column("id", &DbModel::FuncRetType::id, primary_key()),
+      make_column("return_type", &DbModel::FuncRetType::return_type, primary_key()));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn
