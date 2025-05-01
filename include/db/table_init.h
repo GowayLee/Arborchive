@@ -37,6 +37,10 @@ inline auto initStorage(const std::string &path) {
       FuncTableFn::fun_decls(),
       FuncTableFn::fun_def(),
       FuncTableFn::function_return_type(),
+      FuncTableFn::pure_functions(),
+      FuncTableFn::function_deleted(),
+      FuncTableFn::function_defaulted(),
+      FuncTableFn::function_prototyped(),
       // Type Tables
       TypeTableFn::types()
     );

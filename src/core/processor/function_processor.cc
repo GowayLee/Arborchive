@@ -31,11 +31,35 @@ int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
                                locIdPair->spec_id};
   DbModel::FuncRetType func_ret_type = {function.id, typeId};
 
+  checkBasicInfo(decl, function.id);
+
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
   STG.insertClassObj(func_ret_type);
   return function.id;
 }
+
+void FunctionProcessor::checkBasicInfo(const FunctionDecl *decl,
+                                       const int funcId) const {
+  if (decl->isPureVirtual()) {
+    DbModel::PureFuncs func_pure = {funcId};
+    STG.insertClassObj(func_pure);
+  }
+  if (decl->isDeleted()) {
+    DbModel::FuncDeleted func_deleted = {funcId};
+    STG.insertClassObj(func_deleted);
+  }
+  if (decl->isDefaulted()) {
+    DbModel::FuncDefaulted func_default = {funcId};
+    STG.insertClassObj(func_default);
+  }
+  if (decl->hasPrototype()) {
+    DbModel::FuncPrototyped func_prototype = {funcId};
+    STG.insertClassObj(func_prototype);
+  }
+}
+
+void checkBasicInfo(const FunctionDecl *decl, int funcId);
 
 // Router to process functions of @operator @builtin_function
 // @user_defined_function, @normal_function

@@ -40,6 +40,30 @@ inline auto function_return_type() {
       make_column("return_type", &DbModel::FuncRetType::return_type));
 }
 
+inline auto pure_functions() {
+  return make_table(
+      "purefunctions",
+      make_column("id", &DbModel::PureFuncs::id));
+}
+
+inline auto function_deleted() {
+  return make_table(
+      "function_deleted",
+      make_column("id", &DbModel::FuncDeleted::id));
+}
+
+inline auto function_defaulted() {
+  return make_table(
+      "function_defaulted",
+      make_column("id", &DbModel::FuncDefaulted::id));
+}
+
+inline auto function_prototyped() {
+  return make_table(
+      "function_prototyped",
+      make_column("id", &DbModel::FuncPrototyped::id));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn

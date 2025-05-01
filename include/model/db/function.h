@@ -39,6 +39,22 @@ struct FuncRetType {
   int return_type;
 };
 
+struct PureFuncs {
+  int id;
+};
+
+struct FuncDeleted {
+  int id;
+};
+
+struct FuncDefaulted {
+  int id;
+};
+
+struct FuncPrototyped {
+  int id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_
