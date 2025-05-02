@@ -55,6 +55,11 @@ struct FuncPrototyped {
   int id;
 };
 
+struct FuncEntryPt {
+  int id;
+  int entry_point;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_

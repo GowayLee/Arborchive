@@ -64,6 +64,13 @@ inline auto function_prototyped() {
       make_column("id", &DbModel::FuncPrototyped::id));
 }
 
+inline auto function_entry_point() {
+  return make_table(
+      "function_entry_point",
+      make_column("id", &DbModel::FuncEntryPt::id),
+      make_column("entry_point", &DbModel::FuncEntryPt::entry_point));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn

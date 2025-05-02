@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum class LocationType { DEFAULT = 0, STMT = 1, EXPR = 2 };
+enum class LocationType { DEFAULT = 1, STMT = 2, EXPR = 3 };
 
 namespace DbModel {
 

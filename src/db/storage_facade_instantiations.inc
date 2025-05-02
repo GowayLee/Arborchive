@@ -13,6 +13,7 @@ template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&
 template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
 template void StorageFacade::insertClassObj<DbModel::FuncDefaulted&>(DbModel::FuncDefaulted&);
 template void StorageFacade::insertClassObj<DbModel::FuncDeleted&>(DbModel::FuncDeleted&);
+template void StorageFacade::insertClassObj<DbModel::FuncEntryPt&>(DbModel::FuncEntryPt&);
 template void StorageFacade::insertClassObj<DbModel::FuncPrototyped&>(DbModel::FuncPrototyped&);
 template void StorageFacade::insertClassObj<DbModel::FuncRetType&>(DbModel::FuncRetType&);
 template void StorageFacade::insertClassObj<DbModel::Function&>(DbModel::Function&);
@@ -21,4 +22,5 @@ template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::LocationExpr&>(DbModel::LocationExpr&);
 template void StorageFacade::insertClassObj<DbModel::LocationStmt&>(DbModel::LocationStmt&);
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
+template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
 template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);

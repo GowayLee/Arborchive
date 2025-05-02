@@ -2,10 +2,13 @@
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
+#include "model/db/stmt.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
+
+Stmt *getFirstNonCompoundStmt(clang::Stmt *S);
 
 // Create base function struct and return id
 int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
@@ -31,7 +34,12 @@ int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
                                locIdPair->spec_id};
   DbModel::FuncRetType func_ret_type = {function.id, typeId};
 
-  checkBasicInfo(decl, function.id);
+  // Record @purefunction @function_deleted @function_defaulted
+  // @function_prototyped
+  recordBasicInfo(decl, function.id);
+
+  // Record @function_entry_point stmt
+  recordEntryPoint(decl, function.id);
 
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
@@ -39,8 +47,31 @@ int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   return function.id;
 }
 
-void FunctionProcessor::checkBasicInfo(const FunctionDecl *decl,
-                                       const int funcId) const {
+void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl,
+                                         const int funcId) const {
+  if (!decl->hasBody()) // Skip if function has no body
+    return;
+  Stmt *body = decl->getBody();
+  Stmt *entryStmt = getFirstNonCompoundStmt(body);
+  if (entryStmt == nullptr) // Skip if entry statement is not found
+    return;
+  std::string stmtKey =
+      DbModel::Stmt::makeKey(entryStmt, decl->getASTContext());
+  LOG_DEBUG << "Function entry point StmtKey: " << stmtKey << std::endl;
+  int stmtId = -1;
+  if (auto cachedId = SEARCH_STMT_CACHE(stmtKey))
+    stmtId = *cachedId;
+  else {
+    LOG_DEBUG << "Stmt cache entry not found, push to pending model queue"
+              << std::endl;
+    // TODO: Dependency Manager...
+  }
+  DbModel::FuncEntryPt funcEntryPt = {funcId, stmtId};
+  STG.insertClassObj(funcEntryPt);
+}
+
+void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl,
+                                        const int funcId) const {
   if (decl->isPureVirtual()) {
     DbModel::PureFuncs func_pure = {funcId};
     STG.insertClassObj(func_pure);
@@ -58,8 +89,6 @@ void FunctionProcessor::checkBasicInfo(const FunctionDecl *decl,
     STG.insertClassObj(func_prototype);
   }
 }
-
-void checkBasicInfo(const FunctionDecl *decl, int funcId);
 
 // Router to process functions of @operator @builtin_function
 // @user_defined_function, @normal_function
@@ -89,7 +118,8 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) const {
     llvm::StringRef name = decl->getName();
 
     // Check is starts with "__builtin__"
-    if (name.starts_with("__builtin__")) { // FIXME: may be official API support?
+    if (name.starts_with(
+            "__builtin__")) { // FIXME: may be official API support?
       processBuiltinFunc(cast<FunctionDecl>(decl));
       return;
     }
@@ -150,4 +180,17 @@ void FunctionProcessor::processCXXConversion(
 void FunctionProcessor::processCXXDeductionGuide(
     const CXXDeductionGuideDecl *decl) const {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
+}
+
+Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {
+  if (!S)
+    return nullptr;
+  // Recursively process the first non-compound statement
+  if (auto *CS = dyn_cast<clang::CompoundStmt>(S)) {
+    if (CS->body_empty())
+      return nullptr; // return nullptr if the compound statement is empty
+    return getFirstNonCompoundStmt(*CS->body_begin());
+  }
+  // Non-compound statement directly returns itself
+  return S;
 }

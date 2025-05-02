@@ -24,7 +24,8 @@ public:
 
 private:
   int handleBaseFunc(const FunctionDecl *decl, const FuncType type) const;
-  void checkBasicInfo(const FunctionDecl *decl, int funcId) const;
+  void recordBasicInfo(const FunctionDecl *decl, const int funcId) const;
+  void recordEntryPoint(const FunctionDecl *decl, const int funcId) const;
 };
 
 #endif // _FUNCTION_PROCESSOR_H_
