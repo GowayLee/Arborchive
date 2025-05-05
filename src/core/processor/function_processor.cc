@@ -1,5 +1,4 @@
 #include "core/processor/function_processor.h"
-#include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
 #include "model/db/stmt.h"
@@ -12,43 +11,31 @@ Stmt *getFirstNonCompoundStmt(clang::Stmt *S);
 
 // Create base function struct and return id
 int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
-                                      const FuncType type) const {
-  LocIdPair *locIdPair = PROC_DEFT(cast<Decl>(decl), ast_context_);
+                                      const FuncType type) {
+  _locIdPair = PROC_DEFT(cast<Decl>(decl), ast_context_);
   std::string name = decl->getNameAsString();
-  DbModel::Function function = {GENID(Function), name, static_cast<int>(type)};
-
-  // Check Type cache for Id for returnType
-  std::string typeKey =
-      DbModel::Type::makeKey(decl->getReturnType(), decl->getASTContext());
-  LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    LOG_DEBUG << "Type cache entry not found, push to pending model queue"
-              << std::endl;
-    // TODO: Dependency Manager...
-  }
-
-  DbModel::FunDecl fun_decl = {GENID(FunDecl), function.id, typeId, name,
-                               locIdPair->spec_id};
-  DbModel::FuncRetType func_ret_type = {function.id, typeId};
+  DbModel::Function function = {_funcId = GENID(Function), name,
+                                static_cast<int>(type)};
 
   // Record @purefunction @function_deleted @function_defaulted
   // @function_prototyped
-  recordBasicInfo(decl, function.id);
+  recordBasicInfo(decl);
 
   // Record @function_entry_point stmt
-  recordEntryPoint(decl, function.id);
+  recordEntryPoint(decl);
+
+  // Record @function_return_type
+  recordReturnType(decl);
+
+  DbModel::FunDecl fun_decl = {GENID(FunDecl), _funcId, _typeId, name,
+                               _locIdPair->spec_id};
 
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
-  STG.insertClassObj(func_ret_type);
   return function.id;
 }
 
-void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl,
-                                         const int funcId) const {
+void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
   if (!decl->hasBody()) // Skip if function has no body
     return;
   Stmt *body = decl->getBody();
@@ -66,33 +53,49 @@ void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl,
               << std::endl;
     // TODO: Dependency Manager...
   }
-  DbModel::FuncEntryPt funcEntryPt = {funcId, stmtId};
+  DbModel::FuncEntryPt funcEntryPt = {_funcId, stmtId};
   STG.insertClassObj(funcEntryPt);
 }
 
-void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl,
-                                        const int funcId) const {
+void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl) const {
   if (decl->isPureVirtual()) {
-    DbModel::PureFuncs func_pure = {funcId};
+    DbModel::PureFuncs func_pure = {_funcId};
     STG.insertClassObj(func_pure);
   }
   if (decl->isDeleted()) {
-    DbModel::FuncDeleted func_deleted = {funcId};
+    DbModel::FuncDeleted func_deleted = {_funcId};
     STG.insertClassObj(func_deleted);
   }
   if (decl->isDefaulted()) {
-    DbModel::FuncDefaulted func_default = {funcId};
+    DbModel::FuncDefaulted func_default = {_funcId};
     STG.insertClassObj(func_default);
   }
   if (decl->hasPrototype()) {
-    DbModel::FuncPrototyped func_prototype = {funcId};
+    DbModel::FuncPrototyped func_prototype = {_funcId};
     STG.insertClassObj(func_prototype);
   }
 }
 
+void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {
+  // Check Type cache for Id for returnType
+  std::string typeKey =
+      DbModel::Type::makeKey(decl->getReturnType(), decl->getASTContext());
+  LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
+  _typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    _typeId = *cachedId;
+  else {
+    LOG_DEBUG << "Type cache entry not found, push to pending model queue"
+              << std::endl;
+    // TODO: Dependency Manager...
+  }
+  DbModel::FuncRetType func_ret_type = {_funcId, _typeId};
+  STG.insertClassObj(func_ret_type);
+}
+
 // Router to process functions of @operator @builtin_function
 // @user_defined_function, @normal_function
-void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) const {
+void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
   auto kind = decl->getKind();
   // Return first, will be processed by other functions
   if (kind == Decl::CXXConstructor || kind == Decl::CXXDestructor ||
@@ -138,47 +141,41 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) const {
   processNormalFunc(cast<FunctionDecl>(decl));
 }
 
-void FunctionProcessor::processBuiltinFunc(
-    const clang::FunctionDecl *decl) const {
+void FunctionProcessor::processBuiltinFunc(const clang::FunctionDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::BUILDIN_FUNC);
 }
 
 void FunctionProcessor::processUserDefinedLiteral(
-    const clang::FunctionDecl *decl) const {
+    const clang::FunctionDecl *decl) {
 
   int id =
       handleBaseFunc(cast<FunctionDecl>(decl), FuncType::USER_DEFINED_LITERAL);
 }
 
-void FunctionProcessor::processOperatorFunc(
-    const clang::FunctionDecl *decl) const {
+void FunctionProcessor::processOperatorFunc(const clang::FunctionDecl *decl) {
 
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::OPERATOR);
 }
 
-void FunctionProcessor::processNormalFunc(
-    const clang::FunctionDecl *decl) const {
+void FunctionProcessor::processNormalFunc(const clang::FunctionDecl *decl) {
 
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::NORM_FUNC);
 }
 
-void FunctionProcessor::processCXXConstructor(
-    const CXXConstructorDecl *decl) const {
+void FunctionProcessor::processCXXConstructor(const CXXConstructorDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONSTRUCTOR);
 }
 
-void FunctionProcessor::processCXXDestructor(
-    const CXXDestructorDecl *decl) const {
+void FunctionProcessor::processCXXDestructor(const CXXDestructorDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DESTRUCTOR);
 }
 
-void FunctionProcessor::processCXXConversion(
-    const CXXConversionDecl *decl) const {
+void FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONVERSION_FUNC);
 }
 
 void FunctionProcessor::processCXXDeductionGuide(
-    const CXXDeductionGuideDecl *decl) const {
+    const CXXDeductionGuideDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
 }
 

@@ -2,6 +2,7 @@
 #define _FUNCTION_PROCESSOR_H_
 
 #include "core/processor/base_processor.h"
+#include "core/srcloc_recorder.h"
 #include "model/db/function.h"
 #include <iostream>
 
@@ -9,23 +10,29 @@ using namespace clang;
 
 class FunctionProcessor : public BaseProcessor {
 public:
-  void routerProcess(const FunctionDecl *decl) const;
-  void processCXXConstructor(const CXXConstructorDecl *decl) const;
-  void processCXXDestructor(const CXXDestructorDecl *decl) const;
-  void processCXXConversion(const CXXConversionDecl *decl) const;
-  void processCXXDeductionGuide(const CXXDeductionGuideDecl *decl) const;
-  void processOperatorFunc(const FunctionDecl *decl) const;
-  void processBuiltinFunc(const FunctionDecl *decl) const;
-  void processUserDefinedLiteral(const FunctionDecl *decl) const;
-  void processNormalFunc(const FunctionDecl *decl) const;
+  void routerProcess(const FunctionDecl *decl);
+  void processCXXConstructor(const CXXConstructorDecl *decl);
+  void processCXXDestructor(const CXXDestructorDecl *decl);
+  void processCXXConversion(const CXXConversionDecl *decl);
+  void processCXXDeductionGuide(const CXXDeductionGuideDecl *decl);
+  void processOperatorFunc(const FunctionDecl *decl);
+  void processBuiltinFunc(const FunctionDecl *decl);
+  void processUserDefinedLiteral(const FunctionDecl *decl);
+  void processNormalFunc(const FunctionDecl *decl);
 
   FunctionProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~FunctionProcessor() = default;
 
 private:
-  int handleBaseFunc(const FunctionDecl *decl, const FuncType type) const;
-  void recordBasicInfo(const FunctionDecl *decl, const int funcId) const;
-  void recordEntryPoint(const FunctionDecl *decl, const int funcId) const;
+  // Cache for common information
+  LocIdPair *_locIdPair;
+  int _funcId;
+  int _typeId;
+
+  int handleBaseFunc(const FunctionDecl *decl, const FuncType type);
+  void recordBasicInfo(const FunctionDecl *decl) const;
+  void recordEntryPoint(const FunctionDecl *decl) const;
+  void recordReturnType(const FunctionDecl *decl);
 };
 
 #endif // _FUNCTION_PROCESSOR_H_
