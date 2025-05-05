@@ -25,6 +25,8 @@ public:
 
 private:
   // Cache for common information
+  // Since the RecursiveVisitor will firstly visit FunctionDecl node, than visit
+  // related subclasses of FunctionDecl, so, we can cache the information here
   LocIdPair *_locIdPair;
   int _funcId;
   int _typeId;

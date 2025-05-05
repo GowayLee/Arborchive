@@ -6,8 +6,8 @@
 #include "table_defs/declaration.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
-#include "table_defs/type.h"
 #include "table_defs/stmt.h"
+#include "table_defs/type.h"
 
 using namespace sqlite_orm;
 

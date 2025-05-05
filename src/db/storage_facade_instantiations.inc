@@ -26,3 +26,4 @@ template void StorageFacade::insertClassObj<DbModel::LocationStmt&>(DbModel::Loc
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
 template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
 template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);
+template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
