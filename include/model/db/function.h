@@ -55,6 +55,14 @@ struct FuncPrototyped {
   int id;
 };
 
+struct FunSpecialized {
+  int id;
+};
+
+struct FunImplicit {
+  int id;
+};
+
 struct FuncEntryPt {
   int id;
   int entry_point;

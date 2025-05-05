@@ -17,6 +17,14 @@ inline auto types() {
       make_column("type", &DbModel::Type::type));
 }
 
+inline auto usertypes() {
+  return make_table(
+      "usertypes",
+      make_column("id", &DbModel::UserType::id, primary_key()),
+      make_column("name", &DbModel::UserType::name),
+      make_column("kind", &DbModel::UserType::kind));
+}
+
 // clang-format on
 
 } // namespace TypeTableFn

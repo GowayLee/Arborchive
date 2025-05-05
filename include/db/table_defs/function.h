@@ -64,6 +64,18 @@ inline auto function_prototyped() {
       make_column("id", &DbModel::FuncPrototyped::id));
 }
 
+inline auto fun_specialized() {
+  return make_table(
+      "fun_specialized",
+      make_column("id", &DbModel::FunSpecialized::id));
+}
+
+inline auto fun_implicit() {
+  return make_table(
+      "fun_implicit",
+      make_column("id", &DbModel::FunImplicit::id));
+}
+
 inline auto function_entry_point() {
   return make_table(
       "function_entry_point",

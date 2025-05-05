@@ -74,6 +74,14 @@ void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl) const {
     DbModel::FuncPrototyped func_prototype = {_funcId};
     STG.insertClassObj(func_prototype);
   }
+  if (decl->isFunctionTemplateSpecialization()) {
+    DbModel::FunSpecialized fun_specialized = {_funcId};
+    STG.insertClassObj(fun_specialized);
+  }
+  if (decl->isImplicit()) {
+    DbModel::FunImplicit fun_implicit = {_funcId};
+    STG.insertClassObj(fun_implicit);
+  }
 }
 
 void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {

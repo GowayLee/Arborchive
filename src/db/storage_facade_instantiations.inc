@@ -11,6 +11,8 @@ template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
 template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
+template void StorageFacade::insertClassObj<DbModel::FunImplicit&>(DbModel::FunImplicit&);
+template void StorageFacade::insertClassObj<DbModel::FunSpecialized&>(DbModel::FunSpecialized&);
 template void StorageFacade::insertClassObj<DbModel::FuncDefaulted&>(DbModel::FuncDefaulted&);
 template void StorageFacade::insertClassObj<DbModel::FuncDeleted&>(DbModel::FuncDeleted&);
 template void StorageFacade::insertClassObj<DbModel::FuncEntryPt&>(DbModel::FuncEntryPt&);
