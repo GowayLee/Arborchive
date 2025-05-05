@@ -1,11 +1,13 @@
 #include "core/processor/function_processor.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
-#include "model/db/stmt.h"
-#include "model/db/type.h"
 #include "util/id_generator.h"
+#include "util/key_generator/stmt.h"
+#include "util/key_generator/type.h"
+#include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
+#include <clang/AST/DeclTemplate.h>
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S);
 
@@ -43,14 +45,14 @@ void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
   if (entryStmt == nullptr) // Skip if entry statement is not found
     return;
   std::string stmtKey =
-      DbModel::Stmt::makeKey(entryStmt, decl->getASTContext());
+      KeyGen::Stmt_::makeKey(entryStmt, decl->getASTContext());
   LOG_DEBUG << "Function entry point StmtKey: " << stmtKey << std::endl;
   int stmtId = -1;
   if (auto cachedId = SEARCH_STMT_CACHE(stmtKey))
     stmtId = *cachedId;
   else {
-    LOG_DEBUG << "Stmt cache entry not found, push to pending model queue"
-              << std::endl;
+    // LOG_DEBUG << "Stmt cache entry not found, push to pending model queue"
+    //           << std::endl;
     // TODO: Dependency Manager...
   }
   DbModel::FuncEntryPt funcEntryPt = {_funcId, stmtId};
@@ -86,15 +88,15 @@ void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl) const {
 
 void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {
   // Check Type cache for Id for returnType
-  std::string typeKey =
-      DbModel::Type::makeKey(decl->getReturnType(), decl->getASTContext());
+  KeyType typeKey =
+      KeyGen::Type::makeKey(decl->getReturnType(), decl->getASTContext());
   LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
   _typeId = -1;
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
     _typeId = *cachedId;
   else {
-    LOG_DEBUG << "Type cache entry not found, push to pending model queue"
-              << std::endl;
+    // LOG_DEBUG << "Type cache entry not found, push to pending model queue"
+    //           << std::endl;
     // TODO: Dependency Manager...
   }
   DbModel::FuncRetType func_ret_type = {_funcId, _typeId};
@@ -185,6 +187,9 @@ void FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
 void FunctionProcessor::processCXXDeductionGuide(
     const CXXDeductionGuideDecl *decl) {
   int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
+  KeyType key =
+      KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
+  LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;
 }
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {
