@@ -12,8 +12,8 @@
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S);
 
 // Create base function struct and return id
-int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
-                                      const FuncType type) {
+void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
+                                       const FuncType type) {
   _locIdPair = PROC_DEFT(cast<Decl>(decl), ast_context_);
   std::string name = decl->getNameAsString();
   DbModel::Function function = {_funcId = GENID(Function), name,
@@ -29,12 +29,11 @@ int FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   // Record @function_return_type
   recordReturnType(decl);
 
-  DbModel::FunDecl fun_decl = {GENID(FunDecl), _funcId, _typeId, name,
-                               _locIdPair->spec_id};
+  DbModel::FunDecl fun_decl = {_funcDeclId = GENID(FunDecl), _funcId, _typeId,
+                               name, _locIdPair->spec_id};
 
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
-  return function.id;
 }
 
 void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
@@ -152,41 +151,40 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
 }
 
 void FunctionProcessor::processBuiltinFunc(const clang::FunctionDecl *decl) {
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::BUILDIN_FUNC);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::BUILDIN_FUNC);
 }
 
 void FunctionProcessor::processUserDefinedLiteral(
     const clang::FunctionDecl *decl) {
 
-  int id =
-      handleBaseFunc(cast<FunctionDecl>(decl), FuncType::USER_DEFINED_LITERAL);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::USER_DEFINED_LITERAL);
 }
 
 void FunctionProcessor::processOperatorFunc(const clang::FunctionDecl *decl) {
 
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::OPERATOR);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::OPERATOR);
 }
 
 void FunctionProcessor::processNormalFunc(const clang::FunctionDecl *decl) {
 
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::NORM_FUNC);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::NORM_FUNC);
 }
 
 void FunctionProcessor::processCXXConstructor(const CXXConstructorDecl *decl) {
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONSTRUCTOR);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONSTRUCTOR);
 }
 
 void FunctionProcessor::processCXXDestructor(const CXXDestructorDecl *decl) {
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DESTRUCTOR);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DESTRUCTOR);
 }
 
 void FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONVERSION_FUNC);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONVERSION_FUNC);
 }
 
 void FunctionProcessor::processCXXDeductionGuide(
     const CXXDeductionGuideDecl *decl) {
-  int id = handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
+  handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
   KeyType key =
       KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
   LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;

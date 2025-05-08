@@ -29,9 +29,10 @@ private:
   // related subclasses of FunctionDecl, so, we can cache the information here
   LocIdPair *_locIdPair;
   int _funcId;
+  int _funcDeclId;
   int _typeId;
 
-  int handleBaseFunc(const FunctionDecl *decl, const FuncType type);
+  void handleBaseFunc(const FunctionDecl *decl, const FuncType type);
   void recordBasicInfo(const FunctionDecl *decl) const;
   void recordEntryPoint(const FunctionDecl *decl) const;
   void recordReturnType(const FunctionDecl *decl);
