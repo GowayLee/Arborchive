@@ -1,90 +1,60 @@
-#include <iostream>
 #include <string>
-#include <vector>
 
-// 普通类
-class Foo {
-public:
-    Foo() {}
-    void bar() {}
+// 测试类模板推导指引的简单示例
+template <typename T> struct MyContainer {
+  T value;
 
-    // 嵌套类
-    class Nested {
-    public:
-        void nestedMethod() {}
-    };
+  MyContainer(T v) : value(v) {}
 };
 
-// 模板类
-template<typename T, typename U>
-class TemplateClass {
-public:
-    T value;
-    void templateMethod(U param) {}
-};
+// 显式推导指引 - 从相同类型构造
+MyContainer(const char *) -> MyContainer<std::string>;
 
-// 模板特化
-template<>
-class TemplateClass<int, float> {
-public:
-    void specializedMethod() {}
-};
+// 测试函数
+void testDeductionGuides() {
+  // 测试1: 使用构造函数参数推导
+  MyContainer c1(42);   // 推导为 MyContainer<int>
+  MyContainer c2(3.14); // 推导为 MyContainer<double>
 
-// 命名空间测试
-namespace MyNamespace {
-    class NamespacedClass {
-    public:
-        void namespacedMethod() {}
-    };
+  // 测试2: 使用显式推导指引
+  MyContainer c3("hello"); // 使用推导指引 -> MyContainer<std::string>
 
-    // 匿名结构体
-    struct {
-        int anonymousField;
-    } anonymousInstance;
+  // 测试3: 显式指定模板参数
+  MyContainer<std::string> c4("world"); // 不使用推导指引
+
+  // 测试4: 拷贝初始化
+  auto c5 = MyContainer(42); // 推导为 MyContainer<int>
+
+  // 测试5: 从相同类型推导
+  MyContainer c6 = c1; // 推导为 MyContainer<int>
 }
 
-// 类型别名
-using IntVector = std::vector<int>;
-using TemplateAlias = TemplateClass<double, char>;
+// 更复杂的例子 - 带多个模板参数的类
+template <typename T, typename U> struct Pair {
+  T first;
+  U second;
 
-// 模板函数
-template<typename T>
-T templateFunction(T a, T b) {
-    return a + b;
+  Pair(T f, U s) : first(f), second(s) {}
+};
+
+// 推导指引 - 从可转换类型推导
+Pair(const char *, const char *) -> Pair<std::string, std::string>;
+
+// 测试函数
+void testPairDeduction() {
+  // 测试1: 直接推导
+  Pair p1(1, 2.0); // 推导为 Pair<int, double>
+
+  // 测试2: 使用推导指引
+  Pair p2("a", "b"); // 推导为 Pair<std::string, std::string>
+
+  // 测试3: 混合类型
+  Pair p3(1, "b"); // 推导为 Pair<int, const char*>
 }
 
-// 普通函数
-int add(int a, int b) { return a + b; }
-
+// 主函数
 int main() {
-    // 基本类型测试
-    int x = 10;
-    int y = 20;
-    int z = add(x, y);
-
-    // 实例化测试
-    Foo f;
-    f.bar();
-
-    Foo::Nested n;
-    n.nestedMethod();
-
-    TemplateClass<std::string, bool> tc;
-    tc.templateMethod(true);
-
-    TemplateClass<int, float> tcs;
-    tcs.specializedMethod();
-
-    MyNamespace::NamespacedClass nc;
-    nc.namespacedMethod();
-
-    // 使用类型别名
-    IntVector iv;
-    TemplateAlias ta;
-
-    // 调用模板函数
-    double d = templateFunction(3.14, 2.71);
-
-    return z;
+  testDeductionGuides();
+  testPairDeduction();
+  return 0;
 }
-
