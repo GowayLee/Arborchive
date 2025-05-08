@@ -45,6 +45,7 @@ inline auto initStorage(const std::string &path) {
       FuncTableFn::fun_specialized(),
       FuncTableFn::fun_implicit(),
       FuncTableFn::function_entry_point(),
+      FuncTableFn::deduction_guide_for_class(),
       // Type Tables
       TypeTableFn::types(),
       TypeTableFn::usertypes(),

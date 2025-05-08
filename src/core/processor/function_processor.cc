@@ -190,6 +190,17 @@ void FunctionProcessor::processCXXDeductionGuide(
   KeyType key =
       KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
   LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;
+  int userTypeId = -1;
+  if (auto cachedId = SEARCH_USERTYPE_CACHE(key))
+    userTypeId = *cachedId;
+  else {
+    // Handle dependency manage
+  }
+  // Since this function is called by RecursiveVisitor after executing
+  // routerProcess() memeber variable _funcId still storages id of current
+  // function
+  DbModel::DeductionGuideForClass deducGuide = {_funcId, userTypeId};
+  STG.insertClassObj(deducGuide);
 }
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {

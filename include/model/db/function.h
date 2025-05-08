@@ -68,6 +68,11 @@ struct FuncEntryPt {
   int entry_point;
 };
 
+struct DeductionGuideForClass {
+  int id;
+  int class_template;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_

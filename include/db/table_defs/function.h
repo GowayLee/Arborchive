@@ -83,6 +83,13 @@ inline auto function_entry_point() {
       make_column("entry_point", &DbModel::FuncEntryPt::entry_point));
 }
 
+inline auto deduction_guide_for_class() {
+  return make_table(
+      "deduction_guide_for_class",
+      make_column("id", &DbModel::DeductionGuideForClass::id),
+      make_column("class_template", &DbModel::DeductionGuideForClass::class_template));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn
