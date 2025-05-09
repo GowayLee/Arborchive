@@ -8,6 +8,7 @@
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
+#include <clang/Basic/ExceptionSpecificationType.h>
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S);
 
@@ -28,6 +29,9 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
 
   // Record @function_return_type
   recordReturnType(decl);
+
+  // Record execption throw and noexcept
+  recordException(decl);
 
   DbModel::FunDecl fun_decl = {_funcDeclId = GENID(FunDecl), _funcId, _typeId,
                                name, _locIdPair->spec_id};
@@ -100,6 +104,53 @@ void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {
   }
   DbModel::FuncRetType func_ret_type = {_funcId, _typeId};
   STG.insertClassObj(func_ret_type);
+}
+
+void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
+  const auto *typeSrcInfo = decl->getTypeSourceInfo();
+  if (!typeSrcInfo)
+    return;
+  const auto *funcProtoType =
+      typeSrcInfo->getType()->getAs<FunctionProtoType>();
+  if (!funcProtoType)
+    return;
+  // 获取处理不同类型的异常规范
+  switch (funcProtoType->getExceptionSpecType()) {
+  case EST_DynamicNone: { // fun_decl_empty_throws
+    DbModel::FunDeclEmptyThrow eptThrow = {_funcDeclId};
+    STG.insertClassObj(eptThrow);
+    break;
+  }
+  case EST_Dynamic: { // fun_decl_throws
+    // 处理 throw(Type1, Type2, ...)
+    int index = 0;
+    for (const auto &qt : funcProtoType->exceptions()) {
+      KeyType typeKey = KeyGen::Type::makeKey(qt, decl->getASTContext());
+      int typeId = -1;
+      if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+        typeId = *cachedId;
+      else {
+        // LOG_DEBUG << "Stmt cache entry not found, push to pending model
+        // queue"
+        //           << std::endl;
+        // TODO: Dependency Manager...
+      }
+      DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index++, typeId};
+      STG.insertClassObj(funDeclThrow);
+    }
+    break;
+  }
+  case EST_BasicNoexcept: { // fun_decl_noexcept
+    DbModel::FunDeclEmptyNoexcept eptNoexcept = {_funcDeclId};
+    STG.insertClassObj(eptNoexcept);
+    break;
+  }
+  case EST_DependentNoexcept: {
+    break;
+  }
+  default:
+    break;
+  }
 }
 
 // Router to process functions of @operator @builtin_function

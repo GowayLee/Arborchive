@@ -35,6 +35,7 @@ private:
   void handleBaseFunc(const FunctionDecl *decl, const FuncType type);
   void recordBasicInfo(const FunctionDecl *decl) const;
   void recordEntryPoint(const FunctionDecl *decl) const;
+  void recordException(const clang::FunctionDecl *decl) const;
   void recordReturnType(const FunctionDecl *decl);
 };
 

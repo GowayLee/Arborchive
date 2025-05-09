@@ -90,6 +90,33 @@ inline auto deduction_guide_for_class() {
       make_column("class_template", &DbModel::DeductionGuideForClass::class_template));
 }
 
+inline auto fun_decl_throws() {
+  return make_table(
+      "fun_decl_throws",
+      make_column("fun_decl", &DbModel::FunDeclThrow::fun_decl),
+      make_column("index", &DbModel::FunDeclThrow::index),
+      make_column("type_id", &DbModel::FunDeclThrow::type_id));
+}
+
+inline auto fun_decl_empty_throws() {
+  return make_table(
+      "fun_decl_empty_throws",
+      make_column("fun_decl", &DbModel::FunDeclEmptyThrow::fun_decl));
+}
+
+inline auto fun_decl_noexcept() {
+  return make_table(
+      "fun_decl_noexcept",
+      make_column("fun_decl", &DbModel::FunDeclNoexcept::fun_decl),
+      make_column("constant", &DbModel::FunDeclNoexcept::constant));
+}
+
+inline auto fun_decl_empty_noexcept() {
+  return make_table(
+      "fun_decl_empty_noexcept",
+      make_column("fun_decl", &DbModel::FunDeclEmptyNoexcept::fun_decl));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn

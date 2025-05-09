@@ -73,6 +73,25 @@ struct DeductionGuideForClass {
   int class_template;
 };
 
+struct FunDeclThrow {
+  int fun_decl;
+  int index;
+  int type_id;
+};
+
+struct FunDeclEmptyThrow {
+  int fun_decl;
+};
+
+struct FunDeclNoexcept {
+  int fun_decl;
+  int constant;
+};
+
+struct FunDeclEmptyNoexcept {
+  int fun_decl;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_

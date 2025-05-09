@@ -11,6 +11,10 @@ template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(Db
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
+template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyNoexcept&>(DbModel::FunDeclEmptyNoexcept&);
+template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyThrow&>(DbModel::FunDeclEmptyThrow&);
+template void StorageFacade::insertClassObj<DbModel::FunDeclNoexcept&>(DbModel::FunDeclNoexcept&);
+template void StorageFacade::insertClassObj<DbModel::FunDeclThrow&>(DbModel::FunDeclThrow&);
 template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
 template void StorageFacade::insertClassObj<DbModel::FunImplicit&>(DbModel::FunImplicit&);
 template void StorageFacade::insertClassObj<DbModel::FunSpecialized&>(DbModel::FunSpecialized&);
