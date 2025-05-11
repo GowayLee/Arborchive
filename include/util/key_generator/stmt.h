@@ -68,4 +68,4 @@ static KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
 
 } // namespace KeyGen
 
-#endif // _KEY_GENERATOR_TYPE_H_
+#endif // _KEY_GENERATOR_STMT_H_

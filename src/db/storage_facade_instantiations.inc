@@ -8,6 +8,7 @@ template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
+template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);

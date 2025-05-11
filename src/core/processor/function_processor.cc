@@ -2,8 +2,10 @@
 #include "db/storage_facade.h"
 #include "model/db/function.h"
 #include "util/id_generator.h"
+#include "util/key_generator/expr.h"
 #include "util/key_generator/stmt.h"
 #include "util/key_generator/type.h"
+#include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/DeclCXX.h>
@@ -130,9 +132,6 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
       if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
         typeId = *cachedId;
       else {
-        // LOG_DEBUG << "Stmt cache entry not found, push to pending model
-        // queue"
-        //           << std::endl;
         // TODO: Dependency Manager...
       }
       DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index++, typeId};
@@ -146,6 +145,55 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
     break;
   }
   case EST_DependentNoexcept: {
+    const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
+    if (noexceptExpr) {
+      KeyType exprKey =
+          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
+      LOG_DEBUG << "Expr key: " << exprKey << std::endl;
+      int exprId = -1;
+      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+        exprId = *cachedId;
+      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
+      STG.insertClassObj(funDeclNoexcept);
+      // TODO: Assume RecursiveVisitor will first visit noexcept node then,
+      // inside expr node. So, hereby, we only caculate exprKey, after inside
+      // expr node is visited, call Dependency Manager to fill real id by
+      // exprKey
+    } else {
+      // If noexcepExpr is a nullptr, treat as fun_decl_empty_noexcept
+      DbModel::FunDeclEmptyNoexcept eptNoexcept = {_funcDeclId};
+      STG.insertClassObj(eptNoexcept);
+    }
+    break;
+  }
+  case EST_NoexceptTrue: {
+    // Need to create an expr entity, literal true
+    const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
+    if (noexceptExpr) {
+      KeyType exprKey =
+          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
+      LOG_DEBUG << "Expr key: " << exprKey << std::endl;
+      int exprId = -1;
+      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+        exprId = *cachedId;
+      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
+      STG.insertClassObj(funDeclNoexcept);
+    }
+    break;
+  }
+  case EST_NoexceptFalse: {
+    // Need to create an expr entity, literal false
+    const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
+    if (noexceptExpr) {
+      KeyType exprKey =
+          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
+      LOG_DEBUG << "Expr key: " << exprKey << std::endl;
+      int exprId = -1;
+      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+        exprId = *cachedId;
+      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
+      STG.insertClassObj(funDeclNoexcept);
+    }
     break;
   }
   default:
