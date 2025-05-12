@@ -36,6 +36,7 @@ private:
   void recordBasicInfo(const FunctionDecl *decl) const;
   void recordEntryPoint(const FunctionDecl *decl) const;
   void recordException(const clang::FunctionDecl *decl) const;
+  void recordTypedef(const FunctionDecl *decl) const;
   void recordReturnType(const FunctionDecl *decl);
 };
 

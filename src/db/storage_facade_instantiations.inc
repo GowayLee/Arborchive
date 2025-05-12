@@ -16,6 +16,7 @@ template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyNoexcept&>(DbMo
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyThrow&>(DbModel::FunDeclEmptyThrow&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclNoexcept&>(DbModel::FunDeclNoexcept&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclThrow&>(DbModel::FunDeclThrow&);
+template void StorageFacade::insertClassObj<DbModel::FunDeclTypedefType&>(DbModel::FunDeclTypedefType&);
 template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
 template void StorageFacade::insertClassObj<DbModel::FunImplicit&>(DbModel::FunImplicit&);
 template void StorageFacade::insertClassObj<DbModel::FunSpecialized&>(DbModel::FunSpecialized&);

@@ -92,6 +92,11 @@ struct FunDeclEmptyNoexcept {
   int fun_decl;
 };
 
+struct FunDeclTypedefType {
+  int fun_decl;
+  int tyepdeftype_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_FUNCTION_H_

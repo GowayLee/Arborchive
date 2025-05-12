@@ -1,6 +1,7 @@
 #include "core/processor/function_processor.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
+#include "model/db/type.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/stmt.h"
@@ -34,6 +35,9 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
 
   // Record execption throw and noexcept
   recordException(decl);
+
+  // Record function typedef
+  recordTypedef(decl);
 
   DbModel::FunDecl fun_decl = {_funcDeclId = GENID(FunDecl), _funcId, _typeId,
                                name, _locIdPair->spec_id};
@@ -198,6 +202,53 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
   }
   default:
     break;
+  }
+}
+
+void FunctionProcessor::recordTypedef(const FunctionDecl *decl) const {
+  // 获取函数声明的类型
+  QualType funcType = decl->getType();
+
+  // 检查是否是typedef类型
+  if (const TypedefType *TT = funcType->getAs<TypedefType>()) {
+    TypedefNameDecl *TND = TT->getDecl();
+    if (TND) {
+      DbModel::UserType::KeyType userTypekey =
+          KeyGen::Type::makeKey(TND, decl->getASTContext());
+      LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
+      int userTypeId = -1;
+      if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey))
+        userTypeId = *cachedId;
+      else {
+        // TODO: Dependency Manager...
+        // FIXME: Maybe function typedef is also the node which declares such
+        // userType
+      }
+      DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
+                                                        userTypeId};
+      STG.insertClassObj(funDeclTypedefType);
+    }
+  } else if (const ElaboratedType *ET = funcType->getAs<ElaboratedType>()) {
+    // 处理可能嵌套在ElaboratedType中的TypedefType
+    if (const TypedefType *TT = ET->getNamedType()->getAs<TypedefType>()) {
+      TypedefNameDecl *TND = TT->getDecl();
+      if (TND) {
+        DbModel::UserType::KeyType userTypekey =
+            KeyGen::Type::makeKey(TND, decl->getASTContext());
+        LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
+        int userTypeId = -1;
+        if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey))
+          userTypeId = *cachedId;
+        else {
+          // TODO: Dependency Manager...
+          // FIXME: Maybe function typedef is also the node which declares such
+          // userType
+        }
+        DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
+                                                          userTypeId};
+        STG.insertClassObj(funDeclTypedefType);
+      }
+    }
   }
 }
 

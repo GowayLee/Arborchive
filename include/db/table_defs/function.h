@@ -117,6 +117,13 @@ inline auto fun_decl_empty_noexcept() {
       make_column("fun_decl", &DbModel::FunDeclEmptyNoexcept::fun_decl));
 }
 
+inline auto fun_decl_typedef_type() {
+  return make_table(
+      "fun_decl_typedef_type",
+      make_column("fun_decl", &DbModel::FunDeclTypedefType::fun_decl),
+      make_column("typedeftype_id", &DbModel::FunDeclTypedefType::tyepdeftype_id));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn
