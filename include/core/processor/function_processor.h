@@ -4,7 +4,6 @@
 #include "core/processor/base_processor.h"
 #include "core/srcloc_recorder.h"
 #include "model/db/function.h"
-#include <iostream>
 
 using namespace clang;
 
@@ -38,6 +37,7 @@ private:
   void recordException(const clang::FunctionDecl *decl) const;
   void recordTypedef(const FunctionDecl *decl) const;
   void recordReturnType(const FunctionDecl *decl);
+  void recordCoroutine(const FunctionDecl *decl);
 };
 
 #endif // _FUNCTION_PROCESSOR_H_

@@ -6,6 +6,9 @@ template void StorageFacade::insertClassObj<DbModel::CompilationBuildMode&>(DbMo
 template void StorageFacade::insertClassObj<DbModel::CompilationFinished&>(DbModel::CompilationFinished&);
 template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::CompilationTime&);
 template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
+template void StorageFacade::insertClassObj<DbModel::Coroutine&>(DbModel::Coroutine&);
+template void StorageFacade::insertClassObj<DbModel::CoroutineDelete&>(DbModel::CoroutineDelete&);
+template void StorageFacade::insertClassObj<DbModel::CoroutineNew&>(DbModel::CoroutineNew&);
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
 template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);

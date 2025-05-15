@@ -20,6 +20,7 @@ struct Function {
   int id;
   std::string name;
   int kind;
+  using KeyType = std::string;
 };
 
 struct FunDecl {
@@ -95,6 +96,21 @@ struct FunDeclEmptyNoexcept {
 struct FunDeclTypedefType {
   int fun_decl;
   int tyepdeftype_id;
+};
+
+struct Coroutine {
+  int function;
+  int traits;
+};
+
+struct CoroutineNew {
+  int function;
+  int new_;
+};
+
+struct CoroutineDelete {
+  int function;
+  int delete_;
 };
 
 } // namespace DbModel

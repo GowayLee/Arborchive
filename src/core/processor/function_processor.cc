@@ -1,9 +1,11 @@
 #include "core/processor/function_processor.h"
+#include "core/processor/coroutine_helper.h"
 #include "db/storage_facade.h"
 #include "model/db/function.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
+#include "util/key_generator/function.h"
 #include "util/key_generator/stmt.h"
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
@@ -23,6 +25,11 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   DbModel::Function function = {_funcId = GENID(Function), name,
                                 static_cast<int>(type)};
 
+  // Insert Cache
+  KeyType funcKey = KeyGen::Function::makeKey(decl, decl->getASTContext());
+  LOG_DEBUG << "Function FunctionKey: " << funcKey << std::endl;
+  INSERT_FUNCTION_CACHE(funcKey, _funcId);
+
   // Record @purefunction @function_deleted @function_defaulted
   // @function_prototyped
   recordBasicInfo(decl);
@@ -38,6 +45,9 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
 
   // Record function typedef
   recordTypedef(decl);
+
+  // Record coroutine
+  recordCoroutine(decl);
 
   DbModel::FunDecl fun_decl = {_funcDeclId = GENID(FunDecl), _funcId, _typeId,
                                name, _locIdPair->spec_id};
@@ -249,6 +259,67 @@ void FunctionProcessor::recordTypedef(const FunctionDecl *decl) const {
         STG.insertClassObj(funDeclTypedefType);
       }
     }
+  }
+}
+
+void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
+  if (!isCoroutineFunction(FD))
+    return;
+
+  // 查找coroutine_traits模板
+  ASTContext &Context = FD->getASTContext();
+  auto *TraitsTemplate = findCoroutineTraitsTemplate(Context);
+
+  if (!TraitsTemplate)
+    return;
+
+  // 获取traits类型
+  QualType TraitsType = getCoroutineTraitsType(Context, FD, TraitsTemplate);
+
+  if (TraitsType.isNull())
+    return;
+
+  KeyType typeKey = KeyGen::Type::makeKey(TraitsType, FD->getASTContext());
+  LOG_DEBUG << "Coroutine Trait TypeKey: " << typeKey << std::endl;
+  int typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    typeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+  DbModel::Coroutine coroutine = {_funcId, typeId};
+  STG.insertClassObj(coroutine);
+
+  // Get coroutine_new
+  // 获取并记录协程的new函数
+  FunctionDecl *NewFD = getCoroutineNewFunction(FD, Context);
+  if (NewFD) {
+    KeyType newFuncKey = KeyGen::Function::makeKey(NewFD, FD->getASTContext());
+    LOG_DEBUG << "Function FuncKey: " << newFuncKey << std::endl;
+    int newFuncId = -1;
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(newFuncKey))
+      newFuncId = *cachedId;
+    else {
+      // TODO: Dependency Manager...
+    }
+    DbModel::CoroutineNew couroutine_new = {_funcId, newFuncId};
+    STG.insertClassObj(couroutine_new);
+  }
+
+  // Get coroutine_delete
+  // 获取并记录协程的delete函数
+  FunctionDecl *DelFD = getCoroutineDeleteFunction(FD, Context);
+  if (DelFD) {
+    KeyType delFuncKey = KeyGen::Function::makeKey(DelFD, FD->getASTContext());
+    LOG_DEBUG << "Function FuncKey: " << delFuncKey << std::endl;
+    int delFuncId = -1;
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(delFuncKey))
+      delFuncId = *cachedId;
+    else {
+      // TODO: Dependency Manager...
+    }
+    DbModel::CoroutineDelete couroutine_delete = {_funcId, delFuncId};
+    STG.insertClassObj(couroutine_delete);
   }
 }
 

@@ -124,6 +124,27 @@ inline auto fun_decl_typedef_type() {
       make_column("typedeftype_id", &DbModel::FunDeclTypedefType::tyepdeftype_id));
 }
 
+inline auto coroutine() {
+  return make_table(
+      "coroutine",
+      make_column("function", &DbModel::Coroutine::function),
+      make_column("traits", &DbModel::Coroutine::traits));
+}
+
+inline auto coroutine_new() {
+  return make_table(
+      "coroutine_new",
+      make_column("function", &DbModel::CoroutineNew::function),
+      make_column("new", &DbModel::CoroutineNew::new_));
+}
+
+inline auto coroutine_delete() {
+  return make_table(
+      "coroutine_delete",
+      make_column("function", &DbModel::CoroutineDelete::function),
+      make_column("delete", &DbModel::CoroutineDelete::delete_));
+}
+
 // clang-format on
 
 } // namespace FuncTableFn
