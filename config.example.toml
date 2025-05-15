@@ -18,11 +18,12 @@ defines = [         # 预定义宏，会被转换为 -D 选项
     # "MAX_ITEMS=1000", # 数值宏
 ]
 
-cxx_standard = "c++17" # C++标准版本，会被转换为 -std= 选项
+cxx_standard = "c++20" # C++标准版本，会被转换为 -std= 选项
 
 # 编译器标志，直接传递给编译器
 flags = [
     "-fexceptions",
+    "-fcoroutines",
     "-Wno-deprecated",
     "-O0"
     # "-Wall",           # 启用所有警告
