@@ -2,7 +2,7 @@
 
 > from CodeQL C/C++ semmelcode dbscheme
 
-### 1. **compilations**
+### 1. **compilations** :DONE
 - **描述**: 记录编译器调用的基本信息。
 - **属性**:
   - `id` (INTEGER, 主键): 编译器调用的唯一标识符。
@@ -15,7 +15,7 @@
   );
   ```
 
-### 2. **compilation_args**
+### 2. **compilation_args** :DONE
 - **描述**: 记录传递给编译器的参数。
 - **属性**:
   - `id` (INTEGER, 外键): 编译器调用的ID，引用自`compilations`表。
@@ -48,7 +48,7 @@
   | 6   | f3.c                |
   ```
 
-### 3. **compilation_build_mode**
+### 3. **compilation_build_mode** :DONE
 - **描述**: 可选地记录每次编译的构建模式。
 - **属性**:
   - `id` (INTEGER, 外键): 编译器调用的ID，引用自`compilations`表。
@@ -102,7 +102,7 @@
 
   Note: rows only contains the files that were actually compiled, does not include `#include` directives.
 
-### 5. **compilation_time**
+### 5. **compilation_time** :DONE
 - **描述**: 记录编译器调用中各阶段的耗时。
 - **属性**:
 - `id` (INTEGER, 外键): 编译器调用的ID，引用自`compilations`表。
@@ -154,7 +154,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 7. **compilation_finished**
+### 7. **compilation_finished** :DONE
 - **描述**: 记录编译器调用的完成信息。
 - **属性**:
   - `id` (INTEGER, 主键): 编译器调用的ID，引用自`compilations`表。
@@ -312,7 +312,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 17. **location** +-+
+### 17. **location** +-+ :DONE
 ```
 @location = @location_stmt | @location_expr | @location_default;
 ```
@@ -335,7 +335,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 18. **locations_default**
+### 18. **locations_default** :DONE
 
 - **描述**: 记录代码中元素的位置信息。
 - **属性**:
@@ -359,7 +359,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 19. **locations_stmt**
+### 19. **locations_stmt** :DONE
 
 - **描述**: 记录代码中stmt的位置信息。
 - **属性**:
@@ -383,7 +383,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 20. **locations_expr**
+### 20. **locations_expr** :DONE
 
 - **描述**: 记录代码中表达式的位置信息。
 - **属性**:
@@ -472,7 +472,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 24. **files**
+### 24. **files** :DONE
 - **描述**: 记录文件信息。
 - **属性**:
   - `id` (INTEGER, 主键): 文件的ID。
@@ -485,7 +485,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 25. **folders**
+### 25. **folders** :DONE
 - **描述**: 记录文件夹信息。
 - **属性**:
   - `id` (INTEGER, 主键): 文件夹的ID。
@@ -498,7 +498,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 26. **container**
+### 26. **container** :DONE
 ```
 @container = @folder | @file +-+
 ```
@@ -658,7 +658,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 36. **functions**
+### 36. **functions** :DONE
 - **描述**: 记录函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID。
@@ -685,7 +685,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 37. **function_entry_point**
+### 37. **function_entry_point** :DONE
 - **描述**: 记录函数的入口点。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -701,7 +701,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 38. **function_return_type**
+### 38. **function_return_type** :DONE
 - **描述**: 记录函数的返回类型。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -716,7 +716,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 39. **coroutine**
+### 39. **coroutine** :DONE
 - **描述**: 记录协程的相关信息。
 
   > If `function` is a coroutine, then this gives the `std::experimental::resumable_traits` instance associated with it, and the variables representing the `handle` and `promise` for it.
@@ -734,7 +734,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 40. **coroutine_placeholder_variable**
+### 40. **coroutine_placeholder_variable** :TODO
 - **描述**: 记录协程占位符变量的信息。
 - **属性**:
   - `placeholder_variable` (INTEGER, 主键): 占位符变量的ID, reference to `variable` table.
@@ -758,7 +758,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 41. **coroutine_new**
+### 41. **coroutine_new** :DONE :FIXME
 - **描述**: 记录协程的`new`函数。
 - **属性**:
   - `function` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -773,7 +773,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 42. **coroutine_delete**
+### 42. **coroutine_delete** :DONE :FIXME
 - **描述**: 记录协程的`delete`函数。
 - **属性**:
   - `function` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -788,7 +788,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 43. **purefunctions**
+### 43. **purefunctions** :DONE
 - **描述**: 记录纯函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -800,7 +800,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 44. **function_deleted**
+### 44. **function_deleted** :DONE
 - **描述**: 记录被删除的函数的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -812,7 +812,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 45. **function_defaulted**
+### 45. **function_defaulted** :DONE
 - **描述**: 记录默认函数的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -824,7 +824,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 46. **function_prototyped**
+### 46. **function_prototyped** :DONE
 - **描述**: 记录函数原型。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -836,7 +836,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 47. **deduction_guide_for_class**
+### 47. **deduction_guide_for_class** :DONE
 - **描述**: 记录类的推导指南。
 - **属性**:
   - `id` (INTEGER, 外键): 函数的ID, reference to `functions` table.
@@ -851,7 +851,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 48. **member_function_this_type**
+### 48. **member_function_this_type** :TODO
 - **描述**: 记录成员函数的`this`类型。
 - **属性**:
   - `id` (INTEGER, 主键): 函数的ID, reference to `functions` table.
@@ -866,7 +866,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 49. **fun_decls**
+### 49. **fun_decls** :DONE
 - **描述**: 记录函数声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID
@@ -889,7 +889,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 50. **fun_def**
+### 50. **fun_def** :DONE
 - **描述**: 记录函数定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -901,7 +901,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 51. **fun_specialized**
+### 51. **fun_specialized** :DONE
 - **描述**: 记录函数特化的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -913,7 +913,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 52. **fun_implicit**
+### 52. **fun_implicit** :DONE
 - **描述**: 记录隐式函数的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -925,7 +925,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 53. **fun_decl_specifiers**
+### 53. **fun_decl_specifiers** :TODO
 - **描述**: 记录函数声明的说明符。
 - **属性**:
   - `id` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -939,7 +939,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 54. **fun_decl_throws**
+### 54. **fun_decl_throws** :DONE
 - **描述**: 记录函数声明的抛出说明。
 - **属性**:
   - `fun_decl` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -957,7 +957,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 55. **fun_decl_empty_throws**
+### 55. **fun_decl_empty_throws** :DONE
 - **描述**: 记录函数声明的空抛出说明。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -969,7 +969,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 56. **fun_decl_noexcept**
+### 56. **fun_decl_noexcept** :DONE
 - **描述**: 记录函数声明的`noexcept`说明。
 - **属性**:
   - `fun_decl` (INTEGER, 外键): 函数声明的ID, reference to `fun_decls` table.
@@ -984,7 +984,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 57. **fun_decl_empty_noexcept**
+### 57. **fun_decl_empty_noexcept** :DONE
 - **描述**: 记录函数声明的空`noexcept`说明。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -996,7 +996,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 58. **fun_decl_typedef_type**
+### 58. **fun_decl_typedef_type** :DONE
 - **描述**: 记录函数声明的`typedef`类型。
 - **属性**:
   - `fun_decl` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -1011,7 +1011,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 59. **fun_requires**
+### 59. **fun_requires** :TODO
 - **描述**: 记录函数声明的`requires`说明。
 - **属性**:
   - `id` (INTEGER, 主键): 函数声明的ID, reference to `fun_decls` table.
@@ -1034,7 +1034,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 60. **param_decl_bind**
+### 60. **param_decl_bind** :TODO
 - **描述**: 记录参数声明的绑定。
 - **属性**:
   - `id` (INTEGER, 主键): 参数声明的ID, reference to `var_decls` table.
@@ -1051,7 +1051,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 61. **var_decls**
+### 61. **var_decls** :DONE
 - **描述**: 记录变量声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 变量声明的ID
@@ -1278,10 +1278,10 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 75. **params**
+### 75. **params** :DONE
 - **描述**: 记录函数参数的信息。
 - **属性**:
-  - `id` (INTEGER, 主键): 参数的ID。
+  - `id` (INTEGER, 主键): 参数的ID。@parameter
   - `function` (INTEGER, 外键): 函数的ID, reference to `parameterized_element` table.
   - `index` (INTEGER): 参数的索引。
   - `type_id` (INTEGER, 外键): 类型的ID, reference to `type` table.
@@ -1314,7 +1314,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 77. **membervariables**
+### 77. **membervariables** :DONE
 - **描述**: 记录成员变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 成员变量的ID。
@@ -1330,7 +1330,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 78. **globalvariables**
+### 78. **globalvariables** :DONE
 - **描述**: 记录全局变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 全局变量的ID。
@@ -1346,7 +1346,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 79. **localvariables**
+### 79. **localvariables** :DONE
 - **描述**: 记录局部变量的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 局部变量的ID。
@@ -1416,7 +1416,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 83. **variable**
+### 83. **variable** :DONE
 ```
 @variable = @localscopevariable | @globalvariable | @membervariable; +-+
 ```
@@ -1440,7 +1440,7 @@ CREATE TABLE compilation_time (
   ```
 
 
-### 84. **localscopevariable**
+### 84. **localscopevariable** :DONE
 ```
 @localscopevariable = @localvariable | @parameter; +-+
 ```
@@ -1654,7 +1654,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 91. **usertypes**
+### 91. **usertypes** :DONE
 - **描述**: 用户定义的类型。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符。
@@ -2583,7 +2583,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 144. **@type**
+### 144. **type** :DONE
 ```
 @type = @builtintype +-+
       | @derivedtype
@@ -2790,7 +2790,7 @@ CREATE TABLE compilation_time (
   ```
 
 
-### 155. **declaration**
+### 155. **declaration** :DONE
 ```
 @declaration = @function +-+
 | @declaredtype
@@ -3760,7 +3760,7 @@ memberaccess(
   );
   ```
 
-### 222. **exprs**
+### 222. **exprs** :DONE
 - **描述**: 表达式。
 - **属性**:
   - `id` (INTEGER, 主键): 唯一标识符，引用自`expr`。
@@ -4464,7 +4464,7 @@ CREATE TABLE fold (
 );
 ```
 
-### 248. **stmts**
+### 248. **stmts** :DONE
 
 - **描述**: 表示语句。
 - **属性**:
