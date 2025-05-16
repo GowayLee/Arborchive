@@ -26,6 +26,7 @@ SCRIPT_DIR = scripts
 
 # 将源文件分为两组：需要LLVM标志的和不需要的
 LLVM_SRCS = $(wildcard $(SRC_DIR)/core/*.cc \
+					   $(SRC_DIR)/util/key_generator/*.cc \
                        $(SRC_DIR)/core/processor/*.cc)
 
 NORMAL_SRCS = $(wildcard $(SRC_DIR)/*.cc \
