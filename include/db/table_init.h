@@ -1,13 +1,14 @@
 #ifndef _TABLE_INIT_H_
 #define _TABLE_INIT_H_
 
+#include "db/table_defs/variable.h"
 #include "table_defs/compilation.h"
 #include "table_defs/container.h"
 #include "table_defs/declaration.h"
+#include "table_defs/expr.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
 #include "table_defs/stmt.h"
-#include "table_defs/expr.h"
 #include "table_defs/type.h"
 
 using namespace sqlite_orm;
@@ -55,6 +56,14 @@ inline auto initStorage(const std::string &path) {
       FuncTableFn::coroutine(),
       FuncTableFn::coroutine_new(),
       FuncTableFn::coroutine_delete(),
+      // Variable Tables
+      VarTableFn::variable(),
+      VarTableFn::localscopevariable(),
+      VarTableFn::localvariables(),
+      VarTableFn::params(),
+      VarTableFn::globalvariables(),
+      VarTableFn::membervariables(),
+      VarTableFn::var_decls(),
       // Type Tables
       TypeTableFn::types(),
       TypeTableFn::usertypes(),
