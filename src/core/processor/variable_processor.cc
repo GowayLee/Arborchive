@@ -2,7 +2,10 @@
 #include "db/storage_facade.h"
 #include "model/db/variable.h"
 #include "util/id_generator.h"
+#include "util/key_generator/element.h"
 #include "util/key_generator/type.h"
+#include <clang/AST/Decl.h>
+#include <clang/Basic/LLVM.h>
 
 void VariableProcessor::routerProcess(const VarDecl *VD) {
   if (!VD || VD->isImplicit())
@@ -60,7 +63,42 @@ int VariableProcessor::processLocalVar(const VarDecl *VD) {
 }
 
 // Process parameter. return id @params
-int VariableProcessor::processParam(const VarDecl *VD) { return -1; }
+int VariableProcessor::processParam(const VarDecl *VD) {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(VD->getDeclContext());
+
+  // Get parameterized element
+  KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
+  int elementId = -1;
+  if (auto cachedId = SEARCH_ELEMENT_CACHE(elementKey))
+    elementId = *cachedId;
+
+  // Get parameter index
+  int index;
+  auto *PVD = llvm::cast<clang::ParmVarDecl>(VD);
+  // Get the parameter list
+  auto Params = FD->parameters();
+  // Iterate through parameters to find the index
+  for (index = 0; index < Params.size(); ++index)
+    if (Params[index] == PVD) {
+      LOG_DEBUG << "Parameter '" << PVD->getNameAsString() << "' in function '"
+                << FD->getNameAsString() << "' has index: " << index
+                << std::endl;
+      break;
+    }
+
+  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
+  LOG_DEBUG << "Parameter TypeKey: " << typeKey << std::endl;
+  int typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    typeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+
+  DbModel::Parameter param = {GENID(Parameter), elementId, index, typeId};
+  STG.insertClassObj(param);
+  return param.id;
+}
 
 // Process Global Variable, return id @globalvariable
 int VariableProcessor::processGlobalVar(const VarDecl *VD) {

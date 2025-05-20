@@ -5,6 +5,7 @@
 #include "table_defs/compilation.h"
 #include "table_defs/container.h"
 #include "table_defs/declaration.h"
+#include "table_defs/element.h"
 #include "table_defs/expr.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
@@ -70,7 +71,9 @@ inline auto initStorage(const std::string &path) {
       // Stmt Tables
       StmtTableFn::stmts(),
       // Expr Tables;
-      ExprTableFn::exprs()
+      ExprTableFn::exprs(),
+      // Element Tables;
+      ElementTableFn::parameterized_element()
     );
   // clang-format on
 }

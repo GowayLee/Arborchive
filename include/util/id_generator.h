@@ -26,15 +26,9 @@ public:
 
     std::lock_guard<std::mutex> lock(mutex_);
     auto &id_generator = type_ids_[getTypeIndex<T>()];
-    if (id_generator == 0) {
-      LOG_INFO << "Initializing first ID for type: " << typeid(T).name()
-               << std::endl;
+    if (id_generator == 0)
       id_generator = 1;
-    }
-    int new_id = id_generator.fetch_add(1);
-    // LOG_DEBUG << "Generated new ID " << new_id
-    //           << " for type: " << typeid(T).name() << std::endl;
-    return new_id;
+    return id_generator.fetch_add(1);
   }
 
   template <typename T> static int getLastGeneratedId() {

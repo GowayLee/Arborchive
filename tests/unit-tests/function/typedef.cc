@@ -7,3 +7,8 @@ int add(int a, int b) { return a + b; }
 int multiply(int a, int b) { return a * b; }
 
 MathFunc funcPtr = &add;
+
+class MyClass {};
+
+const MyClass *foo() { return nullptr; }
+MyClass *bar() { return nullptr; }

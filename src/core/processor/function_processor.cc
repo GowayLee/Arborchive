@@ -1,9 +1,11 @@
 #include "core/processor/function_processor.h"
 #include "core/processor/coroutine_helper.h"
 #include "db/storage_facade.h"
+#include "model/db/element.h"
 #include "model/db/function.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
+#include "util/key_generator/element.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/function.h"
 #include "util/key_generator/stmt.h"
@@ -30,6 +32,12 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   LOG_DEBUG << "Function FunctionKey: " << funcKey << std::endl;
   INSERT_FUNCTION_CACHE(funcKey, _funcId);
 
+  KeyType elementKey = KeyGen::Element::makeKeyFromFuncKey(funcKey);
+  DbModel::ParameterizedElement parameterizedElement = {
+      GENID(ParameterizedElement), _funcId,
+      static_cast<int>(ElementType::FUNCTION)};
+  INSERT_ELEMENT_CACHE(elementKey, _funcId);
+
   // Record @purefunction @function_deleted @function_defaulted
   // @function_prototyped
   recordBasicInfo(decl);
@@ -54,6 +62,7 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
 
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
+  STG.insertClassObj(parameterizedElement);
 }
 
 void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
