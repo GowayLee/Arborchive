@@ -30,6 +30,7 @@ template void StorageFacade::insertClassObj<DbModel::FuncPrototyped&>(DbModel::F
 template void StorageFacade::insertClassObj<DbModel::FuncRetType&>(DbModel::FuncRetType&);
 template void StorageFacade::insertClassObj<DbModel::Function&>(DbModel::Function&);
 template void StorageFacade::insertClassObj<DbModel::GlobalVar&>(DbModel::GlobalVar&);
+template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
 template void StorageFacade::insertClassObj<DbModel::LocalScopeVar&>(DbModel::LocalScopeVar&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
@@ -46,4 +47,6 @@ template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserTyp
 template void StorageFacade::insertClassObj<DbModel::VarDecl&>(DbModel::VarDecl&);
 template void StorageFacade::insertClassObj<DbModel::VarDeclSpec&>(DbModel::VarDeclSpec&);
 template void StorageFacade::insertClassObj<DbModel::VarDef&>(DbModel::VarDef&);
+template void StorageFacade::insertClassObj<DbModel::VarRequire&>(DbModel::VarRequire&);
+template void StorageFacade::insertClassObj<DbModel::VarSpecialized&>(DbModel::VarSpecialized&);
 template void StorageFacade::insertClassObj<DbModel::Variable&>(DbModel::Variable&);

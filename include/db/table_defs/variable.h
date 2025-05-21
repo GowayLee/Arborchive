@@ -74,11 +74,30 @@ inline auto var_def() {
       make_column("id", &DbModel::VarDef::id));
 }
 
+inline auto var_specialized() {
+  return make_table(
+      "var_specialized",
+      make_column("id", &DbModel::VarSpecialized::id));
+}
+
 inline auto var_decl_specifiers() {
   return make_table(
       "var_decl_specifiers",
       make_column("id", &DbModel::VarDeclSpec::id),
       make_column("name", &DbModel::VarDeclSpec::name));
+}
+
+inline auto is_structured_binding() {
+  return make_table(
+      "is_structured_binding",
+      make_column("id", &DbModel::IsStructuredBinding::id));
+}
+
+inline auto var_requires() {
+  return make_table(
+      "var_requires",
+      make_column("id", &DbModel::VarRequire::id),
+      make_column("constraint", &DbModel::VarRequire::constraint));
 }
 
 // clang-format on

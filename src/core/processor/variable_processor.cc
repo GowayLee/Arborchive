@@ -4,7 +4,9 @@
 #include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/element.h"
+#include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
+#include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <clang/Basic/LLVM.h>
 
@@ -43,20 +45,30 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
 
   LocIdPair *locIdPair =
       SrcLocRecorder::processDefault(VD, &VD->getASTContext());
-  std::string name = VD->getNameAsString();
+  _name = VD->getNameAsString();
 
   DbModel::VarDecl varDecl = {
-      _varDeclId = GENID(VarDecl), varId, _typeId, name, locIdPair->spec_id,
+      _varDeclId = GENID(VarDecl), varId, _typeId, _name, locIdPair->spec_id,
   };
 
   if (VD->isThisDeclarationADefinition()) {
     DbModel::VarDef varDef = {_varDeclId};
     STG.insertClassObj(varDef);
   }
+  recordSpecialize(VD);
   recordSpecifier(VD);
+  recordStructuredBinding(VD);
 
   STG.insertClassObj(variable);
   STG.insertClassObj(varDecl);
+}
+
+void VariableProcessor::recordSpecialize(const VarDecl *VD) {
+  if (auto *specialized =
+          clang::dyn_cast<clang::VarTemplateSpecializationDecl>(VD)) {
+    DbModel::VarSpecialized varSpecialized = {_varDeclId};
+    STG.insertClassObj(varSpecialized);
+  }
 }
 
 void VariableProcessor::recordSpecifier(const VarDecl *VD) {
@@ -164,13 +176,34 @@ void VariableProcessor::recordSpecifier(const VarDecl *VD) {
   // }
 }
 
+void VariableProcessor::recordStructuredBinding(const VarDecl *VD) {
+  if (auto *bindingDecl = clang::dyn_cast<clang::DecompositionDecl>(VD)) {
+    DbModel::IsStructuredBinding isStructuredBinding = {_varId};
+    STG.insertClassObj(isStructuredBinding);
+  }
+}
+
+void VariableProcessor::recordRequire(const VarDecl *VD) {
+  // 获取约束表达式
+  const clang::Expr *CE = VD->getTrailingRequiresClause();
+  if (!CE)
+    return;
+  KeyType exprKey = KeyGen::Expr_::makeKey(CE, VD->getASTContext());
+  LOG_DEBUG << "Variable require Expr key: " << exprKey << std::endl;
+  int exprId = -1;
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    exprId = *cachedId;
+  DbModel::VarRequire varRequire = {_varDeclId, exprId};
+  STG.insertClassObj(varRequire);
+}
+
 // Process Local Scope Variable, return id @localscopevariable
 int VariableProcessor::processLocalScopeVar(const VarDecl *VD) {
   int associate_id;
   LocalScopeVarType type;
 
-  if (llvm::isa<clang::ParmVarDecl>(VD)) {
-    associate_id = processParam(VD); // @params
+  if (llvm::isa<clang::ParmVarDecl>(VD)) { // FIXME: No function context
+    associate_id = processParam(VD);       // @params
     type = LocalScopeVarType::PARAMETER;
   } else {
     associate_id = processLocalVar(VD); // @localvariables
@@ -198,6 +231,12 @@ int VariableProcessor::processLocalVar(const VarDecl *VD) {
 // Process parameter. return id @params
 int VariableProcessor::processParam(const VarDecl *VD) {
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(VD->getDeclContext());
+
+  if (!FD) {
+    LOG_WARNING << "Parameter '" << VD->getNameAsString()
+                << "' has no function context." << std::endl;
+    return -1;
+  }
 
   // Get parameterized element
   KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
@@ -236,4 +275,8 @@ int VariableProcessor::processGlobalVar(const VarDecl *VD) {
 }
 
 // Process Member Variable, return id @membervariable
-int VariableProcessor::processMemberVar(const VarDecl *VD) { return -1; }
+int VariableProcessor::processMemberVar(const VarDecl *VD) {
+  DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
+  STG.insertClassObj(memberVar);
+  return memberVar.id;
+}

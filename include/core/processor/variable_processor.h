@@ -19,8 +19,12 @@ private:
   int _typeId;
   int _varId;
   int _varDeclId;
+  std::string _name;
 
   void recordSpecifier(const VarDecl *VD);
+  void recordSpecialize(const VarDecl *VD);
+  void recordStructuredBinding(const VarDecl *VD);
+  void recordRequire(const VarDecl *VD);
 
   int processLocalScopeVar(const VarDecl *VD);
   int processGlobalVar(const VarDecl *VD);

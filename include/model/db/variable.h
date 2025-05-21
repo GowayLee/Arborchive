@@ -62,11 +62,23 @@ struct VarDef {
   int id;
 };
 
+struct VarSpecialized {
+  int id;
+};
+
 struct VarDeclSpec {
   int id;
   std::string name;
 };
 
+struct IsStructuredBinding {
+  int id;
+};
+
+struct VarRequire {
+  int id;
+  int constraint;
+};
 } // namespace DbModel
 
 #endif // _MODEL_VARIABLE_H_
