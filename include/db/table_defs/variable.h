@@ -68,6 +68,19 @@ inline auto var_decls() {
       make_column("location", &DbModel::VarDecl::location));
 }
 
+inline auto var_def() {
+  return make_table(
+      "var_def",
+      make_column("id", &DbModel::VarDef::id));
+}
+
+inline auto var_decl_specifiers() {
+  return make_table(
+      "var_decl_specifiers",
+      make_column("id", &DbModel::VarDeclSpec::id),
+      make_column("name", &DbModel::VarDeclSpec::name));
+}
+
 // clang-format on
 
 } // namespace VarTableFn

@@ -1,4 +1,5 @@
 #include "core/processor/variable_processor.h"
+#include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/variable.h"
 #include "util/id_generator.h"
@@ -11,17 +12,156 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   if (!VD || VD->isImplicit())
     return;
 
-  int varId = -1;
+  int varId;
+  VarType varType;
+
+  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
+  LOG_DEBUG << "Variable TypeKey: " << typeKey << std::endl;
+  _typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    _typeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
 
   // Classify VarDecl
   if (llvm::isa<clang::FieldDecl>(VD) ||
-      (VD->getDeclContext()->isRecord() && VD->isCXXClassMember()))
+      (VD->getDeclContext()->isRecord() && VD->isCXXClassMember())) {
     varId = processMemberVar(VD); // @membervariable
-  else if (VD->hasGlobalStorage() && !VD->isStaticLocal() &&
-           VD->getDeclContext()->isFileContext())
+    varType = VarType::MEMBER_VARIABLE;
+  } else if (VD->hasGlobalStorage() && !VD->isStaticLocal() &&
+             VD->getDeclContext()->isFileContext()) {
     varId = processGlobalVar(VD); // @globalvariable
-  else
+    varType = VarType::GLOBAL_VARIABLE;
+  } else {
     varId = processLocalScopeVar(VD); // @localscopevariable
+    varType = VarType::LOCAL_SCOPE_VARIABLE;
+  }
+
+  DbModel::Variable variable = {_varId = GENID(Variable), varId,
+                                static_cast<int>(varType)};
+
+  LocIdPair *locIdPair =
+      SrcLocRecorder::processDefault(VD, &VD->getASTContext());
+  std::string name = VD->getNameAsString();
+
+  DbModel::VarDecl varDecl = {
+      _varDeclId = GENID(VarDecl), varId, _typeId, name, locIdPair->spec_id,
+  };
+
+  if (VD->isThisDeclarationADefinition()) {
+    DbModel::VarDef varDef = {_varDeclId};
+    STG.insertClassObj(varDef);
+  }
+  recordSpecifier(VD);
+
+  STG.insertClassObj(variable);
+  STG.insertClassObj(varDecl);
+}
+
+void VariableProcessor::recordSpecifier(const VarDecl *VD) {
+  // 处理存储类说明符（storage class specifiers）
+  clang::StorageClass storageClass = VD->getStorageClass();
+  if (storageClass != clang::SC_None) {
+    std::string storageClassStr;
+    switch (storageClass) {
+    case clang::SC_Static:
+      storageClassStr = "static";
+      break;
+    case clang::SC_Extern:
+      storageClassStr = "extern";
+      break;
+    case clang::SC_PrivateExtern:
+      storageClassStr = "private_extern";
+      break;
+    case clang::SC_Auto:
+      storageClassStr = "auto";
+      break;
+    case clang::SC_Register:
+      storageClassStr = "register";
+      break;
+    default:
+      storageClassStr = "unknown";
+    }
+    if (storageClassStr != "unknown") {
+      DbModel::VarDeclSpec varDeclSpec = {_varDeclId, storageClassStr};
+      STG.insertClassObj(varDeclSpec);
+    }
+  }
+
+  // 处理类型限定符（type qualifiers）
+  clang::QualType qualType = VD->getType();
+
+  if (qualType.isConstQualified()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "const"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  if (qualType.isVolatileQualified()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "volatile"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  if (qualType.isRestrictQualified()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "restrict"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  // 检查是否为线程局部存储
+  if (VD->getTLSKind() != clang::VarDecl::TLS_None) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "thread_local"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  // 检查是否为内联变量（C++17特性）
+  if (VD->isInline()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "inline"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  // 检查是否为constexpr变量
+  if (VD->isConstexpr()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "constexpr"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  // 检查是否为静态成员变量
+  if (VD->isStaticDataMember()) {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "static_member"};
+    STG.insertClassObj(varDeclSpec);
+  }
+
+  // 检查可见性属性
+  switch (VD->getVisibility()) {
+  case clang::DefaultVisibility:
+    break;
+  case clang::HiddenVisibility: {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "visibility_hidden"};
+    STG.insertClassObj(varDeclSpec);
+    break;
+  }
+  case clang::ProtectedVisibility: {
+    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "visibility_protected"};
+    STG.insertClassObj(varDeclSpec);
+    break;
+  }
+  }
+
+  // // 检查对齐方式
+  // if (VD->hasAttr<clang::AlignedAttr>()) {
+  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "aligned"};
+  //   STG.insertClassObj(varDeclSpec);
+  // }
+
+  // // 检查其他常见属性
+  // if (VD->hasAttr<clang::DeprecatedAttr>()) {
+  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "deprecated"};
+  //   STG.insertClassObj(varDeclSpec);
+  // }
+  // if (VD->hasAttr<clang::UnusedAttr>()) {
+  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "unused"};
+  //   STG.insertClassObj(varDeclSpec);
+  // }
 }
 
 // Process Local Scope Variable, return id @localscopevariable
@@ -49,17 +189,10 @@ int VariableProcessor::processLocalVar(const VarDecl *VD) {
   KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
   LOG_DEBUG << "Local Variable TypeKey: " << typeKey << std::endl;
 
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-  int id;
-  DbModel::LocalVar localVar = {id = GENID(LocalVar), typeId,
+  DbModel::LocalVar localVar = {GENID(LocalVar), _typeId,
                                 VD->getNameAsString()};
   STG.insertClassObj(localVar);
-  return id;
+  return localVar.id;
 }
 
 // Process parameter. return id @params
@@ -73,7 +206,7 @@ int VariableProcessor::processParam(const VarDecl *VD) {
     elementId = *cachedId;
 
   // Get parameter index
-  int index;
+  size_t index;
   auto *PVD = llvm::cast<clang::ParmVarDecl>(VD);
   // Get the parameter list
   auto Params = FD->parameters();
@@ -85,17 +218,8 @@ int VariableProcessor::processParam(const VarDecl *VD) {
                 << std::endl;
       break;
     }
-
-  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
-  LOG_DEBUG << "Parameter TypeKey: " << typeKey << std::endl;
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-
-  DbModel::Parameter param = {GENID(Parameter), elementId, index, typeId};
+  DbModel::Parameter param = {GENID(Parameter), elementId,
+                              static_cast<int>(index), _typeId};
   STG.insertClassObj(param);
   return param.id;
 }
@@ -105,17 +229,10 @@ int VariableProcessor::processGlobalVar(const VarDecl *VD) {
   KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
   LOG_DEBUG << "Global Variable TypeKey: " << typeKey << std::endl;
 
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-  int id;
-  DbModel::GlobalVar globalVar = {id = GENID(GlobalVar), typeId,
+  DbModel::GlobalVar globalVar = {GENID(GlobalVar), _typeId,
                                   VD->getNameAsString()};
   STG.insertClassObj(globalVar);
-  return id;
+  return globalVar.id;
 }
 
 // Process Member Variable, return id @membervariable

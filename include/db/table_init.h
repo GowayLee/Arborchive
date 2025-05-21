@@ -65,6 +65,8 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::globalvariables(),
       VarTableFn::membervariables(),
       VarTableFn::var_decls(),
+      VarTableFn::var_def(),
+      VarTableFn::var_decl_specifiers(),
       // Type Tables
       TypeTableFn::types(),
       TypeTableFn::usertypes(),

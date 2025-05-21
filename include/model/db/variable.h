@@ -58,6 +58,15 @@ struct VarDecl {
   int location;
 };
 
+struct VarDef {
+  int id;
+};
+
+struct VarDeclSpec {
+  int id;
+  std::string name;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_VARIABLE_H_

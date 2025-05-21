@@ -16,6 +16,12 @@ public:
   ~VariableProcessor() = default;
 
 private:
+  int _typeId;
+  int _varId;
+  int _varDeclId;
+
+  void recordSpecifier(const VarDecl *VD);
+
   int processLocalScopeVar(const VarDecl *VD);
   int processGlobalVar(const VarDecl *VD);
   int processMemberVar(const VarDecl *VD);
