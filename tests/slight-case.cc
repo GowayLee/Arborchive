@@ -6,7 +6,7 @@ public:
   void baz() {}
 };
 
-int add(int a, int b) { return a + b; }
+int add(const int a, const int b) { return a + b; }
 
 int main() {
   int x = 10;

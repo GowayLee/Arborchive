@@ -1,6 +1,7 @@
 #ifndef _TABLE_INIT_H_
 #define _TABLE_INIT_H_
 
+#include "db/table_defs/class.h"
 #include "db/table_defs/variable.h"
 #include "table_defs/compilation.h"
 #include "table_defs/container.h"
@@ -78,7 +79,9 @@ inline auto initStorage(const std::string &path) {
       // Expr Tables;
       ExprTableFn::exprs(),
       // Element Tables;
-      ElementTableFn::parameterized_element()
+      ElementTableFn::parameterized_element(),
+      // Class Table;
+      ClassTableFn::memeber()
     );
   // clang-format on
 }

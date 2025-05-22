@@ -1,6 +1,8 @@
 #include "core/processor/variable_processor.h"
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
+#include "model/db/class.h"
+#include "model/db/declaration.h"
 #include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/element.h"
@@ -51,6 +53,9 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
       _varDeclId = GENID(VarDecl), varId, _typeId, _name, locIdPair->spec_id,
   };
 
+  DbModel::Declaration declaration = {GENID(Declaration), _varDeclId,
+                                      static_cast<int>(DeclType::VARIABLE)};
+
   if (VD->isThisDeclarationADefinition()) {
     DbModel::VarDef varDef = {_varDeclId};
     STG.insertClassObj(varDef);
@@ -59,6 +64,7 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   recordSpecifier(VD);
   recordStructuredBinding(VD);
 
+  STG.insertClassObj(declaration);
   STG.insertClassObj(variable);
   STG.insertClassObj(varDecl);
 }
@@ -277,6 +283,9 @@ int VariableProcessor::processGlobalVar(const VarDecl *VD) {
 // Process Member Variable, return id @membervariable
 int VariableProcessor::processMemberVar(const VarDecl *VD) {
   DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
+  DbModel::Member member = {GENID(Member), memberVar.id,
+                            static_cast<int>(MemberType::MEMBERVARIABLE)};
   STG.insertClassObj(memberVar);
+  STG.insertClassObj(member);
   return memberVar.id;
 }
