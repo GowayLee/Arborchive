@@ -1074,7 +1074,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 62. **var_def**
+### 62. **var_def** :DONE
 - **描述**: 记录变量定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 变量声明的ID, reference to `var_decls` table.
@@ -1086,7 +1086,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 63. **var_specialized**
+### 63. **var_specialized** :DONE
 - **描述**: 记录变量特化的信息。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1098,7 +1098,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 64. **var_decl_specifiers**
+### 64. **var_decl_specifiers** :DONE
 - **描述**: 记录变量声明的说明符。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1112,7 +1112,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 65. **is_structured_binding**
+### 65. **is_structured_binding** :DONE
 - **描述**: 记录变量是否为结构化绑定
 - **属性**:
   - `id` (INTEGER, 主键): 变量的ID, reference to `variable` table.
@@ -1124,7 +1124,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 66. **var_requires**
+### 66. **var_requires** :DONE
 - **描述**: 记录变量声明的`requires`说明。
 - **属性**:
   - `id` (INTEGER, 外键): 变量声明的ID, reference to `var_decls` table.
@@ -1376,7 +1376,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 81. **orphaned_variables**
+### 81. **orphaned_variables** :TODO :?
 - **描述**: 记录孤立变量的信息。
 - **属性**:
   - `var` (INTEGER, 外键): 局部变量的ID, reference to `localvariable` table.
@@ -2790,7 +2790,7 @@ CREATE TABLE compilation_time (
   ```
 
 
-### 155. **declaration** :DONE
+### 155. **declaration** :PARTIALLYDONE
 ```
 @declaration = @function +-+
 | @declaredtype
@@ -2819,7 +2819,7 @@ CREATE TABLE compilation_time (
   )
   ```
 
-### 156. **member**
+### 156. **member** :PARTIALLYDONE
 ```
 @member = @membervariable +-+
 | @function
