@@ -73,6 +73,11 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::var_requires(),
       // Type Tables
       TypeTableFn::types(),
+      TypeTableFn::type_decls(),
+      TypeTableFn::type_def(),
+      TypeTableFn::type_decl_top(),
+      TypeTableFn::builtintypes(),
+      TypeTableFn::derivedtypes(),
       TypeTableFn::usertypes(),
       // Stmt Tables
       StmtTableFn::stmts(),

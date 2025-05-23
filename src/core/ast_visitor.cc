@@ -11,6 +11,7 @@ void ASTVisitor::initProcessors() {
   class_decl_processor_ = std::make_unique<ClassDeclProcessor>(&context_);
   function_processor_ = std::make_unique<FunctionProcessor>(&context_);
   variable_processor_ = std::make_unique<VariableProcessor>(&context_);
+  type_processor_ = std::make_unique<TypeProcessor>(&context_);
 }
 
 // 实现各种Visit方法
@@ -49,7 +50,11 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
   return true;
 }
 
-bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) { return true; }
+// Type Family
+bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) {
+  type_processor_->routerProcess(decl);
+  return true;
+}
 
 bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
