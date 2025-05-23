@@ -1139,7 +1139,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 67. **type_decls**
+### 67. **type_decls** :DONE
 - **描述**: 记录类型声明的信息。
 - **属性**:
   - `id` (INTEGER, 主键): 类型声明的ID。
@@ -1156,7 +1156,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 68. **type_def**
+### 68. **type_def** :DONE
 - **描述**: 记录类型定义的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 类型声明的ID, reference to `type_decls` table.
@@ -1168,7 +1168,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 69. **type_decl_top**
+### 69. **type_decl_top** :DONE
 - **描述**: 记录顶级类型声明。
 - **属性**:
   - `type_decl` (INTEGER, 主键): 类型声明的ID, reference to `type_decls` table.
@@ -1462,7 +1462,7 @@ CREATE TABLE compilation_time (
   ```
 
 
-### 85. **builtintypes**
+### 85. **builtintypes** :DONE
 - **描述**: 记录内置类型的详细信息。
 - **属性**:
 
@@ -1550,9 +1550,9 @@ CREATE TABLE compilation_time (
       sign INTEGER,
       alignment INTEGER
   );
-  ```
 
-### 86. **derivedtypes**
+
+### 86. **derivedtypes** :DONE
 - **描述**: 记录派生类型的详细信息。
 - **属性**:
   - `id` (INTEGER, 主键): 派生类型的ID。
@@ -2628,7 +2628,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 146. **member**
+### 146. **member** :TODO :?
 - **描述**: 成员。
 - **属性**:
   - `parent` (INTEGER, 外键): 父类型的ID，引用自`type`表。
