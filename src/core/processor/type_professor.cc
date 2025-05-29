@@ -30,7 +30,7 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   typeModel.id = _typeId;
   // Insert Cache
   KeyType keyType = KeyGen::Type::makeKey(TD, TD->getASTContext());
-  INSERT_TYPE_CACHE(keyType, _typeId);
+  INSERT_TYPE_CACHE(keyType, _typeId); // FIXME: testing is needed
   // Classify type
   if (type->isBuiltinType()) { // FIXME: Miss track on `slight-case.cc`
     // @builtintype
@@ -52,8 +52,8 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   } else if (type->isMemberPointerType()) {
     // @ptrtomember
     typeModel.type = static_cast<int>(TypeType::PTR_TO_MEMBER);
-    // typeModel.associate_id =
-    //     processPtrToMemberType(cast<MemberPointerType>(type));
+    typeModel.associate_id = processPtrToMemberType(
+        cast<MemberPointerType>(type), TD->getASTContext());
   } else if (type->isDecltypeType()) {
     // @decltype
     typeModel.type = static_cast<int>(TypeType::DECL_TYPE);
@@ -238,6 +238,44 @@ int TypeProcessor::processRoutineType(const Type *TP, ASTContext &ast_context) {
       STG.insertClassObj(routineTypeArgModel);
     }
   return routineTypeModel.id;
+}
+
+int TypeProcessor::processPtrToMemberType(const MemberPointerType *MPT,
+                                          ASTContext &ast_context) {
+  // 获取指针指向的类型
+  QualType pointeeType = MPT->getPointeeType();
+  KeyType pointeeTypeKey = KeyGen::Type::makeKey(pointeeType, ast_context);
+  int pointeeTypeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(pointeeTypeKey))
+    pointeeTypeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+
+  // 获取所属的类类型
+  const Type *classType = MPT->getClass();
+  KeyType classTypeKey =
+      KeyGen::Type::makeKey(classType->getCanonicalTypeInternal(), ast_context);
+  int classTypeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(classTypeKey))
+    classTypeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+
+  DbModel::PtrToMember ptrToMemberModel = {GENID(PtrToMember), pointeeTypeId,
+                                           classTypeId};
+  STG.insertClassObj(ptrToMemberModel);
+  return ptrToMemberModel.id;
+}
+
+// 数据库操作辅助函数
+int insertPtrToMember(int type_id, int class_id) {
+  // TODO: 实现数据库插入逻辑
+  // INSERT INTO ptrtomembers (type_id, class_id)
+  // VALUES (type_id, class_id)
+  // 返回插入记录的ID
+  return 0;
 }
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {

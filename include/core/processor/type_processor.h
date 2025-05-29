@@ -23,7 +23,7 @@ private:
   int processDerivedType(const Type *TP, ASTContext &ast_context);
   int processUserType(const Type *TP, ASTContext &ast_context);
   int processRoutineType(const Type *TP, ASTContext &ast_context);
-  // int processPtrToMemberType(const MemberPointerType *MPT);
+  int processPtrToMemberType(const MemberPointerType *MPT, ASTContext &ast_context);
   // int processDeclType(const DecltypeType *DT);
 
   void recordTypeDef(const TypeDecl *TD);

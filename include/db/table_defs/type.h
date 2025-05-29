@@ -75,9 +75,17 @@ inline auto routinetypes() {
 inline auto routinetypeargs() {
   return make_table(
       "routinetypeargs",
-      make_column("routine", &DbModel::RoutineTypeArg::routine, primary_key()),
+      make_column("routine", &DbModel::RoutineTypeArg::routine),
       make_column("index", &DbModel::RoutineTypeArg::index),
       make_column("type_id", &DbModel::RoutineTypeArg::type_id));
+}
+
+inline auto ptrtomembers() {
+  return make_table(
+      "ptrtomembers",
+      make_column("id", &DbModel::PtrToMember::id, primary_key()),
+      make_column("type_id", &DbModel::PtrToMember::type_id),
+      make_column("class_id", &DbModel::PtrToMember::class_id));
 }
 
 // clang-format on

@@ -169,6 +169,12 @@ struct RoutineTypeArg {
   int type_id;
 };
 
+struct PtrToMember {
+  int id;
+  int type_id;
+  int class_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_TYPE_H_
