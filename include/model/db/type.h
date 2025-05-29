@@ -158,6 +158,17 @@ struct UserType {
   using KeyType = std::string;
 };
 
+struct RoutineType {
+  int id;
+  int return_type;
+};
+
+struct RoutineTypeArg {
+  int routine;
+  int index;
+  int type_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_TYPE_H_

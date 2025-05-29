@@ -48,7 +48,7 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   } else if (type->isFunctionType() || type->isFunctionProtoType()) {
     // @routinetype
     typeModel.type = static_cast<int>(TypeType::ROUTINE_TYPE);
-    // typeModel.associate_id = processRoutineType(type);
+    typeModel.associate_id = processRoutineType(type, TD->getASTContext());
   } else if (type->isMemberPointerType()) {
     // @ptrtomember
     typeModel.type = static_cast<int>(TypeType::PTR_TO_MEMBER);
@@ -203,6 +203,41 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
   INSERT_USERTYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
   return userTypeModel.id;
+}
+
+int TypeProcessor::processRoutineType(const Type *TP, ASTContext &ast_context) {
+  // 获取函数类型的具体信息
+  const FunctionType *FT = TP->getAs<FunctionType>();
+  if (!FT)
+    return -1;
+
+  QualType returnType = FT->getReturnType();
+  KeyType routineTypeKey = KeyGen::Type::makeKey(returnType, ast_context);
+  int routineTypeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(routineTypeKey))
+    routineTypeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+  DbModel::RoutineType routineTypeModel = {GENID(RoutineType), routineTypeId};
+  STG.insertClassObj(routineTypeModel);
+
+  // 如果是FunctionProtoType，处理参数
+  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
+    for (unsigned index = 0; index < FPT->getNumParams(); ++index) {
+      QualType paramType = FPT->getParamType(index);
+      KeyType routineArgTypeKey = KeyGen::Type::makeKey(paramType, ast_context);
+      int routineArgTypeId = -1;
+      if (auto cachedId = SEARCH_TYPE_CACHE(routineArgTypeKey))
+        routineArgTypeId = *cachedId;
+      else {
+        // TODO: Dependency Manager...
+      }
+      DbModel::RoutineTypeArg routineTypeArgModel = {
+          routineTypeModel.id, static_cast<int>(index), routineArgTypeId};
+      STG.insertClassObj(routineTypeArgModel);
+    }
+  return routineTypeModel.id;
 }
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {

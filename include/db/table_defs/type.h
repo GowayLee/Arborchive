@@ -65,6 +65,21 @@ inline auto usertypes() {
       make_column("kind", &DbModel::UserType::kind));
 }
 
+inline auto routinetypes() {
+  return make_table(
+      "routinetypes",
+      make_column("id", &DbModel::RoutineType::id, primary_key()),
+      make_column("return_type", &DbModel::RoutineType::return_type));
+}
+
+inline auto routinetypeargs() {
+  return make_table(
+      "routinetypeargs",
+      make_column("routine", &DbModel::RoutineTypeArg::routine, primary_key()),
+      make_column("index", &DbModel::RoutineTypeArg::index),
+      make_column("type_id", &DbModel::RoutineTypeArg::type_id));
+}
+
 // clang-format on
 
 } // namespace TypeTableFn

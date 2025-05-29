@@ -79,6 +79,8 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::builtintypes(),
       TypeTableFn::derivedtypes(),
       TypeTableFn::usertypes(),
+      TypeTableFn::routinetypes(),
+      TypeTableFn::routinetypeargs(),
       // Stmt Tables
       StmtTableFn::stmts(),
       // Expr Tables;

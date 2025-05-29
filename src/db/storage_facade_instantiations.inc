@@ -44,6 +44,8 @@ template void StorageFacade::insertClassObj<DbModel::MemberVar&>(DbModel::Member
 template void StorageFacade::insertClassObj<DbModel::Parameter&>(DbModel::Parameter&);
 template void StorageFacade::insertClassObj<DbModel::ParameterizedElement&>(DbModel::ParameterizedElement&);
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
+template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);
+template void StorageFacade::insertClassObj<DbModel::RoutineTypeArg&>(DbModel::RoutineTypeArg&);
 template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
 template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);
 template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDecl&);
