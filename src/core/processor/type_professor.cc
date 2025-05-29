@@ -7,6 +7,7 @@
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Type.h>
+#include <clang/Basic/Specifiers.h>
 #include <iostream>
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType);
@@ -31,7 +32,7 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   KeyType keyType = KeyGen::Type::makeKey(TD, TD->getASTContext());
   INSERT_TYPE_CACHE(keyType, _typeId);
   // Classify type
-  if (type->isBuiltinType()) {
+  if (type->isBuiltinType()) { // FIXME: Miss track on `slight-case.cc`
     // @builtintype
     typeModel.type = static_cast<int>(TypeType::BUILTIN_TYPE);
     typeModel.associate_id =
@@ -43,7 +44,7 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   } else if (type->isRecordType() || type->isEnumeralType()) {
     // @usertype
     typeModel.type = static_cast<int>(TypeType::USER_TYPE);
-    // typeModel.associate_id = processUserType(type);
+    typeModel.associate_id = processUserType(type, TD->getASTContext());
   } else if (type->isFunctionType() || type->isFunctionProtoType()) {
     // @routinetype
     typeModel.type = static_cast<int>(TypeType::ROUTINE_TYPE);
@@ -72,6 +73,8 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
 
   // Determine top type declaration
   recordTopTypeDecl(TD);
+  STG.insertClassObj(typeModel);
+  STG.insertClassObj(typeDecl);
 }
 
 void TypeProcessor::recordTypeDef(const TypeDecl *TD) {
@@ -132,6 +135,74 @@ int TypeProcessor::processDerivedType(const Type *TP, ASTContext &ast_context) {
                                            getDerivedTypeKind(TP), typeId};
   STG.insertClassObj(derivedTypeModel);
   return derivedTypeModel.id;
+}
+
+int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
+  // Get typedecl
+  const TypeDecl *TD = TP->getAsTagDecl();
+  if (!TD) {
+    // 对于typedef和using alias的情况，需要特殊处理
+    if (const TypedefType *TT = dyn_cast<TypedefType>(TP))
+      TD = TT->getDecl();
+    else if (const auto *ET = dyn_cast<ElaboratedType>(TP))
+      // 处理可能的elaborated type
+      return processUserType(ET->getNamedType().getTypePtr(), ast_context);
+  }
+  if (!TD)
+    return -1;
+
+  // Get typename
+  std::string typeName = TD->getNameAsString();
+  LOG_DEBUG << "Processing user type: " << typeName << std::endl;
+
+  // Specify type kind
+  int kind = static_cast<int>(
+      UserTypeKind::UNKNOWN_USERTYPE); // unknown_usertype by default
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
+    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      if (CXXRD->isClass())
+        kind =
+            CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                ? static_cast<int>(UserTypeKind::CLASS)
+                : static_cast<int>(
+                      UserTypeKind::TEMPLATE_CLASS); // class or template_class
+      else if (CXXRD->isStruct())
+        kind = CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                   ? static_cast<int>(UserTypeKind::STRUCT)
+                   : static_cast<int>(
+                         UserTypeKind::TEMPLATE_STRUCT); // struct or
+                                                         // template_struct
+      else if (CXXRD->isUnion())
+        kind =
+            CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                ? static_cast<int>(UserTypeKind::UNION)
+                : static_cast<int>(
+                      UserTypeKind::TEMPLATE_UNION); // union or template_union
+    } else {
+      if (RD->isStruct())
+        kind = static_cast<int>(UserTypeKind::STRUCT); // struct
+      else if (RD->isUnion())
+        kind = static_cast<int>(UserTypeKind::UNION); // union
+    }
+  } else if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD))
+    kind = ED->isScoped()
+               ? static_cast<int>(UserTypeKind::SCOPED_ENUM)
+               : static_cast<int>(UserTypeKind::ENUM); // scoped_enum or enum
+  else if (const TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(TD)) {
+    if (isa<TypeAliasDecl>(TND))
+      kind = static_cast<int>(UserTypeKind::SCOPED_ENUM); // using_alias
+    else
+      kind = static_cast<int>(UserTypeKind::TYPEDEF); // typedef
+  } else if (const TemplateTypeParmDecl *TTPD =
+                 dyn_cast<TemplateTypeParmDecl>(TD))
+    kind = static_cast<int>(
+        UserTypeKind::TEMPLATE_PARAMETER); // template_parameter
+
+  DbModel::UserType userTypeModel = {GENID(UserType), typeName, kind};
+  KeyType userTypeKey = KeyGen::Type::makeKey(TD, ast_context);
+  INSERT_USERTYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+  return userTypeModel.id;
 }
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {

@@ -12,11 +12,21 @@ using namespace clang;
 bool isDerivedType(const Type *type) {
   if (!type)
     return false;
-
-  return type->isPointerType() || type->isReferenceType() ||
-         type->isArrayType() || type->isVectorType() ||
-         type->isFunctionPointerType() || type->isBlockPointerType() ||
-         isa<AttributedType>(type) || type->isSpecifierType();
+  return type->isPointerType() ||         // 指针类型 (T*)
+         type->isReferenceType() ||       // 引用类型 (T&)
+         type->isArrayType() ||           // 数组类型 (T[])
+         type->isVectorType() ||          // 向量类型
+         type->isFunctionPointerType() || // 函数指针类型
+         type->isMemberPointerType() ||   // 成员指针类型 (T Class::*)
+         type->isBlockPointerType() ||    // Block指针类型
+         type->isLValueReferenceType() || // 左值引用类型 (T&)
+         type->isRValueReferenceType() || // 右值引用类型 (T&&)
+         type->isComplexType() ||         // 复数类型
+         // type->isTypedefType() ||         // typedef类型
+         isa<AttributedType>(type) || // 带属性的类型
+         type->isDecltypeType();      // decltype类型
+  // type->isAdjustedType() ||        // 调整后的类型
+  // type->isParenType();             // 带括号的类型
 }
 
 // Get the kind of derived type

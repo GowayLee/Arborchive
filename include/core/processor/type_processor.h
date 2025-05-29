@@ -21,7 +21,7 @@ private:
 
   int processBuiltinType(const BuiltinType *BT, ASTContext &ast_context);
   int processDerivedType(const Type *TP, ASTContext &ast_context);
-  // int processUserType(const Type *TP);
+  int processUserType(const Type *TP, ASTContext &ast_context);
   // int processRoutineType(const Type *TP);
   // int processPtrToMemberType(const MemberPointerType *MPT);
   // int processDeclType(const DecltypeType *DT);

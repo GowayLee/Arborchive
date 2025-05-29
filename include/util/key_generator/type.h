@@ -24,6 +24,11 @@
       .getRepository<CacheRepository<DbModel::UserType>>()                     \
       .find(type)
 
+#define INSERT_USERTYPE_CACHE(key, id)                                         \
+  CacheManager::instance()                                                     \
+      .getRepository<CacheRepository<DbModel::UserType>>()                     \
+      .insert(key, id)
+
 using KeyType = std::string;
 using namespace clang;
 
