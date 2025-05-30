@@ -1634,7 +1634,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 90. **decltypes**
+### 90. **decltypes** :DONE
 - **描述**: `decltype`运算符的实例。
 - **属性**:
   - `id` (INTEGER, 主键): `decltype`的ID，引用自`decltype`。
@@ -2213,7 +2213,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 125. **routinetypes**
+### 125. **routinetypes** :DONE
 - **描述**: 例程类型。
 - **属性**:
   - `id` (INTEGER, 主键): 例程类型的唯一标识符。
@@ -2227,7 +2227,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 126. **routinetypeargs**
+### 126. **routinetypeargs** :DONE
 - **描述**: 例程类型参数。
 - **属性**:
   - `routine` (INTEGER, 外键): 例程类型的ID，引用自`routinetype`表。
@@ -2245,7 +2245,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 127. **ptrtomembers**
+### 127. **ptrtomembers** :DONE
 - **描述**: 指向成员的指针。
 - **属性**:
   - `id` (INTEGER, 主键): 指向成员的指针的唯一标识符。
