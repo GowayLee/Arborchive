@@ -1,7 +1,6 @@
 #ifndef _MODEL_TYPE_H_
 #define _MODEL_TYPE_H_
 
-#include "model/db/expr.h"
 #include <string>
 
 enum class TypeType {
@@ -173,6 +172,13 @@ struct PtrToMember {
   int id;
   int type_id;
   int class_id;
+};
+
+struct DeclType {
+  int id;
+  int expr;
+  int base_type;
+  bool parentheses_would_change_meaning;
 };
 
 } // namespace DbModel

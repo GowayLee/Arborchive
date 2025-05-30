@@ -88,6 +88,15 @@ inline auto ptrtomembers() {
       make_column("class_id", &DbModel::PtrToMember::class_id));
 }
 
+inline auto decltypes() {
+  return make_table(
+      "decltypes",
+      make_column("id", &DbModel::DeclType::id, primary_key()),
+      make_column("expr", &DbModel::DeclType::expr),
+      make_column("base_type", &DbModel::DeclType::base_type),
+      make_column("parentheses_would_change_meaning", &DbModel::DeclType::parentheses_would_change_meaning));
+}
+
 // clang-format on
 
 } // namespace TypeTableFn

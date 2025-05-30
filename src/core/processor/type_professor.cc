@@ -4,6 +4,7 @@
 #include "db/storage_facade.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
+#include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Type.h>
@@ -57,7 +58,8 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
   } else if (type->isDecltypeType()) {
     // @decltype
     typeModel.type = static_cast<int>(TypeType::DECL_TYPE);
-    // typeModel.associate_id = processDeclType(cast<DecltypeType>(type));
+    typeModel.associate_id =
+        processDeclType(cast<DecltypeType>(type), TD->getASTContext());
   } else {
     LOG_WARNING << "Unknown type classification" << std::endl;
     // 不匹配已知类型分类的情况
@@ -269,13 +271,33 @@ int TypeProcessor::processPtrToMemberType(const MemberPointerType *MPT,
   return ptrToMemberModel.id;
 }
 
-// 数据库操作辅助函数
-int insertPtrToMember(int type_id, int class_id) {
-  // TODO: 实现数据库插入逻辑
-  // INSERT INTO ptrtomembers (type_id, class_id)
-  // VALUES (type_id, class_id)
-  // 返回插入记录的ID
-  return 0;
+int TypeProcessor::processDeclType(const DecltypeType *DT,
+                                   ASTContext &ast_context) {
+  const Expr *expr = DT->getUnderlyingExpr();
+  int exprId = -1;
+  if (expr) {
+    KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context);
+    if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+      exprId = *cachedId;
+  }
+
+  // 获取基础类型
+  QualType baseType = DT->getUnderlyingType();
+  KeyType typeKey = KeyGen::Type::makeKey(baseType, ast_context);
+  int typeId = -1;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    typeId = *cachedId;
+  else {
+    // TODO: Dependency Manager...
+  }
+
+  // 获取括号是否会改变语义
+  bool parenthesesWouldChange = DT->isReferenceType();
+
+  DbModel::DeclType declTypeModel = {GENID(DeclType), exprId, typeId,
+                                     parenthesesWouldChange};
+  STG.insertClassObj(declTypeModel);
+  return declTypeModel.id;
 }
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {

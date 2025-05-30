@@ -10,6 +10,7 @@ template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Contai
 template void StorageFacade::insertClassObj<DbModel::Coroutine&>(DbModel::Coroutine&);
 template void StorageFacade::insertClassObj<DbModel::CoroutineDelete&>(DbModel::CoroutineDelete&);
 template void StorageFacade::insertClassObj<DbModel::CoroutineNew&>(DbModel::CoroutineNew&);
+template void StorageFacade::insertClassObj<DbModel::DeclType&>(DbModel::DeclType&);
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
 template void StorageFacade::insertClassObj<DbModel::DerivedType&>(DbModel::DerivedType&);
