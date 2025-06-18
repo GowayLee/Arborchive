@@ -1,5 +1,6 @@
 #include "core/processor/derivedtype_helper.h"
 #include "core/processor/type_processor.h"
+#include "core/processor/usertype_helper.h"
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/type.h"
@@ -204,6 +205,12 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
   KeyType userTypeKey = KeyGen::Type::makeKey(TD, ast_context);
   INSERT_USERTYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
+
+  // Process more detail about user_type
+  record_is_pod_class(TP, ast_context, userTypeModel.id);
+  record_is_standard_layout_class(TP, ast_context, userTypeModel.id);
+  record_is_complete(TP, ast_context, userTypeModel.id);
+
   return userTypeModel.id;
 }
 

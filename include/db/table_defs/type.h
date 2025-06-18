@@ -97,6 +97,23 @@ inline auto decltypes() {
       make_column("parentheses_would_change_meaning", &DbModel::DeclType::parentheses_would_change_meaning));
 }
 
+inline auto is_pod_class() {
+  return make_table(
+      "is_pod_class",
+      make_column("id", &DbModel::IsPodClass::id, primary_key()));
+}
+
+inline auto is_standard_layout_class() {
+  return make_table(
+      "is_standard_layout_class",
+      make_column("id", &DbModel::IsStandartLayoutClass::id, primary_key()));
+}
+
+inline auto is_complete() {
+  return make_table(
+      "is_complete",
+      make_column("id", &DbModel::IsComplete::id, primary_key()));
+}
 // clang-format on
 
 } // namespace TypeTableFn

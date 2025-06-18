@@ -83,6 +83,9 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::routinetypeargs(),
       TypeTableFn::ptrtomembers(),
       TypeTableFn::decltypes(),
+      TypeTableFn::is_pod_class(),
+      TypeTableFn::is_standard_layout_class(),
+      TypeTableFn::is_complete(),
       // Stmt Tables
       StmtTableFn::stmts(),
       // Expr Tables;

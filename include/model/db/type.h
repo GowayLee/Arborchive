@@ -181,6 +181,18 @@ struct DeclType {
   bool parentheses_would_change_meaning;
 };
 
+struct IsPodClass {
+  int id;
+};
+
+struct IsStandartLayoutClass {
+  int id;
+};
+
+struct IsComplete {
+  int id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_TYPE_H_
