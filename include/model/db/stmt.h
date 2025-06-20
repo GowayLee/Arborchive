@@ -42,6 +42,21 @@ struct Stmt {
   using KeyType = std::string;
 };
 
+struct IfInit {
+  int if_stmt;
+  int init_id;
+};
+
+struct IfThen {
+  int if_stmt;
+  int then_id;
+};
+
+struct IfElse {
+  int if_stmt;
+  int else_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_STMT_H_

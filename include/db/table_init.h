@@ -88,6 +88,9 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::is_complete(),
       // Stmt Tables
       StmtTableFn::stmts(),
+      StmtTableFn::if_initalization(),
+      StmtTableFn::if_then(),
+      StmtTableFn::if_else(),
       // Expr Tables;
       ExprTableFn::exprs(),
       // Element Tables;

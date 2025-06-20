@@ -33,6 +33,12 @@ template void StorageFacade::insertClassObj<DbModel::FuncPrototyped&>(DbModel::F
 template void StorageFacade::insertClassObj<DbModel::FuncRetType&>(DbModel::FuncRetType&);
 template void StorageFacade::insertClassObj<DbModel::Function&>(DbModel::Function&);
 template void StorageFacade::insertClassObj<DbModel::GlobalVar&>(DbModel::GlobalVar&);
+template void StorageFacade::insertClassObj<DbModel::IfElse&>(DbModel::IfElse&);
+template void StorageFacade::insertClassObj<DbModel::IfInit&>(DbModel::IfInit&);
+template void StorageFacade::insertClassObj<DbModel::IfThen&>(DbModel::IfThen&);
+template void StorageFacade::insertClassObj<DbModel::IsComplete&>(DbModel::IsComplete&);
+template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
+template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbModel::IsStandartLayoutClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
 template void StorageFacade::insertClassObj<DbModel::LocalScopeVar&>(DbModel::LocalScopeVar&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);

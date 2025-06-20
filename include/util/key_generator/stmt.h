@@ -12,6 +12,11 @@
       .getRepository<CacheRepository<DbModel::Stmt>>()                         \
       .find(type)
 
+#define INSERT_STMT_CACHE(key, id)                                             \
+  CacheManager::instance()                                                     \
+      .getRepository<CacheRepository<DbModel::Stmt>>()                         \
+      .insert(key, id)
+
 using KeyType = std::string;
 using namespace clang;
 
