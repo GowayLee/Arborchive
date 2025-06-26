@@ -7,6 +7,7 @@
 #include "util/key_generator/stmt.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Stmt.h>
+#include <clang/AST/StmtCXX.h>
 #include <clang/Basic/LLVM.h>
 
 int StmtProcessor::getStmtId(Stmt *stmt, StmtType stmtType) {
@@ -62,7 +63,6 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
   }
 }
 
-// 处理传统for循环 (for(init; cond; inc) body)
 void StmtProcessor::processForStmt(ForStmt *forStmt) {
   int for_stmt_id = getStmtId(forStmt, StmtType::FOR);
 
@@ -75,7 +75,8 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
   if (Stmt *init = forStmt->getInit()) {
     int init_id = -1;
     KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
-    DbModel::ForInit forInitModel = {for_stmt_id, init_id};
+    // FIXME:
+    DbModel::ForInit forInitModel = {stmtForOrRangeBasedModel.id, init_id};
     STG.insertClassObj(forInitModel);
   }
 
@@ -83,7 +84,8 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
   if (Expr *cond = forStmt->getCond()) {
     int condition_id = -1;
     KeyType exprKey = KeyGen::Expr_::makeKey(cond, *ast_context_);
-    LOG_DEBUG << "For condition expr key: " << exprKey << std::endl;;
+    // FIXME:
+    LOG_DEBUG << "For condition expr key: " << exprKey << std::endl;
     DbModel::ForCond forCondModel = {for_stmt_id, condition_id};
     STG.insertClassObj(forCondModel);
   }
@@ -92,7 +94,8 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
   if (Expr *inc = forStmt->getInc()) {
     int update_id = -1;
     KeyType exprKey = KeyGen::Expr_::makeKey(inc, *ast_context_);
-    LOG_DEBUG << "For update expr key: " << exprKey << std::endl;;
+    // FIXME:
+    LOG_DEBUG << "For update expr key: " << exprKey << std::endl;
     DbModel::ForUpdate forUpdateModel = {for_stmt_id, update_id};
     STG.insertClassObj(forUpdateModel);
   }
@@ -101,6 +104,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
   if (Stmt *body = forStmt->getBody()) {
     int body_id = -1;
     KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    // FIXME:
     DbModel::ForBody forBodyModel = {for_stmt_id, body_id};
     STG.insertClassObj(forBodyModel);
   }
@@ -115,27 +119,12 @@ void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
       for_stmt_id};
   STG.insertClassObj(stmtForOrRangeBasedModel);
 
-  // // 1. 处理范围声明（相当于初始化）
-  // if (VarDecl *loopVar = rangeForStmt->getLoopVariable()) {
-  //   int init_id = getVarDeclId(loopVar);
-  //   recordForInitialization(for_stmt_id, init_id);
-  // }
-
-  // // 2. 基于范围的for循环没有显式的条件表达式
-  // // 条件是隐式的（迭代器是否到达end()）
-  // // 如果需要记录，可以获取范围表达式
-  // if (Expr *rangeExpr = rangeForStmt->getRangeInit()) {
-  //   int condition_id = getExprId(rangeExpr);
-  //   recordForCondition(for_stmt_id, condition_id);
-  // }
-
-  // // 3. 基于范围的for循环没有显式的更新表达式
-  // // 更新是隐式的（++iterator）
-  // // 如果需要，可以记录内部生成的迭代器递增
-
-  // // 4. 处理循环体
-  // if (Stmt *body = rangeForStmt->getBody()) {
-  //   int body_id = getStmtId(body);
-  //   recordForBody(for_stmt_id, body_id);
-  // }
+  // 1. 处理范围声明（相当于初始化）
+  if (Stmt *init = rangeForStmt->getInit()) {
+    int init_id = -1;
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    // FIXME:
+    DbModel::ForInit forInitModel = {stmtForOrRangeBasedModel.id, init_id};
+    STG.insertClassObj(forInitModel);
+  }
 }
