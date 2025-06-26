@@ -1640,7 +1640,7 @@ CREATE TABLE compilation_time (
   - `id` (INTEGER, 主键): `decltype`的ID，引用自`decltype`。
   - `expr` (INTEGER, 外键): 表达式的ID，引用自`expr`表。
   - `base_type` (INTEGER, 外键): 基础类型的ID，引用自`type`表。
-  - `parentheses_would_change_meaning` (BOOLEAN): 括号是否会改变语义。
+  - `parentheses_would_change_meaning` (BOOLEAN): 括号是否会改变语义。 :?
 - **示例**:
   ```sql
   CREATE TABLE decltypes (
@@ -4549,7 +4549,7 @@ CREATE TABLE variable_vla (
 );
 ```
 
-### 251. **if_initialization**
+### 251. **if_initialization** :DONE
 
 - **描述**: 表示`if`语句的初始化部分。
 - **属性**:
@@ -4565,7 +4565,7 @@ CREATE TABLE if_initialization (
 );
 ```
 
-### 252. **if_then**
+### 252. **if_then** :DONE
 
 - **描述**: 表示`if`语句的`then`部分。
 - **属性**:
@@ -4581,7 +4581,7 @@ CREATE TABLE if_then (
 );
 ```
 
-### 253. **if_else**
+### 253. **if_else** :DONE
 
 - **描述**: 表示`if`语句的`else`部分。
 - **属性**:
@@ -4683,7 +4683,7 @@ CREATE TABLE consteval_if_else (
 );
 ```
 
-### 260. **while_body**
+### 260. **while_body** :DONE
 
 - **描述**: 表示`while`循环的主体部分。
 - **属性**:
@@ -4699,7 +4699,7 @@ CREATE TABLE while_body (
 );
 ```
 
-### 261. **do_body**
+### 261. **do_body** :DONE
 
 - **描述**: 表示`do-while`循环的主体部分。
 - **属性**:
@@ -4715,7 +4715,7 @@ CREATE TABLE do_body (
 );
 ```
 
-### 262. **switch_initialization**
+### 262. **switch_initialization** :DONE
 
 - **描述**: 表示`switch`语句的初始化部分。
 - **属性**:
@@ -4731,7 +4731,7 @@ CREATE TABLE switch_initialization (
 );
 ```
 
-### 263. **switch_case**
+### 263. **switch_case** :DONE
 
 - **描述**: 表示`switch`语句的`case`部分。
 - **属性**:
@@ -4750,7 +4750,7 @@ CREATE TABLE switch_case (
 );
 ```
 
-### 264. **switch_body**
+### 264. **switch_body** :DONE
 
 - **描述**: 表示`switch`语句的主体部分。
 - **属性**:
@@ -4766,13 +4766,13 @@ CREATE TABLE switch_body (
 );
 ```
 
-### 265. **stmt_for_or_range_based_for**
+### 265. **stmt_for_or_range_based_for** :DONE
 ```
 @stmt_for_or_range_based_for = @stmt_for +-+
                              | @stmt_range_based_for;
 ```
 
-### 266. **for_initialization**
+### 266. **for_initialization** :DONE
 
 - **描述**: 表示`for`循环的初始化部分。
 - **属性**:
@@ -4788,7 +4788,7 @@ CREATE TABLE for_initialization (
 );
 ```
 
-### 267. **for_condition**
+### 267. **for_condition** :DONE
 
 - **描述**: 表示`for`循环的条件部分。
 - **属性**:
@@ -4804,7 +4804,7 @@ CREATE TABLE for_condition (
 );
 ```
 
-### 268. **for_update**
+### 268. **for_update** :DONE
 
 - **描述**: 表示`for`循环的更新部分。
 - **属性**:
@@ -4820,7 +4820,7 @@ CREATE TABLE for_update (
 );
 ```
 
-### 269. **for_body**
+### 269. **for_body** :DONE
 
 - **描述**: 表示`for`循环的主体部分。
 - **属性**:
