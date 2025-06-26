@@ -73,6 +73,21 @@ bool ASTVisitor::VisitCXXForRangeStmt(clang::CXXForRangeStmt *rangeForStmt) {
   return true;
 }
 
+bool ASTVisitor::VisitWhileStmt(clang::WhileStmt *whileStmt) {
+  stmt_processor_->processWhileStmt(whileStmt);
+  return true;
+}
+
+bool ASTVisitor::VisitDoStmt(clang::DoStmt *doStmt) {
+  stmt_processor_->processDoStmt(doStmt);
+  return true;
+}
+
+bool ASTVisitor::VisitSwitchStmt(clang::SwitchStmt *switchStmt) {
+  stmt_processor_->processSwitchStmt(switchStmt);
+  return true;
+}
+
 bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }

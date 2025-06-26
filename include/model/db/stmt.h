@@ -33,10 +33,7 @@ enum class StmtType {
   NOT_CONSTEVAL_IF = 39
 };
 
-enum class ForType {
-  FOR = 1,
-  RANGE_BASED_FOR = 2
-};
+enum class ForType { FOR = 1, RANGE_BASED_FOR = 2 };
 
 namespace DbModel {
 
@@ -83,7 +80,6 @@ struct ForUpdate {
   int update_id;
 };
 
-
 struct ForBody {
   int for_stmt;
   int body_id;
@@ -96,6 +92,22 @@ struct WhileBody {
 
 struct DoBody {
   int do_stmt;
+  int body_id;
+};
+
+struct SwitchInit {
+  int switch_stmt;
+  int init_id;
+};
+
+struct SwitchCase {
+  int switch_stmt;
+  int index;
+  int case_id;
+};
+
+struct SwitchBody {
+  int switch_stmt;
   int body_id;
 };
 

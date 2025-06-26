@@ -19,6 +19,7 @@ public:
   void processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt);
   void processWhileStmt(WhileStmt *whileStmt);
   void processDoStmt(DoStmt *doStmt);
+  void processSwitchStmt(SwitchStmt *switchStmt);
 
   StmtProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~StmtProcessor() = default;

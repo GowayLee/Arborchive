@@ -136,8 +136,8 @@ void StmtProcessor::processWhileStmt(WhileStmt *whileStmt) {
   if (Stmt *body = whileStmt->getBody()) {
     int body_id = -1;
     KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
-    // Since sub stmtNode of WHILE stmt will be visited after visiting root node of
-    // WHILE, so, directly add this to dependency manager queue
+    // Since sub stmtNode of WHILE stmt will be visited after visiting root node
+    // of WHILE, so, directly add this to dependency manager queue
 
     // TODO: Dependency Manager
     DbModel::WhileBody whileBodyModel = {while_stmt_id, body_id};
@@ -158,5 +158,53 @@ void StmtProcessor::processDoStmt(DoStmt *doStmt) {
     // TODO: Dependency Manager
     DbModel::DoBody doBodyModel = {do_stmt_id, body_id};
     STG.insertClassObj(doBodyModel);
+  }
+}
+
+void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
+  int switch_stmt_id = getStmtId(switchStmt, StmtType::SWITCH);
+
+  // 1. 处理初始化部分
+  if (Stmt *init = switchStmt->getInit()) {
+    int init_id = -1;
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    // Since sub stmtNode of SWITCH stmt will be visited after visiting root
+    // node of SWITCH, so, directly add this to dependency manager queue
+
+    // TODO: Dependency Manager
+    DbModel::SwitchInit switchInitModel = {switch_stmt_id, init_id};
+    STG.insertClassObj(switchInitModel);
+  }
+
+  // 2. 处理主体部分
+  if (Stmt *body = switchStmt->getBody()) {
+    int body_id = -1;
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    // Since sub stmtNode of SWITCH stmt will be visited after visiting root
+    // node of SWITCH, so, directly add this to dependency manager queue
+
+    // TODO: Dependency Manager
+    DbModel::SwitchBody switchBodyModel = {switch_stmt_id, body_id};
+    STG.insertClassObj(switchBodyModel);
+
+    // 3. 处理 case 部分 - 遍历 body 中的 case 语句
+    if (CompoundStmt *compoundBody = dyn_cast<CompoundStmt>(body)) {
+      int case_index = 0;
+      for (Stmt *child : compoundBody->children()) {
+        if (SwitchCase *switchCase = dyn_cast<SwitchCase>(child)) {
+          int case_id = getStmtId(switchStmt, StmtType::SWITCH_CASE);
+          KeyType caseKey = KeyGen::Stmt_::makeKey(switchCase, *ast_context_);
+          // Since sub stmtNode of SWITCH stmt will be visited after visiting
+          // root node of SWITCH, so, directly add this to dependency manager
+          // queue
+
+          // TODO: Dependency Manager
+          DbModel::SwitchCase switchCaseModel = {switch_stmt_id, case_index,
+                                                 case_id};
+          STG.insertClassObj(switchCaseModel);
+          case_index++;
+        }
+      }
+    }
   }
 }

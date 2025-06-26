@@ -88,6 +88,28 @@ inline auto do_body() {
       make_column("body_id", &DbModel::DoBody::body_id));
 }
 
+inline auto switch_initialization() {
+  return make_table(
+      "switch_initialization",
+      make_column("switch_stmt", &DbModel::SwitchInit::switch_stmt, primary_key()),
+      make_column("init_id", &DbModel::SwitchInit::init_id));
+}
+
+inline auto switch_case() {
+  return make_table(
+      "switch_case",
+      make_column("switch_stmt", &DbModel::SwitchCase::switch_stmt),
+      make_column("index", &DbModel::SwitchCase::index),
+      make_column("case_id", &DbModel::SwitchCase::case_id, primary_key()));
+}
+
+inline auto switch_body() {
+  return make_table(
+      "switch_body",
+      make_column("switch_stmt", &DbModel::SwitchBody::switch_stmt, primary_key()),
+      make_column("body_id", &DbModel::SwitchBody::body_id));
+}
+
 // clang-format on
 
 } // namespace StmtTableFn

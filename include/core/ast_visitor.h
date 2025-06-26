@@ -51,6 +51,7 @@ public:
   bool VisitCXXForRangeStmt(clang::CXXForRangeStmt *rangeForStmt);
   bool VisitWhileStmt(clang::WhileStmt *whileStmt);
   bool VisitDoStmt(clang::DoStmt *doStmt);
+  bool VisitSwitchStmt(clang::SwitchStmt *switchStmt);
   bool VisitDeclStmt(clang::DeclStmt *stmt);
   bool VisitCompoundStmt(clang::CompoundStmt *stmt);
 
