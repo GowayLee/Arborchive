@@ -38,6 +38,42 @@ inline auto if_else() {
       make_column("then_id", &DbModel::IfElse::else_id));
 }
 
+inline auto stmt_for_or_range_based_for() {
+  return make_table(
+      "stmt_for_or_range_based_for",
+      make_column("id", &DbModel::StmtForOrRangeBased::id, primary_key()),
+      make_column("associated_id", &DbModel::StmtForOrRangeBased::associated_id),
+      make_column("type", &DbModel::StmtForOrRangeBased::type));
+}
+
+inline auto for_initialization() {
+  return make_table(
+      "for_initialization",
+      make_column("for_stmt", &DbModel::ForInit::for_stmt, primary_key()),
+      make_column("init_id", &DbModel::ForInit::init_id));
+}
+
+inline auto for_condition() {
+  return make_table(
+      "for_condition",
+      make_column("for_stmt", &DbModel::ForCond::for_stmt, primary_key()),
+      make_column("condition_id", &DbModel::ForCond::condition_id));
+}
+
+inline auto for_update() {
+  return make_table(
+      "for_update",
+      make_column("for_stmt", &DbModel::ForUpdate::for_stmt, primary_key()),
+      make_column("update_id", &DbModel::ForUpdate::update_id));
+}
+
+inline auto for_body() {
+  return make_table(
+      "for_body",
+      make_column("for_stmt", &DbModel::ForBody::for_stmt, primary_key()),
+      make_column("body_id", &DbModel::ForBody::body_id));
+}
+
 // clang-format on
 
 } // namespace StmtTableFn

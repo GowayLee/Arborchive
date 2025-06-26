@@ -33,6 +33,11 @@ enum class StmtType {
   NOT_CONSTEVAL_IF = 39
 };
 
+enum class ForType {
+  FOR = 1,
+  RANGE_BASED_FOR = 2
+};
+
 namespace DbModel {
 
 struct Stmt {
@@ -55,6 +60,33 @@ struct IfThen {
 struct IfElse {
   int if_stmt;
   int else_id;
+};
+
+struct StmtForOrRangeBased {
+  int id;
+  int associated_id;
+  int type;
+};
+
+struct ForInit {
+  int for_stmt;
+  int init_id;
+};
+
+struct ForCond {
+  int for_stmt;
+  int condition_id;
+};
+
+struct ForUpdate {
+  int for_stmt;
+  int update_id;
+};
+
+
+struct ForBody {
+  int for_stmt;
+  int body_id;
 };
 
 } // namespace DbModel

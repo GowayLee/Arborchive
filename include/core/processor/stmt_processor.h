@@ -15,6 +15,8 @@ public:
   int getStmtId(Stmt *stmt, StmtType stmtType);
 
   void processIfStmt(IfStmt *ifStmt);
+  void processForStmt(ForStmt *forStmt);
+  void processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt);
 
   StmtProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~StmtProcessor() = default;

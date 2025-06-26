@@ -17,6 +17,10 @@ template void StorageFacade::insertClassObj<DbModel::DerivedType&>(DbModel::Deri
 template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
+template void StorageFacade::insertClassObj<DbModel::ForBody&>(DbModel::ForBody&);
+template void StorageFacade::insertClassObj<DbModel::ForCond&>(DbModel::ForCond&);
+template void StorageFacade::insertClassObj<DbModel::ForInit&>(DbModel::ForInit&);
+template void StorageFacade::insertClassObj<DbModel::ForUpdate&>(DbModel::ForUpdate&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyNoexcept&>(DbModel::FunDeclEmptyNoexcept&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyThrow&>(DbModel::FunDeclEmptyThrow&);
@@ -55,6 +59,7 @@ template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFu
 template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);
 template void StorageFacade::insertClassObj<DbModel::RoutineTypeArg&>(DbModel::RoutineTypeArg&);
 template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
+template void StorageFacade::insertClassObj<DbModel::StmtForOrRangeBased&>(DbModel::StmtForOrRangeBased&);
 template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);
 template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDecl&);
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);

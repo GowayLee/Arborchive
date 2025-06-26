@@ -58,8 +58,18 @@ bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) {
 }
 
 // Stmt Family
-bool ASTVisitor::VisitIfStmt(clang::IfStmt *ifStmt) { 
+bool ASTVisitor::VisitIfStmt(clang::IfStmt *ifStmt) {
   stmt_processor_->processIfStmt(ifStmt);
+  return true;
+}
+
+bool ASTVisitor::VisitForStmt(clang::ForStmt *forStmt) {
+  stmt_processor_->processForStmt(forStmt);
+  return true;
+}
+
+bool ASTVisitor::VisitCXXForRangeStmt(clang::CXXForRangeStmt *rangeForStmt) {
+  stmt_processor_->processCXXForRangeStmt(rangeForStmt);
   return true;
 }
 
