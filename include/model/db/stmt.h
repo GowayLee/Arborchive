@@ -89,6 +89,16 @@ struct ForBody {
   int body_id;
 };
 
+struct WhileBody {
+  int while_stmt;
+  int body_id;
+};
+
+struct DoBody {
+  int do_stmt;
+  int body_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_STMT_H_

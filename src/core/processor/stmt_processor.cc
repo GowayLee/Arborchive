@@ -128,3 +128,35 @@ void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
     STG.insertClassObj(forInitModel);
   }
 }
+
+void StmtProcessor::processWhileStmt(WhileStmt *whileStmt) {
+  int while_stmt_id = getStmtId(whileStmt, StmtType::WHILE);
+
+  // 处理循环体
+  if (Stmt *body = whileStmt->getBody()) {
+    int body_id = -1;
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    // Since sub stmtNode of WHILE stmt will be visited after visiting root node of
+    // WHILE, so, directly add this to dependency manager queue
+
+    // TODO: Dependency Manager
+    DbModel::WhileBody whileBodyModel = {while_stmt_id, body_id};
+    STG.insertClassObj(whileBodyModel);
+  }
+}
+
+void StmtProcessor::processDoStmt(DoStmt *doStmt) {
+  int do_stmt_id = getStmtId(doStmt, StmtType::END_TEST_WHILE);
+
+  // 处理循环体
+  if (Stmt *body = doStmt->getBody()) {
+    int body_id = -1;
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    // Since sub stmtNode of DO stmt will be visited after visiting root node of
+    // DO, so, directly add this to dependency manager queue
+
+    // TODO: Dependency Manager
+    DbModel::DoBody doBodyModel = {do_stmt_id, body_id};
+    STG.insertClassObj(doBodyModel);
+  }
+}

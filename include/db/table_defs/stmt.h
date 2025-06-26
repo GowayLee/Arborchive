@@ -74,6 +74,20 @@ inline auto for_body() {
       make_column("body_id", &DbModel::ForBody::body_id));
 }
 
+inline auto while_body() {
+  return make_table(
+      "while_body",
+      make_column("while_stmt", &DbModel::WhileBody::while_stmt, primary_key()),
+      make_column("body_id", &DbModel::WhileBody::body_id));
+}
+
+inline auto do_body() {
+  return make_table(
+      "do_body",
+      make_column("do_stmt", &DbModel::DoBody::do_stmt, primary_key()),
+      make_column("body_id", &DbModel::DoBody::body_id));
+}
+
 // clang-format on
 
 } // namespace StmtTableFn

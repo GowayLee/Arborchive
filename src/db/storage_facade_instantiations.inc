@@ -14,6 +14,7 @@ template void StorageFacade::insertClassObj<DbModel::DeclType&>(DbModel::DeclTyp
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
 template void StorageFacade::insertClassObj<DbModel::DerivedType&>(DbModel::DerivedType&);
+template void StorageFacade::insertClassObj<DbModel::DoBody&>(DbModel::DoBody&);
 template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
@@ -71,3 +72,4 @@ template void StorageFacade::insertClassObj<DbModel::VarDef&>(DbModel::VarDef&);
 template void StorageFacade::insertClassObj<DbModel::VarRequire&>(DbModel::VarRequire&);
 template void StorageFacade::insertClassObj<DbModel::VarSpecialized&>(DbModel::VarSpecialized&);
 template void StorageFacade::insertClassObj<DbModel::Variable&>(DbModel::Variable&);
+template void StorageFacade::insertClassObj<DbModel::WhileBody&>(DbModel::WhileBody&);

@@ -96,6 +96,8 @@ inline auto initStorage(const std::string &path) {
       StmtTableFn::for_condition(),
       StmtTableFn::for_update(),
       StmtTableFn::for_body(),
+      StmtTableFn::while_body(),
+      StmtTableFn::do_body(),
       // Expr Tables;
       ExprTableFn::exprs(),
       // Element Tables;
