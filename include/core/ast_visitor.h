@@ -45,8 +45,13 @@ public:
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
 
-  // 语句类型
+  // Stmt Family
   bool VisitIfStmt(clang::IfStmt *ifStmt);
+  bool VisitForStmt(clang::ForStmt *forStmt);
+  bool VisitCXXForRangeStmt(clang::CXXForRangeStmt *rangeForStmt);
+  bool VisitWhileStmt(clang::WhileStmt *whileStmt);
+  bool VisitDoStmt(clang::DoStmt *doStmt);
+  bool VisitSwitchStmt(clang::SwitchStmt *switchStmt);
   bool VisitDeclStmt(clang::DeclStmt *stmt);
   bool VisitCompoundStmt(clang::CompoundStmt *stmt);
 
