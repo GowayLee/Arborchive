@@ -1777,7 +1777,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 98. **is_pod_class**
+### 98. **is_pod_class** :DONE
 - **描述**: 是否为POD类。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1789,7 +1789,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 99. **is_standard_layout_class**
+### 99. **is_standard_layout_class** :DONE
 - **描述**: 是否为标准布局类。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
@@ -1801,7 +1801,7 @@ CREATE TABLE compilation_time (
   );
   ```
 
-### 100. **is_complete**
+### 100. **is_complete** :DONE
 - **描述**: 是否完整。
 - **属性**:
   - `id` (INTEGER, 主键): 用户类型的唯一标识符，引用自`usertype`表。
