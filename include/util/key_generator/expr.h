@@ -12,6 +12,11 @@
       .getRepository<CacheRepository<DbModel::Expr>>()                         \
       .find(type)
 
+#define INSERT_EXPR_CACHE(type)                                                \
+  CacheManager::instance()                                                     \
+      .getRepository<CacheRepository<DbModel::Expr>>()                         \
+      .insert(key, id)
+
 using KeyType = std::string;
 using namespace clang;
 

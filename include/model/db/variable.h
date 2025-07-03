@@ -17,6 +17,7 @@ struct Variable {
   int id;
   int associate_id;
   int type;
+  using KeyType = std::string;
 };
 
 struct LocalScopeVar {

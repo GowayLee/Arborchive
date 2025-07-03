@@ -39,6 +39,21 @@ inline auto iscall() {
       make_column("kind", &DbModel::IsCall::kind));
 }
 
+inline auto varbindexpr() {
+  return make_table(
+      "varbindexpr",
+      make_column("id", &DbModel::VarBindExpr::id, primary_key()),
+      make_column("associate_id", &DbModel::VarBindExpr::associate_id),
+      make_column("type", &DbModel::VarBindExpr::type));
+}
+
+inline auto varbind() {
+  return make_table(
+      "varbind",
+      make_column("expr", &DbModel::VarBind::expr, primary_key()),
+      make_column("var", &DbModel::VarBind::var));
+}
+
 // clang-format on
 
 } // namespace ExprTableFn

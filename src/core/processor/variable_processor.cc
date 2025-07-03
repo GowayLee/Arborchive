@@ -8,6 +8,7 @@
 #include "util/key_generator/element.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
+#include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <clang/Basic/LLVM.h>
@@ -52,6 +53,10 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   DbModel::VarDecl varDecl = {
       _varDeclId = GENID(VarDecl), varId, _typeId, _name, locIdPair->spec_id,
   };
+
+  // Maintain cache
+  KeyType VDKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
+  INSERT_VARIABLE_CACHE(VDKey, varDecl.id);
 
   DbModel::Declaration declaration = {GENID(Declaration), _varDeclId,
                                       static_cast<int>(DeclType::VARIABLE)};

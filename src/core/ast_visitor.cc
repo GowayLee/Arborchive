@@ -102,8 +102,7 @@ bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *stmt) {
 }
 
 bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
-  // LOG_DEBUG << "Visiting DeclRefExpr" << std::endl;
-
+  expr_processor_->processDeclRef(expr);
   return true;
 }
 

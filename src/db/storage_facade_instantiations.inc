@@ -22,6 +22,8 @@ template void StorageFacade::insertClassObj<DbModel::ForBody&>(DbModel::ForBody&
 template void StorageFacade::insertClassObj<DbModel::ForCond&>(DbModel::ForCond&);
 template void StorageFacade::insertClassObj<DbModel::ForInit&>(DbModel::ForInit&);
 template void StorageFacade::insertClassObj<DbModel::ForUpdate&>(DbModel::ForUpdate&);
+template void StorageFacade::insertClassObj<DbModel::FunBind&>(DbModel::FunBind&);
+template void StorageFacade::insertClassObj<DbModel::FunBindExpr&>(DbModel::FunBindExpr&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyNoexcept&>(DbModel::FunDeclEmptyNoexcept&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyThrow&>(DbModel::FunDeclEmptyThrow&);
@@ -41,6 +43,7 @@ template void StorageFacade::insertClassObj<DbModel::GlobalVar&>(DbModel::Global
 template void StorageFacade::insertClassObj<DbModel::IfElse&>(DbModel::IfElse&);
 template void StorageFacade::insertClassObj<DbModel::IfInit&>(DbModel::IfInit&);
 template void StorageFacade::insertClassObj<DbModel::IfThen&>(DbModel::IfThen&);
+template void StorageFacade::insertClassObj<DbModel::IsCall&>(DbModel::IsCall&);
 template void StorageFacade::insertClassObj<DbModel::IsComplete&>(DbModel::IsComplete&);
 template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbModel::IsStandartLayoutClass&);
@@ -69,6 +72,8 @@ template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDec
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);
 template void StorageFacade::insertClassObj<DbModel::TypeDef&>(DbModel::TypeDef&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
+template void StorageFacade::insertClassObj<DbModel::VarBind&>(DbModel::VarBind&);
+template void StorageFacade::insertClassObj<DbModel::VarBindExpr&>(DbModel::VarBindExpr&);
 template void StorageFacade::insertClassObj<DbModel::VarDecl&>(DbModel::VarDecl&);
 template void StorageFacade::insertClassObj<DbModel::VarDeclSpec&>(DbModel::VarDeclSpec&);
 template void StorageFacade::insertClassObj<DbModel::VarDef&>(DbModel::VarDef&);

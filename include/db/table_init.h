@@ -106,6 +106,8 @@ inline auto initStorage(const std::string &path) {
       ExprTableFn::funbind(),
       ExprTableFn::funbindexpr(),
       ExprTableFn::iscall(),
+      ExprTableFn::varbindexpr(),
+      ExprTableFn::varbind(),
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;

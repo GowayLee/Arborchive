@@ -5,12 +5,15 @@
 #include "core/srcloc_recorder.h"
 #include "model/db/expr.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 
 using namespace clang;
 
 class ExprProcessor : public BaseProcessor {
 public:
+
+  void processDeclRef(DeclRefExpr* expr);
 
 
 
@@ -22,6 +25,9 @@ private:
   int _varId;
   int _varDeclId;
   std::string _name;
+
+  int processBaseExpr(Expr *expr, ExprType exprType);
+  void recordVarBindExpr(VarDecl* VD, DeclRefExpr *expr);
 
 };
 

@@ -277,6 +277,13 @@ enum class IsCallKind {
   STATICMBRPTRREADEXPR = 10
 };
 
+enum class VarBindType {
+  VARACCESS = 1,
+  CTORFIELDINIT = 2,
+  DTORFIELDDESTRUCT = 3
+};
+
+
 namespace DbModel {
 
 struct Expr {
@@ -300,6 +307,17 @@ struct FunBind {
 struct IsCall {
   int caller;
   int kind;
+};
+
+struct VarBindExpr {
+  int id;
+  int associate_id;
+  int type;
+};
+
+struct VarBind {
+  int expr;
+  int var;
 };
 
 } // namespace DbModel
