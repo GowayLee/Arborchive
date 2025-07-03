@@ -3196,7 +3196,7 @@ CREATE TABLE compilation_time (
 ;
 ```
 
-### 175. **iscall**
+### 175. **iscall** :TODO
 
 - **描述**: 表示一个函数调用。
 - **属性**:
@@ -3289,12 +3289,12 @@ CREATE TABLE namequalifiers (
 );
 ```
 
-### 181. **varbind**
+### 181. **varbind** :DONE
 
 - **描述**: 表示变量绑定。
 - **属性**:
   - `expr` (INTEGER, 主键): 表达式的唯一标识符，引用自`varbindexpr`表。
-  - `var` (INTEGER): 可访问变量的唯一标识符，引用自`accessible`表。
+  - `var` (INTEGER): 可访问变量的唯一标识符，引用自`accessible`表。// Change to variable table
 
 ```sql
 CREATE TABLE varbind (
@@ -3305,7 +3305,7 @@ CREATE TABLE varbind (
 );
 ```
 
-### 182. **funbind**
+### 182. **funbind** :TODO
 
 - **描述**: 表示函数绑定。
 - **属性**:
@@ -4428,7 +4428,7 @@ CREATE TABLE lambda_capture (
 );
 ```
 
-### 242. **funbindexpr**
+### 242. **funbindexpr** :TODO
 ```
 @funbindexpr = @routineexpr +-+
              | @new_expr
@@ -4441,7 +4441,7 @@ CREATE TABLE lambda_capture (
              | @dtorvirtualdestruct;
 ```
 
-### 243. **varbindexpr**
+### 243. **varbindexpr** :DONE
 ```
 @varbindexpr = @varaccess | @ctorfieldinit | @dtorfielddestruct; +-+
 ```
