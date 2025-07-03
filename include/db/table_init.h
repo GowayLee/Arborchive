@@ -103,6 +103,9 @@ inline auto initStorage(const std::string &path) {
       StmtTableFn::switch_case(),
       // Expr Tables;
       ExprTableFn::exprs(),
+      ExprTableFn::funbind(),
+      ExprTableFn::funbindexpr(),
+      ExprTableFn::iscall(),
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;

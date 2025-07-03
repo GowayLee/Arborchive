@@ -3211,6 +3211,21 @@ CREATE TABLE iscall (
 );
 ```
 
+```
+/*
+   kind(1) = mbrcallexpr
+   kind(2) = mbrptrcallexpr
+   kind(3) = mbrptrmbrcallexpr
+   kind(4) = ptrmbrptrmbrcallexpr
+   kind(5) = mbrreadexpr // x.y
+   kind(6) = mbrptrreadexpr // p->y
+   kind(7) = mbrptrmbrreadexpr // x.*pm
+   kind(8) = mbrptrmbrptrreadexpr // x->*pm
+   kind(9) = staticmbrreadexpr // static x.y
+   kind(10) = staticmbrptrreadexpr // static p->y
+*/
+```
+
 ### 176. **numtemplatearguments**
 
 - **描述**: 表示模板参数的数目。
@@ -4283,7 +4298,7 @@ CREATE TABLE new_array_allocated_type (
               | @dtorfielddestruct;
 ```
 
-### 234. **condition_decl_bind**
+### 234. **condition_decl_bind** :DONE
 
 - **描述**: 表示条件声明的绑定。
 - **属性**:

@@ -17,6 +17,28 @@ inline auto exprs() {
       make_column("location", &DbModel::Expr::location));
 }
 
+inline auto funbindexpr() {
+  return make_table(
+      "funbindexpr",
+      make_column("id", &DbModel::FunBindExpr::id, primary_key()),
+      make_column("associate_id", &DbModel::FunBindExpr::associate_id),
+      make_column("type", &DbModel::FunBindExpr::type));
+}
+
+inline auto funbind() {
+  return make_table(
+      "funbind",
+      make_column("expr", &DbModel::FunBind::expr, primary_key()),
+      make_column("fun", &DbModel::FunBind::fun));
+}
+
+inline auto iscall() {
+  return make_table(
+      "iscall",
+      make_column("caller", &DbModel::IsCall::caller, primary_key()),
+      make_column("kind", &DbModel::IsCall::kind));
+}
+
 // clang-format on
 
 } // namespace ExprTableFn

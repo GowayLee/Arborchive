@@ -13,6 +13,7 @@ void ASTVisitor::initProcessors() {
   variable_processor_ = std::make_unique<VariableProcessor>(&context_);
   type_processor_ = std::make_unique<TypeProcessor>(&context_);
   stmt_processor_ = std::make_unique<StmtProcessor>(&context_);
+  expr_processor_ = std::make_unique<ExprProcessor>(&context_);
 }
 
 // 实现各种Visit方法

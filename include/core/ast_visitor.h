@@ -6,6 +6,7 @@
 #include "core/processor/variable_processor.h"
 #include "core/processor/stmt_processor.h"
 #include "core/processor/type_processor.h"
+#include "core/processor/expr_processor.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
@@ -20,6 +21,7 @@ private:
   std::unique_ptr<VariableProcessor> variable_processor_ = nullptr;
   std::unique_ptr<TypeProcessor> type_processor_ = nullptr;
   std::unique_ptr<StmtProcessor> stmt_processor_ = nullptr;
+  std::unique_ptr<ExprProcessor> expr_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext &context);
@@ -55,7 +57,7 @@ public:
   bool VisitDeclStmt(clang::DeclStmt *stmt);
   bool VisitCompoundStmt(clang::CompoundStmt *stmt);
 
-  // 表达式类型
+  // Expr Family
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitCallExpr(clang::CallExpr *expr);
 

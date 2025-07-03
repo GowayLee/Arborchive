@@ -252,6 +252,31 @@ enum class ExprType {
   // clang-format on
 };
 
+enum class FunBindType {
+  ROUTINEEXPR = 1,
+  NEW_EXPR = 2,
+  DELETE_EXPR = 3,
+  DELETE_ARRAY_EXPR = 4,
+  CTORDIRECTINIT = 5,
+  CTORVITUALINIT = 6,
+  COTRDELEGATINGINIT = 7,
+  DTORDIRECTDESTRUCT = 8,
+  DTORVITUALDESTRUCT = 9
+};
+
+enum class IsCallKind {
+  MBRCALLEXPR = 1,
+  MBRPTRCALLEXPR = 2,
+  MBRPTRMBRCALLEXPR = 3,
+  PTRMBRPTRMBRCALLEXPR = 4,
+  MBRREADEXPR = 5,
+  MBRPTRREADEXPR = 6,
+  MBRPTRMBRREADEXPR = 7,
+  MBRPTRMBRPTRREADEXPR = 8,
+  STATICMBRREADEXPR = 9,
+  STATICMBRPTRREADEXPR = 10
+};
+
 namespace DbModel {
 
 struct Expr {
@@ -259,6 +284,22 @@ struct Expr {
   int kind;
   int location;
   using KeyType = std::string;
+};
+
+struct FunBindExpr {
+  int id;
+  int associate_id;
+  int type;
+};
+
+struct FunBind {
+  int expr;
+  int fun;
+};
+
+struct IsCall {
+  int caller;
+  int kind;
 };
 
 } // namespace DbModel
