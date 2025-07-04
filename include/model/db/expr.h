@@ -5,6 +5,7 @@
 
 enum class ExprType {
   // clang-format off
+  _UNKNOWN_ = -1,
   ERROREXPR = 1,
   ADDRESS_OF = 2,   // & AddressOfExpr
   REFERENCE_TO = 3, // ReferenceToExpr (implicit?)

@@ -15,6 +15,10 @@ public:
 
   void processDeclRef(DeclRefExpr* expr);
 
+  void processUnaryOperator(const UnaryOperator *op);
+  void processBinaryOperator(const BinaryOperator *op);
+  void processConditionalOperator(const ConditionalOperator *op);
+
 
 
   ExprProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};

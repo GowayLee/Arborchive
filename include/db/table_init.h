@@ -8,6 +8,7 @@
 #include "table_defs/declaration.h"
 #include "table_defs/element.h"
 #include "table_defs/expr.h"
+#include "table_defs/operator.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
 #include "table_defs/stmt.h"
@@ -108,6 +109,9 @@ inline auto initStorage(const std::string &path) {
       ExprTableFn::iscall(),
       ExprTableFn::varbindexpr(),
       ExprTableFn::varbind(),
+      OpExprTableFn::op_expr(),
+      OpExprTableFn::un_op_expr(),
+      OpExprTableFn::bin_op_expr(),
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;

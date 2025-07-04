@@ -106,9 +106,23 @@ bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
   return true;
 }
 
-bool ASTVisitor::VisitCallExpr(clang::CallExpr *expr) {
-  // LOG_DEBUG << "Visiting CallExpr" << std::endl;
+bool ASTVisitor::VisitCallExpr(CallExpr *expr) {
+  // expr_processor_->Process(expr);
+  return true;
+}
 
+bool ASTVisitor::VisitUnaryOperator(const UnaryOperator *op) {
+  expr_processor_->processUnaryOperator(op);
+  return true;
+}
+
+bool ASTVisitor::VisitBinaryOperator(const BinaryOperator *op) {
+  expr_processor_->processBinaryOperator(op);
+  return true;
+}
+
+bool ASTVisitor::VisitConditionalOperator(const ConditionalOperator *op) {
+  expr_processor_->processConditionalOperator(op);
   return true;
 }
 
