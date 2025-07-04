@@ -60,6 +60,9 @@ public:
   // Expr Family
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);
   bool VisitCallExpr(clang::CallExpr *expr);
+  bool VisitUnaryOperator(const clang::UnaryOperator *op);
+  bool VisitBinaryOperator(const clang::BinaryOperator *op);
+  bool VisitConditionalOperator(const clang::ConditionalOperator *op);
 
   // 初始化处理器
   void initProcessors();
