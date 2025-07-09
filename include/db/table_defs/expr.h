@@ -17,14 +17,6 @@ inline auto exprs() {
       make_column("location", &DbModel::Expr::location));
 }
 
-inline auto funbindexpr() {
-  return make_table(
-      "funbindexpr",
-      make_column("id", &DbModel::FunBindExpr::id, primary_key()),
-      make_column("associate_id", &DbModel::FunBindExpr::associate_id),
-      make_column("type", &DbModel::FunBindExpr::type));
-}
-
 inline auto funbind() {
   return make_table(
       "funbind",
@@ -37,14 +29,6 @@ inline auto iscall() {
       "iscall",
       make_column("caller", &DbModel::IsCall::caller, primary_key()),
       make_column("kind", &DbModel::IsCall::kind));
-}
-
-inline auto varbindexpr() {
-  return make_table(
-      "varbindexpr",
-      make_column("id", &DbModel::VarBindExpr::id, primary_key()),
-      make_column("associate_id", &DbModel::VarBindExpr::associate_id),
-      make_column("type", &DbModel::VarBindExpr::type));
 }
 
 inline auto varbind() {

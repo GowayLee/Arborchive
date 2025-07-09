@@ -30,7 +30,7 @@ private:
   int _varDeclId;
   std::string _name;
 
-  int processBaseExpr(Expr *expr, ExprType exprType);
+  int processBaseExpr(Expr *expr, ExprKind exprKind);
   void recordVarBindExpr(VarDecl* VD, DeclRefExpr *expr);
 
 };

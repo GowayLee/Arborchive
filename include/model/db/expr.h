@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum class ExprType {
+enum class ExprKind {
   // clang-format off
   _UNKNOWN_ = -1,
   ERROREXPR = 1,
@@ -253,18 +253,6 @@ enum class ExprType {
   // clang-format on
 };
 
-enum class FunBindType {
-  ROUTINEEXPR = 1,
-  NEW_EXPR = 2,
-  DELETE_EXPR = 3,
-  DELETE_ARRAY_EXPR = 4,
-  CTORDIRECTINIT = 5,
-  CTORVITUALINIT = 6,
-  COTRDELEGATINGINIT = 7,
-  DTORDIRECTDESTRUCT = 8,
-  DTORVITUALDESTRUCT = 9
-};
-
 enum class IsCallKind {
   MBRCALLEXPR = 1,
   MBRPTRCALLEXPR = 2,
@@ -278,13 +266,6 @@ enum class IsCallKind {
   STATICMBRPTRREADEXPR = 10
 };
 
-enum class VarBindType {
-  VARACCESS = 1,
-  CTORFIELDINIT = 2,
-  DTORFIELDDESTRUCT = 3
-};
-
-
 namespace DbModel {
 
 struct Expr {
@@ -292,12 +273,6 @@ struct Expr {
   int kind;
   int location;
   using KeyType = std::string;
-};
-
-struct FunBindExpr {
-  int id;
-  int associate_id;
-  int type;
 };
 
 struct FunBind {
@@ -308,12 +283,6 @@ struct FunBind {
 struct IsCall {
   int caller;
   int kind;
-};
-
-struct VarBindExpr {
-  int id;
-  int associate_id;
-  int type;
 };
 
 struct VarBind {
