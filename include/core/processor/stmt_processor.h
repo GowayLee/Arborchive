@@ -12,7 +12,7 @@ using namespace clang;
 class StmtProcessor : public BaseProcessor {
 public:
 
-  int getStmtId(Stmt *stmt, StmtType stmtType);
+  int getStmtId(Stmt *stmt, StmtKind stmtKind);
 
   void processIfStmt(IfStmt *ifStmt);
   void processForStmt(ForStmt *forStmt);

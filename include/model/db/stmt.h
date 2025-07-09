@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum class StmtType {
+enum class StmtKind {
   EXPR = 1,
   IF = 2,
   WHILE = 3,

@@ -10,11 +10,11 @@
 #include <clang/AST/StmtCXX.h>
 #include <clang/Basic/LLVM.h>
 
-int StmtProcessor::getStmtId(Stmt *stmt, StmtType stmtType) {
+int StmtProcessor::getStmtId(Stmt *stmt, StmtKind stmtKind) {
   KeyType stmtKey = KeyGen::Stmt_::makeKey(stmt, *ast_context_);
   LocIdPair *locIdPair = SrcLocRecorder::processStmt(stmt, ast_context_);
 
-  DbModel::Stmt stmtModel = {GENID(Stmt), static_cast<int>(stmtType),
+  DbModel::Stmt stmtModel = {GENID(Stmt), static_cast<int>(stmtKind),
                              locIdPair->spec_id};
 
   INSERT_STMT_CACHE(stmtKey, stmtModel.id);
@@ -23,7 +23,7 @@ int StmtProcessor::getStmtId(Stmt *stmt, StmtType stmtType) {
 }
 
 void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
-  int if_stmt_id = getStmtId(ifStmt, StmtType::IF);
+  int if_stmt_id = getStmtId(ifStmt, StmtKind::IF);
 
   // 1. 处理初始化部分
   if (Stmt *init = ifStmt->getInit()) {
@@ -64,7 +64,7 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
 }
 
 void StmtProcessor::processForStmt(ForStmt *forStmt) {
-  int for_stmt_id = getStmtId(forStmt, StmtType::FOR);
+  int for_stmt_id = getStmtId(forStmt, StmtKind::FOR);
 
   // 0. Determine logacy for or range based for
   DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
@@ -111,7 +111,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 }
 
 void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
-  int for_stmt_id = getStmtId((Stmt *)rangeForStmt, StmtType::FOR);
+  int for_stmt_id = getStmtId((Stmt *)rangeForStmt, StmtKind::FOR);
 
   // 0. Determine logacy for or range based for
   DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
@@ -130,7 +130,7 @@ void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
 }
 
 void StmtProcessor::processWhileStmt(WhileStmt *whileStmt) {
-  int while_stmt_id = getStmtId(whileStmt, StmtType::WHILE);
+  int while_stmt_id = getStmtId(whileStmt, StmtKind::WHILE);
 
   // 处理循环体
   if (Stmt *body = whileStmt->getBody()) {
@@ -146,7 +146,7 @@ void StmtProcessor::processWhileStmt(WhileStmt *whileStmt) {
 }
 
 void StmtProcessor::processDoStmt(DoStmt *doStmt) {
-  int do_stmt_id = getStmtId(doStmt, StmtType::END_TEST_WHILE);
+  int do_stmt_id = getStmtId(doStmt, StmtKind::END_TEST_WHILE);
 
   // 处理循环体
   if (Stmt *body = doStmt->getBody()) {
@@ -162,7 +162,7 @@ void StmtProcessor::processDoStmt(DoStmt *doStmt) {
 }
 
 void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
-  int switch_stmt_id = getStmtId(switchStmt, StmtType::SWITCH);
+  int switch_stmt_id = getStmtId(switchStmt, StmtKind::SWITCH);
 
   // 1. 处理初始化部分
   if (Stmt *init = switchStmt->getInit()) {
@@ -192,7 +192,7 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
       int case_index = 0;
       for (Stmt *child : compoundBody->children()) {
         if (SwitchCase *switchCase = dyn_cast<SwitchCase>(child)) {
-          int case_id = getStmtId(switchStmt, StmtType::SWITCH_CASE);
+          int case_id = getStmtId(switchStmt, StmtKind::SWITCH_CASE);
           KeyType caseKey = KeyGen::Stmt_::makeKey(switchCase, *ast_context_);
           // Since sub stmtNode of SWITCH stmt will be visited after visiting
           // root node of SWITCH, so, directly add this to dependency manager
