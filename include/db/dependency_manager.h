@@ -1,27 +1,47 @@
-#ifndef _DEPENDENCY_MANAGER_H_
-#define _DEPENDENCY_MANAGER_H_
+#ifndef _DB_DEPENDENCY_MANAGER_H_
+#define _DB_DEPENDENCY_MANAGER_H_
 
-#include "model/dependency/base_dep.h"
-#include <memory>
-#include <mutex>
+#include <functional>
+#include <string>
 #include <vector>
+
+using KeyType = std::string;
+
+// 用于指定Key属于哪种类型的缓存，以便DependencyManager知道去哪里查找
+enum class CacheType {
+  FUNCTION,
+  TYPE,
+  USERTYPE,
+  STMT,
+  EXPR,
+  VARIABLE,
+  ELEMENT
+};
+
+// 描述一个待处理的更新操作
+struct PendingUpdate {
+  KeyType dependencyKey;                // 依赖的节点的Key
+  CacheType keyType;                    // Key的类型，用于指定搜索哪个缓存
+  std::function<void(int)> updater;     // 获取ID后要执行的更新回调函数
+};
 
 class DependencyManager {
 public:
-  static DependencyManager &getInstance();
+  static DependencyManager &instance();
 
-  void processPendingModels();
+  // 添加一个新的待处理依赖
+  void addDependency(const PendingUpdate &update);
 
-  void addPendingModelDep(std::unique_ptr<BaseDep> &&dep);
-  void clear();
+  // 在AST遍历结束后，解析所有依赖
+  void resolveDependencies();
 
 private:
   DependencyManager() = default;
+  ~DependencyManager() = default;
   DependencyManager(const DependencyManager &) = delete;
   DependencyManager &operator=(const DependencyManager &) = delete;
 
-  mutable std::mutex mutex_;
-  std::vector<std::unique_ptr<BaseDep>> pending_models_;
+  std::vector<PendingUpdate> pending_updates_;
 };
 
-#endif // _DEPENDENCY_MANAGER_H_
+#endif // _DB_DEPENDENCY_MANAGER_H_
