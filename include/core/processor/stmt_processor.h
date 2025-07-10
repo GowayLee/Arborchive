@@ -20,6 +20,7 @@ public:
   void processWhileStmt(WhileStmt *whileStmt);
   void processDoStmt(DoStmt *doStmt);
   void processSwitchStmt(SwitchStmt *switchStmt);
+  void processBlockStmt(CompoundStmt *blockStmt);
 
   StmtProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~StmtProcessor() = default;

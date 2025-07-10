@@ -300,3 +300,7 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
     }
   }
 }
+
+void StmtProcessor::processBlockStmt(CompoundStmt *blockStmt) {
+  int block_stmt_id = getStmtId(blockStmt, StmtKind::BLOCK);
+}

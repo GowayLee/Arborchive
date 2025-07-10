@@ -96,8 +96,7 @@ bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
 bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *decl) { return true; }
 
 bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *stmt) {
-  // LOG_DEBUG << "Visiting CompoundStmt" << std::endl;
-
+  stmt_processor_->processBlockStmt(stmt);
   return true;
 }
 
