@@ -1,5 +1,6 @@
 #include "core/processor/function_processor.h"
 #include "core/processor/coroutine_helper.h"
+#include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/element.h"
 #include "model/db/function.h"
@@ -26,6 +27,7 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   std::string name = decl->getNameAsString();
   DbModel::Function function = {_funcId = GENID(Function), name,
                                 static_cast<int>(type)};
+  _funcDeclId = GENID(FunDecl); // Generate ID early for dependency capturing
 
   // Insert Cache
   KeyType funcKey = KeyGen::Function::makeKey(decl, decl->getASTContext());
@@ -57,8 +59,8 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   // Record coroutine
   recordCoroutine(decl);
 
-  DbModel::FunDecl fun_decl = {_funcDeclId = GENID(FunDecl), _funcId, _typeId,
-                               name, _locIdPair->spec_id};
+  DbModel::FunDecl fun_decl = {_funcDeclId, _funcId, _typeId, name,
+                               _locIdPair->spec_id};
 
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
@@ -75,16 +77,20 @@ void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
   std::string stmtKey =
       KeyGen::Stmt_::makeKey(entryStmt, decl->getASTContext());
   LOG_DEBUG << "Function entry point StmtKey: " << stmtKey << std::endl;
-  int stmtId = -1;
-  if (auto cachedId = SEARCH_STMT_CACHE(stmtKey))
-    stmtId = *cachedId;
-  else {
-    // LOG_DEBUG << "Stmt cache entry not found, push to pending model queue"
-    //           << std::endl;
-    // TODO: Dependency Manager...
+
+  if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
+    DbModel::FuncEntryPt funcEntryPt = {_funcId, *cachedId};
+    STG.insertClassObj(funcEntryPt);
+  } else {
+    DbModel::FuncEntryPt funcEntryPt = {_funcId, -1};
+    STG.insertClassObj(funcEntryPt);
+    PendingUpdate update{
+        stmtKey, CacheType::STMT, [_funcId = _funcId](int resolvedId) {
+          DbModel::FuncEntryPt updated_record = {_funcId, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
   }
-  DbModel::FuncEntryPt funcEntryPt = {_funcId, stmtId};
-  STG.insertClassObj(funcEntryPt);
 }
 
 void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl) const {
@@ -119,16 +125,35 @@ void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {
   KeyType typeKey =
       KeyGen::Type::makeKey(decl->getReturnType(), decl->getASTContext());
   LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
-  _typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
     _typeId = *cachedId;
-  else {
-    // LOG_DEBUG << "Type cache entry not found, push to pending model queue"
-    //           << std::endl;
-    // TODO: Dependency Manager...
+  } else {
+    _typeId = -1;
+    // Register dependency for FunDecl table
+    PendingUpdate funDeclUpdate{
+        typeKey, CacheType::TYPE,
+        [_funcDeclId = _funcDeclId, _funcId = _funcId,
+         name = decl->getNameAsString(),
+         spec_id = _locIdPair->spec_id](int resolvedId) {
+          DbModel::FunDecl updated_record = {_funcDeclId, _funcId, resolvedId,
+                                             name, spec_id};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(funDeclUpdate);
   }
+  // This record always needs to be inserted, either with a real ID or a
+  // dependency
   DbModel::FuncRetType func_ret_type = {_funcId, _typeId};
   STG.insertClassObj(func_ret_type);
+  if (_typeId == -1) {
+    PendingUpdate funcRetUpdate{
+        typeKey, CacheType::TYPE, [_funcId = _funcId](int resolvedId) {
+          DbModel::FuncRetType updated_record = {_funcId, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(funcRetUpdate);
+  }
 }
 
 void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
@@ -151,14 +176,22 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
     int index = 0;
     for (const auto &qt : funcProtoType->exceptions()) {
       KeyType typeKey = KeyGen::Type::makeKey(qt, decl->getASTContext());
-      int typeId = -1;
-      if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-        typeId = *cachedId;
-      else {
-        // TODO: Dependency Manager...
+      if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+        DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index, *cachedId};
+        STG.insertClassObj(funDeclThrow);
+      } else {
+        DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index, -1};
+        STG.insertClassObj(funDeclThrow);
+        PendingUpdate update{
+            typeKey, CacheType::TYPE,
+            [_funcDeclId = _funcDeclId, index = index](int resolvedId) {
+              DbModel::FunDeclThrow updated_record = {_funcDeclId, index,
+                                                      resolvedId};
+              STG.insertClassObj(updated_record);
+            }};
+        DependencyManager::instance().addDependency(update);
       }
-      DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index++, typeId};
-      STG.insertClassObj(funDeclThrow);
+      index++;
     }
     break;
   }
@@ -167,55 +200,32 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
     STG.insertClassObj(eptNoexcept);
     break;
   }
-  case EST_DependentNoexcept: {
+  case EST_DependentNoexcept:
+  case EST_NoexceptTrue:
+  case EST_NoexceptFalse: {
     const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
     if (noexceptExpr) {
       KeyType exprKey =
           KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
       LOG_DEBUG << "Expr key: " << exprKey << std::endl;
-      int exprId = -1;
-      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-        exprId = *cachedId;
-      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
-      STG.insertClassObj(funDeclNoexcept);
-      // TODO: Assume RecursiveVisitor will first visit noexcept node then,
-      // inside expr node. So, hereby, we only caculate exprKey, after inside
-      // expr node is visited, call Dependency Manager to fill real id by
-      // exprKey
-    } else {
+      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
+        DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, *cachedId};
+        STG.insertClassObj(funDeclNoexcept);
+      } else {
+        DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, -1};
+        STG.insertClassObj(funDeclNoexcept);
+        PendingUpdate update{exprKey, CacheType::EXPR,
+                             [_funcDeclId = _funcDeclId](int resolvedId) {
+                               DbModel::FunDeclNoexcept updated_record = {
+                                   _funcDeclId, resolvedId};
+                               STG.insertClassObj(updated_record);
+                             }};
+        DependencyManager::instance().addDependency(update);
+      }
+    } else if (funcProtoType->getExceptionSpecType() == EST_DependentNoexcept) {
       // If noexcepExpr is a nullptr, treat as fun_decl_empty_noexcept
       DbModel::FunDeclEmptyNoexcept eptNoexcept = {_funcDeclId};
       STG.insertClassObj(eptNoexcept);
-    }
-    break;
-  }
-  case EST_NoexceptTrue: {
-    // Need to create an expr entity, literal true
-    const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
-    if (noexceptExpr) {
-      KeyType exprKey =
-          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
-      LOG_DEBUG << "Expr key: " << exprKey << std::endl;
-      int exprId = -1;
-      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-        exprId = *cachedId;
-      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
-      STG.insertClassObj(funDeclNoexcept);
-    }
-    break;
-  }
-  case EST_NoexceptFalse: {
-    // Need to create an expr entity, literal false
-    const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
-    if (noexceptExpr) {
-      KeyType exprKey =
-          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
-      LOG_DEBUG << "Expr key: " << exprKey << std::endl;
-      int exprId = -1;
-      if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-        exprId = *cachedId;
-      DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, exprId};
-      STG.insertClassObj(funDeclNoexcept);
     }
     break;
   }
@@ -225,48 +235,35 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
 }
 
 void FunctionProcessor::recordTypedef(const FunctionDecl *decl) const {
-  // 获取函数声明的类型
-  QualType funcType = decl->getType();
-
-  // 检查是否是typedef类型
-  if (const TypedefType *TT = funcType->getAs<TypedefType>()) {
-    TypedefNameDecl *TND = TT->getDecl();
+  auto processTypedef = [&](const TypedefNameDecl *TND) {
     if (TND) {
       DbModel::UserType::KeyType userTypekey =
           KeyGen::Type::makeKey(TND, decl->getASTContext());
       LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
-      int userTypeId = -1;
-      if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey))
-        userTypeId = *cachedId;
-      else {
-        // TODO: Dependency Manager...
-        // FIXME: Maybe function typedef is also the node which declares such
-        // userType
-      }
-      DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
-                                                        userTypeId};
-      STG.insertClassObj(funDeclTypedefType);
-    }
-  } else if (const ElaboratedType *ET = funcType->getAs<ElaboratedType>()) {
-    // 处理可能嵌套在ElaboratedType中的TypedefType
-    if (const TypedefType *TT = ET->getNamedType()->getAs<TypedefType>()) {
-      TypedefNameDecl *TND = TT->getDecl();
-      if (TND) {
-        DbModel::UserType::KeyType userTypekey =
-            KeyGen::Type::makeKey(TND, decl->getASTContext());
-        LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
-        int userTypeId = -1;
-        if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey))
-          userTypeId = *cachedId;
-        else {
-          // TODO: Dependency Manager...
-          // FIXME: Maybe function typedef is also the node which declares such
-          // userType
-        }
+      if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey)) {
         DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
-                                                          userTypeId};
+                                                          *cachedId};
         STG.insertClassObj(funDeclTypedefType);
+      } else {
+        DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId, -1};
+        STG.insertClassObj(funDeclTypedefType);
+        PendingUpdate update{userTypekey, CacheType::USERTYPE,
+                             [_funcDeclId = _funcDeclId](int resolvedId) {
+                               DbModel::FunDeclTypedefType updated_record = {
+                                   _funcDeclId, resolvedId};
+                               STG.insertClassObj(updated_record);
+                             }};
+        DependencyManager::instance().addDependency(update);
       }
+    }
+  };
+
+  QualType funcType = decl->getType();
+  if (const TypedefType *TT = funcType->getAs<TypedefType>()) {
+    processTypedef(TT->getDecl());
+  } else if (const ElaboratedType *ET = funcType->getAs<ElaboratedType>()) {
+    if (const TypedefType *TT = ET->getNamedType()->getAs<TypedefType>()) {
+      processTypedef(TT->getDecl());
     }
   }
 }
@@ -275,60 +272,67 @@ void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
   if (!isCoroutineFunction(FD))
     return;
 
-  // 查找coroutine_traits模板
   ASTContext &Context = FD->getASTContext();
   auto *TraitsTemplate = findCoroutineTraitsTemplate(Context);
-
   if (!TraitsTemplate)
     return;
 
-  // 获取traits类型
   QualType TraitsType = getCoroutineTraitsType(Context, FD, TraitsTemplate);
-
   if (TraitsType.isNull())
     return;
 
   KeyType typeKey = KeyGen::Type::makeKey(TraitsType, FD->getASTContext());
   LOG_DEBUG << "Coroutine Trait TypeKey: " << typeKey << std::endl;
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    DbModel::Coroutine coroutine = {_funcId, *cachedId};
+    STG.insertClassObj(coroutine);
+  } else {
+    DbModel::Coroutine coroutine = {_funcId, -1};
+    STG.insertClassObj(coroutine);
+    PendingUpdate update{
+        typeKey, CacheType::TYPE, [_funcId = _funcId](int resolvedId) {
+          DbModel::Coroutine updated_record = {_funcId, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
   }
-  DbModel::Coroutine coroutine = {_funcId, typeId};
-  STG.insertClassObj(coroutine);
 
-  // Get coroutine_new
-  // 获取并记录协程的new函数
   FunctionDecl *NewFD = getCoroutineNewFunction(FD, Context);
   if (NewFD) {
     KeyType newFuncKey = KeyGen::Function::makeKey(NewFD, FD->getASTContext());
     LOG_DEBUG << "Function FuncKey: " << newFuncKey << std::endl;
-    int newFuncId = -1;
-    if (auto cachedId = SEARCH_FUNCTION_CACHE(newFuncKey))
-      newFuncId = *cachedId;
-    else {
-      // TODO: Dependency Manager...
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(newFuncKey)) {
+      DbModel::CoroutineNew couroutine_new = {_funcId, *cachedId};
+      STG.insertClassObj(couroutine_new);
+    } else {
+      DbModel::CoroutineNew couroutine_new = {_funcId, -1};
+      STG.insertClassObj(couroutine_new);
+      PendingUpdate update{
+          newFuncKey, CacheType::FUNCTION, [_funcId = _funcId](int resolvedId) {
+            DbModel::CoroutineNew updated_record = {_funcId, resolvedId};
+            STG.insertClassObj(updated_record);
+          }};
+      DependencyManager::instance().addDependency(update);
     }
-    DbModel::CoroutineNew couroutine_new = {_funcId, newFuncId};
-    STG.insertClassObj(couroutine_new);
   }
 
-  // Get coroutine_delete
-  // 获取并记录协程的delete函数
   FunctionDecl *DelFD = getCoroutineDeleteFunction(FD, Context);
   if (DelFD) {
     KeyType delFuncKey = KeyGen::Function::makeKey(DelFD, FD->getASTContext());
     LOG_DEBUG << "Function FuncKey: " << delFuncKey << std::endl;
-    int delFuncId = -1;
-    if (auto cachedId = SEARCH_FUNCTION_CACHE(delFuncKey))
-      delFuncId = *cachedId;
-    else {
-      // TODO: Dependency Manager...
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(delFuncKey)) {
+      DbModel::CoroutineDelete couroutine_delete = {_funcId, *cachedId};
+      STG.insertClassObj(couroutine_delete);
+    } else {
+      DbModel::CoroutineDelete couroutine_delete = {_funcId, -1};
+      STG.insertClassObj(couroutine_delete);
+      PendingUpdate update{
+          delFuncKey, CacheType::FUNCTION, [_funcId = _funcId](int resolvedId) {
+            DbModel::CoroutineDelete updated_record = {_funcId, resolvedId};
+            STG.insertClassObj(updated_record);
+          }};
+      DependencyManager::instance().addDependency(update);
     }
-    DbModel::CoroutineDelete couroutine_delete = {_funcId, delFuncId};
-    STG.insertClassObj(couroutine_delete);
   }
 }
 
@@ -367,7 +371,8 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
     }
 
     // Check isUserDefinedLiteral
-    if (name.find("operator\"\"") == 0) { // FIXME: maybe official API support?
+    if (name.find("operator"
+                  "") == 0) { // FIXME: maybe official API support?
       processUserDefinedLiteral(cast<FunctionDecl>(decl));
       return;
     }
@@ -418,17 +423,20 @@ void FunctionProcessor::processCXXDeductionGuide(
   KeyType key =
       KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
   LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;
-  int userTypeId = -1;
-  if (auto cachedId = SEARCH_USERTYPE_CACHE(key))
-    userTypeId = *cachedId;
-  else {
-    // Handle dependency manage
+  if (auto cachedId = SEARCH_USERTYPE_CACHE(key)) {
+    DbModel::DeductionGuideForClass deducGuide = {_funcId, *cachedId};
+    STG.insertClassObj(deducGuide);
+  } else {
+    DbModel::DeductionGuideForClass deducGuide = {_funcId, -1};
+    STG.insertClassObj(deducGuide);
+    PendingUpdate update{key, CacheType::USERTYPE,
+                         [_funcId = _funcId](int resolvedId) {
+                           DbModel::DeductionGuideForClass updated_record = {
+                               _funcId, resolvedId};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
   }
-  // Since this function is called by RecursiveVisitor after executing
-  // routerProcess() memeber variable _funcId still storages id of current
-  // function
-  DbModel::DeductionGuideForClass deducGuide = {_funcId, userTypeId};
-  STG.insertClassObj(deducGuide);
 }
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {

@@ -1,5 +1,6 @@
 #include "core/processor/variable_processor.h"
 #include "core/srcloc_recorder.h"
+#include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/class.h"
 #include "model/db/declaration.h"
@@ -20,16 +21,7 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   int varId;
   VarType varType;
 
-  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
-  LOG_DEBUG << "Variable TypeKey: " << typeKey << std::endl;
-  _typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    _typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-
-  // Classify VarDecl
+  // Classify VarDecl first to get the specific variable ID
   if (llvm::isa<clang::FieldDecl>(VD) ||
       (VD->getDeclContext()->isRecord() && VD->isCXXClassMember())) {
     varId = processMemberVar(VD); // @membervariable
@@ -49,10 +41,27 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   LocIdPair *locIdPair =
       SrcLocRecorder::processDefault(VD, &VD->getASTContext());
   _name = VD->getNameAsString();
+  _varDeclId = GENID(VarDecl);
 
-  DbModel::VarDecl varDecl = {
-      _varDeclId = GENID(VarDecl), varId, _typeId, _name, locIdPair->spec_id,
-  };
+  // Handle Type Dependency
+  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
+  LOG_DEBUG << "Variable TypeKey: " << typeKey << std::endl;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    _typeId = *cachedId;
+  } else {
+    _typeId = -1;
+    PendingUpdate update{typeKey, CacheType::TYPE,
+                         [_varDeclId = _varDeclId, varId = varId, name = _name,
+                          spec_id = locIdPair->spec_id](int resolvedId) {
+                           DbModel::VarDecl updated_record = {
+                               _varDeclId, varId, resolvedId, name, spec_id};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  DbModel::VarDecl varDecl = {_varDeclId, varId, _typeId, _name,
+                              locIdPair->spec_id};
 
   // Maintain cache
   KeyType VDKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
@@ -201,11 +210,19 @@ void VariableProcessor::recordRequire(const VarDecl *VD) {
     return;
   KeyType exprKey = KeyGen::Expr_::makeKey(CE, VD->getASTContext());
   LOG_DEBUG << "Variable require Expr key: " << exprKey << std::endl;
-  int exprId = -1;
-  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-    exprId = *cachedId;
-  DbModel::VarRequire varRequire = {_varDeclId, exprId};
-  STG.insertClassObj(varRequire);
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
+    DbModel::VarRequire varRequire = {_varDeclId, *cachedId};
+    STG.insertClassObj(varRequire);
+  } else {
+    DbModel::VarRequire varRequire = {_varDeclId, -1};
+    STG.insertClassObj(varRequire);
+    PendingUpdate update{
+        exprKey, CacheType::EXPR, [_varDeclId = _varDeclId](int resolvedId) {
+          DbModel::VarRequire updated_record = {_varDeclId, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
 }
 
 // Process Local Scope Variable, return id @localscopevariable
@@ -230,9 +247,6 @@ int VariableProcessor::processLocalScopeVar(const VarDecl *VD) {
 
 // Process Local Variable. return id @localvariables
 int VariableProcessor::processLocalVar(const VarDecl *VD) {
-  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
-  LOG_DEBUG << "Local Variable TypeKey: " << typeKey << std::endl;
-
   DbModel::LocalVar localVar = {GENID(LocalVar), _typeId,
                                 VD->getNameAsString()};
   STG.insertClassObj(localVar);
@@ -249,12 +263,6 @@ int VariableProcessor::processParam(const VarDecl *VD) {
     return -1;
   }
 
-  // Get parameterized element
-  KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
-  int elementId = -1;
-  if (auto cachedId = SEARCH_ELEMENT_CACHE(elementKey))
-    elementId = *cachedId;
-
   // Get parameter index
   size_t index;
   auto *PVD = llvm::cast<clang::ParmVarDecl>(VD);
@@ -268,6 +276,24 @@ int VariableProcessor::processParam(const VarDecl *VD) {
                 << std::endl;
       break;
     }
+
+  // Get parameterized element
+  KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
+  int elementId = -1;
+  if (auto cachedId = SEARCH_ELEMENT_CACHE(elementKey)) {
+    elementId = *cachedId;
+  } else {
+    PendingUpdate update{elementKey, CacheType::ELEMENT,
+                         [paramId = GENID(Parameter), index = index,
+                          typeId = _typeId](int resolvedId) {
+                           DbModel::Parameter updated_record = {
+                               paramId, resolvedId, static_cast<int>(index),
+                               typeId};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
+  }
+
   DbModel::Parameter param = {GENID(Parameter), elementId,
                               static_cast<int>(index), _typeId};
   STG.insertClassObj(param);
@@ -276,9 +302,6 @@ int VariableProcessor::processParam(const VarDecl *VD) {
 
 // Process Global Variable, return id @globalvariable
 int VariableProcessor::processGlobalVar(const VarDecl *VD) {
-  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
-  LOG_DEBUG << "Global Variable TypeKey: " << typeKey << std::endl;
-
   DbModel::GlobalVar globalVar = {GENID(GlobalVar), _typeId,
                                   VD->getNameAsString()};
   STG.insertClassObj(globalVar);

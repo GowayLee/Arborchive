@@ -2,6 +2,7 @@
 #include "core/processor/type_processor.h"
 #include "core/processor/usertype_helper.h"
 #include "core/srcloc_recorder.h"
+#include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
@@ -124,20 +125,31 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
 
 int TypeProcessor::processDerivedType(const Type *TP, ASTContext &ast_context) {
   QualType QT = getUnderlyingType(TP);
-
   KeyType typeKey = KeyGen::Type::makeKey(QT, ast_context);
   LOG_DEBUG << "DerivedType TypeKey: " << typeKey << std::endl;
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    int typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
+
+  int derivedTypeId = GENID(DerivedType);
+  std::string derivedTypeName = getDerivedTypeName(TP, ast_context);
+  int derivedTypeKind = getDerivedTypeKind(TP);
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    DbModel::DerivedType derivedTypeModel = {derivedTypeId, derivedTypeName,
+                                             derivedTypeKind, *cachedId};
+    STG.insertClassObj(derivedTypeModel);
+  } else {
+    DbModel::DerivedType derivedTypeModel = {derivedTypeId, derivedTypeName,
+                                             derivedTypeKind, -1};
+    STG.insertClassObj(derivedTypeModel);
+    PendingUpdate update{
+        typeKey, CacheType::TYPE,
+        [derivedTypeId, derivedTypeName, derivedTypeKind](int resolvedId) {
+          DbModel::DerivedType updated_record = {derivedTypeId, derivedTypeName,
+                                                 derivedTypeKind, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
   }
-  DbModel::DerivedType derivedTypeModel = {GENID(DerivedType),
-                                           getDerivedTypeName(TP, ast_context),
-                                           getDerivedTypeKind(TP), typeId};
-  STG.insertClassObj(derivedTypeModel);
-  return derivedTypeModel.id;
+  return derivedTypeId;
 }
 
 int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
@@ -215,96 +227,144 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
 }
 
 int TypeProcessor::processRoutineType(const Type *TP, ASTContext &ast_context) {
-  // 获取函数类型的具体信息
   const FunctionType *FT = TP->getAs<FunctionType>();
   if (!FT)
     return -1;
 
+  int routineTypeId = GENID(RoutineType);
   QualType returnType = FT->getReturnType();
-  KeyType routineTypeKey = KeyGen::Type::makeKey(returnType, ast_context);
-  int routineTypeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(routineTypeKey))
-    routineTypeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-  DbModel::RoutineType routineTypeModel = {GENID(RoutineType), routineTypeId};
-  STG.insertClassObj(routineTypeModel);
+  KeyType returnTypeKey = KeyGen::Type::makeKey(returnType, ast_context);
 
-  // 如果是FunctionProtoType，处理参数
-  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
+  if (auto cachedId = SEARCH_TYPE_CACHE(returnTypeKey)) {
+    DbModel::RoutineType routineTypeModel = {routineTypeId, *cachedId};
+    STG.insertClassObj(routineTypeModel);
+  } else {
+    DbModel::RoutineType routineTypeModel = {routineTypeId, -1};
+    STG.insertClassObj(routineTypeModel);
+    PendingUpdate update{
+        returnTypeKey, CacheType::TYPE, [routineTypeId](int resolvedId) {
+          DbModel::RoutineType updated_record = {routineTypeId, resolvedId};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
     for (unsigned index = 0; index < FPT->getNumParams(); ++index) {
       QualType paramType = FPT->getParamType(index);
-      KeyType routineArgTypeKey = KeyGen::Type::makeKey(paramType, ast_context);
-      int routineArgTypeId = -1;
-      if (auto cachedId = SEARCH_TYPE_CACHE(routineArgTypeKey))
-        routineArgTypeId = *cachedId;
-      else {
-        // TODO: Dependency Manager...
+      KeyType paramTypeKey = KeyGen::Type::makeKey(paramType, ast_context);
+      if (auto cachedId = SEARCH_TYPE_CACHE(paramTypeKey)) {
+        DbModel::RoutineTypeArg routineTypeArgModel = {
+            routineTypeId, static_cast<int>(index), *cachedId};
+        STG.insertClassObj(routineTypeArgModel);
+      } else {
+        DbModel::RoutineTypeArg routineTypeArgModel = {
+            routineTypeId, static_cast<int>(index), -1};
+        STG.insertClassObj(routineTypeArgModel);
+        PendingUpdate update{paramTypeKey, CacheType::TYPE,
+                             [routineTypeId, index](int resolvedId) {
+                               DbModel::RoutineTypeArg updated_record = {
+                                   routineTypeId, static_cast<int>(index),
+                                   resolvedId};
+                               STG.insertClassObj(updated_record);
+                             }};
+        DependencyManager::instance().addDependency(update);
       }
-      DbModel::RoutineTypeArg routineTypeArgModel = {
-          routineTypeModel.id, static_cast<int>(index), routineArgTypeId};
-      STG.insertClassObj(routineTypeArgModel);
     }
-  return routineTypeModel.id;
+  }
+  return routineTypeId;
 }
 
 int TypeProcessor::processPtrToMemberType(const MemberPointerType *MPT,
                                           ASTContext &ast_context) {
-  // 获取指针指向的类型
+  int ptrToMemberId = GENID(PtrToMember);
   QualType pointeeType = MPT->getPointeeType();
-  KeyType pointeeTypeKey = KeyGen::Type::makeKey(pointeeType, ast_context);
-  int pointeeTypeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(pointeeTypeKey))
-    pointeeTypeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
-
-  // 获取所属的类类型
   const Type *classType = MPT->getClass();
+
+  KeyType pointeeTypeKey = KeyGen::Type::makeKey(pointeeType, ast_context);
   KeyType classTypeKey =
       KeyGen::Type::makeKey(classType->getCanonicalTypeInternal(), ast_context);
-  int classTypeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(classTypeKey))
-    classTypeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
 
-  DbModel::PtrToMember ptrToMemberModel = {GENID(PtrToMember), pointeeTypeId,
+  auto pointeeIdOpt = SEARCH_TYPE_CACHE(pointeeTypeKey);
+  auto classIdOpt = SEARCH_TYPE_CACHE(classTypeKey);
+
+  int pointeeTypeId = pointeeIdOpt.value_or(-1);
+  int classTypeId = classIdOpt.value_or(-1);
+
+  DbModel::PtrToMember ptrToMemberModel = {ptrToMemberId, pointeeTypeId,
                                            classTypeId};
   STG.insertClassObj(ptrToMemberModel);
-  return ptrToMemberModel.id;
+
+  if (!pointeeIdOpt) {
+    PendingUpdate update{pointeeTypeKey, CacheType::TYPE,
+                         [ptrToMemberId, classTypeId](int resolvedId) {
+                           DbModel::PtrToMember updated_record = {
+                               ptrToMemberId, resolvedId, classTypeId};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  if (!classIdOpt) {
+    PendingUpdate update{classTypeKey, CacheType::TYPE,
+                         [ptrToMemberId, pointeeTypeId](int resolvedId) {
+                           DbModel::PtrToMember updated_record = {
+                               ptrToMemberId, pointeeTypeId, resolvedId};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  return ptrToMemberId;
 }
 
 int TypeProcessor::processDeclType(const DecltypeType *DT,
                                    ASTContext &ast_context) {
+  int declTypeId = GENID(DeclType);
   const Expr *expr = DT->getUnderlyingExpr();
+  QualType baseType = DT->getUnderlyingType();
+  bool parenthesesWouldChange = DT->isReferenceType();
+
   int exprId = -1;
   if (expr) {
     KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context);
-    if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
       exprId = *cachedId;
+    }
   }
 
-  // 获取基础类型
-  QualType baseType = DT->getUnderlyingType();
   KeyType typeKey = KeyGen::Type::makeKey(baseType, ast_context);
-  int typeId = -1;
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    typeId = *cachedId;
-  else {
-    // TODO: Dependency Manager...
-  }
+  auto typeIdOpt = SEARCH_TYPE_CACHE(typeKey);
+  int typeId = typeIdOpt.value_or(-1);
 
-  // 获取括号是否会改变语义
-  bool parenthesesWouldChange = DT->isReferenceType();
-
-  DbModel::DeclType declTypeModel = {GENID(DeclType), exprId, typeId,
+  DbModel::DeclType declTypeModel = {declTypeId, exprId, typeId,
                                      parenthesesWouldChange};
   STG.insertClassObj(declTypeModel);
-  return declTypeModel.id;
+
+  if (expr && exprId == -1) {
+    KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context);
+    PendingUpdate update{
+        exprKey, CacheType::EXPR,
+        [declTypeId, typeId, parenthesesWouldChange](int resolvedId) {
+          DbModel::DeclType updated_record = {declTypeId, resolvedId, typeId,
+                                              parenthesesWouldChange};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  if (!typeIdOpt) {
+    PendingUpdate update{
+        typeKey, CacheType::TYPE,
+        [declTypeId, exprId, parenthesesWouldChange](int resolvedId) {
+          DbModel::DeclType updated_record = {declTypeId, exprId, resolvedId,
+                                              parenthesesWouldChange};
+          STG.insertClassObj(updated_record);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  return declTypeId;
 }
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {
