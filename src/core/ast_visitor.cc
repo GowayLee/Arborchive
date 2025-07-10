@@ -10,6 +10,7 @@ ASTVisitor::ASTVisitor(clang::ASTContext &context) : context_(context) {
 void ASTVisitor::initProcessors() {
   class_decl_processor_ = std::make_unique<ClassDeclProcessor>(&context_);
   function_processor_ = std::make_unique<FunctionProcessor>(&context_);
+  namespace_processor_ = std::make_unique<NamespaceProcessor>(&context_);
   variable_processor_ = std::make_unique<VariableProcessor>(&context_);
   type_processor_ = std::make_unique<TypeProcessor>(&context_);
   stmt_processor_ = std::make_unique<StmtProcessor>(&context_);
@@ -122,6 +123,11 @@ bool ASTVisitor::VisitBinaryOperator(const BinaryOperator *op) {
 
 bool ASTVisitor::VisitConditionalOperator(const ConditionalOperator *op) {
   expr_processor_->processConditionalOperator(op);
+  return true;
+}
+
+bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
+  namespace_processor_->processNamespaceDecl(decl);
   return true;
 }
 

@@ -30,6 +30,27 @@ inline auto folders() {
       make_column("name", &DbModel::Folder::name));
 }
 
+inline auto namespaces() {
+  return make_table(
+      "namespaces",
+      make_column("id", &DbModel::Namespace::id, primary_key()),
+      make_column("name", &DbModel::Namespace::name));
+}
+
+inline auto namespace_inline() {
+  return make_table(
+      "namespace_inline",
+      make_column("id", &DbModel::NamespaceInline::id, primary_key()));
+}
+
+inline auto namespacembrs() {
+  return make_table(
+      "namespacembrs",
+      make_column("parentid", &DbModel::NamespaceMember::parentid),
+      make_column("memberid", &DbModel::NamespaceMember::memberid),
+      primary_key(&DbModel::NamespaceMember::parentid, &DbModel::NamespaceMember::memberid));
+}
+
 // clang-format on
 
 } // namespace ContainerTableFn

@@ -23,6 +23,20 @@ struct Folder {
   std::string name;
 };
 
+struct Namespace {
+  int id;
+  std::string name;
+};
+
+struct NamespaceInline {
+  int id;
+};
+
+struct NamespaceMember {
+  int parentid;
+  int memberid;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_CONTAINER_H_

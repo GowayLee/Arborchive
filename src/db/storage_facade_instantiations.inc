@@ -55,6 +55,9 @@ template void StorageFacade::insertClassObj<DbModel::LocationExpr&>(DbModel::Loc
 template void StorageFacade::insertClassObj<DbModel::LocationStmt&>(DbModel::LocationStmt&);
 template void StorageFacade::insertClassObj<DbModel::Member&>(DbModel::Member&);
 template void StorageFacade::insertClassObj<DbModel::MemberVar&>(DbModel::MemberVar&);
+template void StorageFacade::insertClassObj<DbModel::Namespace&>(DbModel::Namespace&);
+template void StorageFacade::insertClassObj<DbModel::NamespaceInline&>(DbModel::NamespaceInline&);
+template void StorageFacade::insertClassObj<DbModel::NamespaceMember&>(DbModel::NamespaceMember&);
 template void StorageFacade::insertClassObj<DbModel::Parameter&>(DbModel::Parameter&);
 template void StorageFacade::insertClassObj<DbModel::ParameterizedElement&>(DbModel::ParameterizedElement&);
 template void StorageFacade::insertClassObj<DbModel::PtrToMember&>(DbModel::PtrToMember&);
