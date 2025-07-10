@@ -5,9 +5,11 @@
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/stmt.h"
+#include "util/key_generator/values.h"
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprCXX.h>
 
 int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
   KeyType exprKey = KeyGen::Expr_::makeKey(expr, *ast_context_);
@@ -317,4 +319,86 @@ void ExprProcessor::processAssignExpr(const BinaryOperator *op) {
   default:
     return;
   }
+}
+
+void ExprProcessor::processStringLiteral(const StringLiteral *literal) {
+  int exprId =
+      processBaseExpr(const_cast<StringLiteral *>(literal), ExprKind::LITERAL);
+
+  std::string value = literal->getString().str();
+  std::string text = "\"" + value + "\"";
+
+  processLiteralValue(value, text, exprId);
+}
+
+void ExprProcessor::processIntegerLiteral(const IntegerLiteral *literal) {
+  int exprId =
+      processBaseExpr(const_cast<IntegerLiteral *>(literal), ExprKind::LITERAL);
+
+  std::string value = std::to_string(literal->getValue().getSExtValue());
+  std::string text = value;
+
+  processLiteralValue(value, text, exprId);
+}
+
+void ExprProcessor::processFloatingLiteral(const FloatingLiteral *literal) {
+  int exprId = processBaseExpr(const_cast<FloatingLiteral *>(literal),
+                               ExprKind::LITERAL);
+
+  llvm::SmallVector<char, 16> buffer;
+  literal->getValue().toString(buffer);
+  std::string value(buffer.begin(), buffer.end());
+  std::string text = value;
+
+  processLiteralValue(value, text, exprId);
+}
+
+void ExprProcessor::processCharacterLiteral(const CharacterLiteral *literal) {
+  int exprId = processBaseExpr(const_cast<CharacterLiteral *>(literal),
+                               ExprKind::LITERAL);
+
+  std::string value = std::to_string(literal->getValue());
+  std::string text =
+      "'" + std::string(1, static_cast<char>(literal->getValue())) + "'";
+
+  processLiteralValue(value, text, exprId);
+}
+
+void ExprProcessor::processBoolLiteral(const CXXBoolLiteralExpr *literal) {
+  int exprId = processBaseExpr(const_cast<CXXBoolLiteralExpr *>(literal),
+                               ExprKind::LITERAL);
+
+  std::string value = literal->getValue() ? "1" : "0";
+  std::string text = literal->getValue() ? "true" : "false";
+
+  processLiteralValue(value, text, exprId);
+}
+
+int ExprProcessor::processLiteralValue(const std::string &value,
+                                       const std::string &text, int exprId) {
+  // Create Values entry
+  KeyType valueKey = KeyGen::Values::makeKey(value);
+  int valueId = GENID(Values);
+
+  DbModel::Values valuesModel = {valueId, value};
+  INSERT_VALUES_CACHE(valueKey, valueId);
+  STG.insertClassObj(valuesModel);
+
+  // Create ValueText entry
+  KeyType textKey = KeyGen::ValueText::makeKey(text);
+  int textId = GENID(ValueText);
+
+  DbModel::ValueText valueTextModel = {textId, text};
+  INSERT_VALUETEXT_CACHE(textKey, textId);
+  STG.insertClassObj(valueTextModel);
+
+  // Create ValueBind to link expression with value
+  recordValueBindExpr(valueId, exprId);
+
+  return valueId;
+}
+
+void ExprProcessor::recordValueBindExpr(int valueId, int exprId) {
+  DbModel::ValueBind valueBindModel = {valueId, exprId};
+  STG.insertClassObj(valueBindModel);
 }

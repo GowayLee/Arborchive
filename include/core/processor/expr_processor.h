@@ -18,6 +18,12 @@ public:
   void processBinaryOperator(const BinaryOperator *op);
   void processConditionalOperator(const ConditionalOperator *op);
 
+  void processStringLiteral(const StringLiteral *literal);
+  void processIntegerLiteral(const IntegerLiteral *literal);
+  void processFloatingLiteral(const FloatingLiteral *literal);
+  void processCharacterLiteral(const CharacterLiteral *literal);
+  void processBoolLiteral(const CXXBoolLiteralExpr *literal);
+
   void processAssignArithExpr(const BinaryOperator *op);
   void processAssignBitwiseExpr(const BinaryOperator *op);
   void processAssignPointerExpr(const BinaryOperator *op);
@@ -35,6 +41,10 @@ private:
 
   int processBaseExpr(Expr *expr, ExprKind exprKind);
   void recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr);
+
+  int processLiteralValue(const std::string &value, const std::string &text,
+                          int exprId);
+  void recordValueBindExpr(int valueId, int exprId);
 };
 
 #endif // _EXPR_PROCESSOR_H_

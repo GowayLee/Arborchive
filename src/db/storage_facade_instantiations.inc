@@ -74,6 +74,9 @@ template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDec
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);
 template void StorageFacade::insertClassObj<DbModel::TypeDef&>(DbModel::TypeDef&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
+template void StorageFacade::insertClassObj<DbModel::ValueBind&>(DbModel::ValueBind&);
+template void StorageFacade::insertClassObj<DbModel::ValueText&>(DbModel::ValueText&);
+template void StorageFacade::insertClassObj<DbModel::Values&>(DbModel::Values&);
 template void StorageFacade::insertClassObj<DbModel::VarBind&>(DbModel::VarBind&);
 template void StorageFacade::insertClassObj<DbModel::VarDecl&>(DbModel::VarDecl&);
 template void StorageFacade::insertClassObj<DbModel::VarDeclSpec&>(DbModel::VarDeclSpec&);

@@ -38,6 +38,27 @@ inline auto varbind() {
       make_column("var", &DbModel::VarBind::var));
 }
 
+inline auto values() {
+  return make_table(
+      "values",
+      make_column("id", &DbModel::Values::id, primary_key()),
+      make_column("str", &DbModel::Values::str));
+}
+
+inline auto valuetext() {
+  return make_table(
+      "valuetext",
+      make_column("id", &DbModel::ValueText::id, primary_key()),
+      make_column("text", &DbModel::ValueText::text));
+}
+
+inline auto valuebind() {
+  return make_table(
+      "valuebind",
+      make_column("val", &DbModel::ValueBind::val, primary_key()),
+      make_column("expr", &DbModel::ValueBind::expr));
+}
+
 // clang-format on
 
 } // namespace ExprTableFn

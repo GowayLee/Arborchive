@@ -126,6 +126,31 @@ bool ASTVisitor::VisitConditionalOperator(const ConditionalOperator *op) {
   return true;
 }
 
+bool ASTVisitor::VisitStringLiteral(const StringLiteral *literal) {
+  expr_processor_->processStringLiteral(literal);
+  return true;
+}
+
+bool ASTVisitor::VisitIntegerLiteral(const IntegerLiteral *literal) {
+  expr_processor_->processIntegerLiteral(literal);
+  return true;
+}
+
+bool ASTVisitor::VisitFloatingLiteral(const FloatingLiteral *literal) {
+  expr_processor_->processFloatingLiteral(literal);
+  return true;
+}
+
+bool ASTVisitor::VisitCharacterLiteral(const CharacterLiteral *literal) {
+  expr_processor_->processCharacterLiteral(literal);
+  return true;
+}
+
+bool ASTVisitor::VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *literal) {
+  expr_processor_->processBoolLiteral(literal);
+  return true;
+}
+
 bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
   namespace_processor_->processNamespaceDecl(decl);
   return true;

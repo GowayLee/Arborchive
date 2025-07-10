@@ -67,6 +67,13 @@ public:
   bool VisitBinaryOperator(const clang::BinaryOperator *op);
   bool VisitConditionalOperator(const clang::ConditionalOperator *op);
 
+  // Literal Family
+  bool VisitStringLiteral(const clang::StringLiteral *literal);
+  bool VisitIntegerLiteral(const clang::IntegerLiteral *literal);
+  bool VisitFloatingLiteral(const clang::FloatingLiteral *literal);
+  bool VisitCharacterLiteral(const clang::CharacterLiteral *literal);
+  bool VisitCXXBoolLiteralExpr(const clang::CXXBoolLiteralExpr *literal);
+
   // 初始化处理器
   void initProcessors();
 };

@@ -290,6 +290,23 @@ struct VarBind {
   int var;
 };
 
+struct Values {
+  int id;
+  std::string str;
+  using KeyType = std::string;
+};
+
+struct ValueText {
+  int id;
+  std::string text;
+  using KeyType = std::string;
+};
+
+struct ValueBind {
+  int val;
+  int expr;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_EXPR_H_
