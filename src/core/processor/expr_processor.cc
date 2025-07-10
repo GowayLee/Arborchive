@@ -167,38 +167,18 @@ void ExprProcessor::processBinaryOperator(const BinaryOperator *op) {
     break;
   // 3. 赋值运算符
   case BO_Assign:
-    expr_type = ExprKind::ASSIGNEXPR;
-    break;
   case BO_AddAssign:
-    expr_type = ExprKind::ASSIGNADDEXPR;
-    break;
   case BO_SubAssign:
-    expr_type = ExprKind::ASSIGNSUBEXPR;
-    break;
   case BO_MulAssign:
-    expr_type = ExprKind::ASSIGNMULEXPR;
-    break;
   case BO_DivAssign:
-    expr_type = ExprKind::ASSIGNDIVEXPR;
-    break;
   case BO_RemAssign:
-    expr_type = ExprKind::ASSIGNREMEXPR;
-    break;
   case BO_ShlAssign:
-    expr_type = ExprKind::ASSIGNLSHIFTEXPR;
-    break;
   case BO_ShrAssign:
-    expr_type = ExprKind::ASSIGNRSHIFTEXPR;
-    break;
   case BO_AndAssign:
-    expr_type = ExprKind::ASSIGNANDEXPR;
-    break;
   case BO_OrAssign:
-    expr_type = ExprKind::ASSIGNOREXPR;
-    break;
   case BO_XorAssign:
-    expr_type = ExprKind::ASSIGNXOREXPR;
-    break;
+    processAssignExpr(op);
+    return;
   default:
     return;
   }
@@ -215,4 +195,126 @@ void ExprProcessor::processConditionalOperator(const ConditionalOperator *op) {
   // Traverse(op->getCond());
   // Traverse(op->getTrueExpr());
   // Traverse(op->getFalseExpr());
+}
+
+void ExprProcessor::processAssignArithExpr(const BinaryOperator *op) {
+  ExprKind expr_type = ExprKind::_UNKNOWN_;
+
+  switch (op->getOpcode()) {
+  case BO_AddAssign:
+    expr_type = ExprKind::ASSIGNADDEXPR;
+    break;
+  case BO_SubAssign:
+    expr_type = ExprKind::ASSIGNSUBEXPR;
+    break;
+  case BO_MulAssign:
+    expr_type = ExprKind::ASSIGNMULEXPR;
+    break;
+  case BO_DivAssign:
+    expr_type = ExprKind::ASSIGNDIVEXPR;
+    break;
+  case BO_RemAssign:
+    expr_type = ExprKind::ASSIGNREMEXPR;
+    break;
+  default:
+    return;
+  }
+
+  processBaseExpr(const_cast<BinaryOperator *>(op), expr_type);
+}
+
+void ExprProcessor::processAssignBitwiseExpr(const BinaryOperator *op) {
+  ExprKind expr_type = ExprKind::_UNKNOWN_;
+
+  switch (op->getOpcode()) {
+  case BO_AndAssign:
+    expr_type = ExprKind::ASSIGNANDEXPR;
+    break;
+  case BO_OrAssign:
+    expr_type = ExprKind::ASSIGNOREXPR;
+    break;
+  case BO_XorAssign:
+    expr_type = ExprKind::ASSIGNXOREXPR;
+    break;
+  case BO_ShlAssign:
+    expr_type = ExprKind::ASSIGNLSHIFTEXPR;
+    break;
+  case BO_ShrAssign:
+    expr_type = ExprKind::ASSIGNRSHIFTEXPR;
+    break;
+  default:
+    return;
+  }
+
+  processBaseExpr(const_cast<BinaryOperator *>(op), expr_type);
+}
+
+void ExprProcessor::processAssignPointerExpr(const BinaryOperator *op) {
+  ExprKind expr_type = ExprKind::_UNKNOWN_;
+
+  switch (op->getOpcode()) {
+  case BO_AddAssign:
+    if (op->getLHS()->getType()->isPointerType())
+      expr_type = ExprKind::ASSIGNPADDEXPR;
+    else
+      return;
+    break;
+  case BO_SubAssign:
+    if (op->getLHS()->getType()->isPointerType())
+      expr_type = ExprKind::ASSIGNPSUBEXPR;
+    else
+      return;
+    break;
+  default:
+    return;
+  }
+
+  processBaseExpr(const_cast<BinaryOperator *>(op), expr_type);
+}
+
+void ExprProcessor::processAssignOpExpr(const BinaryOperator *op) {
+  switch (op->getOpcode()) {
+  case BO_AddAssign:
+  case BO_SubAssign:
+  case BO_MulAssign:
+  case BO_DivAssign:
+  case BO_RemAssign:
+    if (op->getLHS()->getType()->isPointerType()) {
+      processAssignPointerExpr(op);
+    } else {
+      processAssignArithExpr(op);
+    }
+    break;
+  case BO_AndAssign:
+  case BO_OrAssign:
+  case BO_XorAssign:
+  case BO_ShlAssign:
+  case BO_ShrAssign:
+    processAssignBitwiseExpr(op);
+    break;
+  default:
+    return;
+  }
+}
+
+void ExprProcessor::processAssignExpr(const BinaryOperator *op) {
+  switch (op->getOpcode()) {
+  case BO_Assign:
+    processBaseExpr(const_cast<BinaryOperator *>(op), ExprKind::ASSIGNEXPR);
+    break;
+  case BO_AddAssign:
+  case BO_SubAssign:
+  case BO_MulAssign:
+  case BO_DivAssign:
+  case BO_RemAssign:
+  case BO_AndAssign:
+  case BO_OrAssign:
+  case BO_XorAssign:
+  case BO_ShlAssign:
+  case BO_ShrAssign:
+    processAssignOpExpr(op);
+    break;
+  default:
+    return;
+  }
 }

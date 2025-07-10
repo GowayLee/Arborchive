@@ -12,14 +12,17 @@ using namespace clang;
 
 class ExprProcessor : public BaseProcessor {
 public:
-
-  void processDeclRef(DeclRefExpr* expr);
+  void processDeclRef(DeclRefExpr *expr);
 
   void processUnaryOperator(const UnaryOperator *op);
   void processBinaryOperator(const BinaryOperator *op);
   void processConditionalOperator(const ConditionalOperator *op);
 
-
+  void processAssignArithExpr(const BinaryOperator *op);
+  void processAssignBitwiseExpr(const BinaryOperator *op);
+  void processAssignPointerExpr(const BinaryOperator *op);
+  void processAssignOpExpr(const BinaryOperator *op);
+  void processAssignExpr(const BinaryOperator *op);
 
   ExprProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~ExprProcessor() = default;
@@ -31,8 +34,7 @@ private:
   std::string _name;
 
   int processBaseExpr(Expr *expr, ExprKind exprKind);
-  void recordVarBindExpr(VarDecl* VD, DeclRefExpr *expr);
-
+  void recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr);
 };
 
 #endif // _EXPR_PROCESSOR_H_

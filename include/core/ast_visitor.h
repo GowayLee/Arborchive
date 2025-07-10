@@ -2,11 +2,11 @@
 #define _AST_VISITOR_H_
 
 #include "core/processor/class_processor.h"
+#include "core/processor/expr_processor.h"
 #include "core/processor/function_processor.h"
-#include "core/processor/variable_processor.h"
 #include "core/processor/stmt_processor.h"
 #include "core/processor/type_processor.h"
-#include "core/processor/expr_processor.h"
+#include "core/processor/variable_processor.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
