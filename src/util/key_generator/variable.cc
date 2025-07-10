@@ -42,7 +42,7 @@ KeyType makeKey(const VarDecl *VD, const ASTContext &ctx) {
     uid += ":" + hierarchy;
   }
 
-  return uid;
+  return "var-" + uid;
 }
 
 } // namespace Var

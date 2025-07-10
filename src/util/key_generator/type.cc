@@ -33,7 +33,7 @@ KeyType makeKey(const NamedDecl *decl, const ASTContext &ctx) {
   if (!scope.empty())
     uid = scope + "::";
   uid += name + templateArgs;
-  return uid;
+  return "type-" + uid;
 }
 
 // clang::TemplateDecl -> clang::NamedDecl

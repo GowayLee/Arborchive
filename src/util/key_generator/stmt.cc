@@ -52,7 +52,7 @@ KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
     os << "-args-" << callExpr->getNumArgs();
   }
 
-  return os.str();
+  return "stmt-" + os.str();
 }
 
 } // namespace Stmt_

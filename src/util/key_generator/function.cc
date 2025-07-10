@@ -55,7 +55,7 @@ KeyType makeKey(const FunctionDecl *FD, ASTContext &Context) {
               << CanonicalFD->getQualifiedNameAsString() << std::endl;
     return "__EMPTY_MANGLED__" + CanonicalFD->getQualifiedNameAsString();
   }
-  return MangledName;
+  return "funtion-" + MangledName;
 }
 
 } // namespace Function

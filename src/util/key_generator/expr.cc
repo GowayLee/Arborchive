@@ -118,7 +118,8 @@ KeyType makeKey(const Expr *expr, const ASTContext &ctx) {
   unsigned endCol = SM.getSpellingColumnNumber(end);
 
   // 生成唯一字符串
-  std::string locStr = llvm::Twine(std::to_string(startLine))
+  std::string locStr = llvm::Twine("expr-")
+                           .concat(std::to_string(startLine))
                            .concat("-")
                            .concat(std::to_string(startCol))
                            .concat("-")
