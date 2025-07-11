@@ -11,6 +11,7 @@ using namespace clang;
 class TypeProcessor : public BaseProcessor {
 public:
   void routerProcess(const TypeDecl *TD);
+  int processType(const Type *T);
 
   TypeProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~TypeProcessor() = default;

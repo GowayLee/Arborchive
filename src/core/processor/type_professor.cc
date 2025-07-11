@@ -14,60 +14,63 @@
 #include <iostream>
 
 int getBuiltinTypeSign(const clang::BuiltinType *builtinType);
+BuiltinTypeKind GetBuiltinTypeKind(const clang::BuiltinType *BT);
 
-void TypeProcessor::routerProcess(const TypeDecl *TD) {
-  auto T = TD->getTypeForDecl();
-  if (!T) { // FIXME:
-    LOG_WARNING << "TypeDecl is null" << std::endl;
-    return;
+int TypeProcessor::processType(const Type *T) {
+  if (!T) {
+    LOG_WARNING << "Type is null" << std::endl;
+    return -1;
   }
 
   QualType qualType = T->getCanonicalTypeInternal();
   const clang::Type *type = qualType.getTypePtr();
 
-  LocIdPair *locIdPair =
-      SrcLocRecorder::processDefault(TD, &TD->getASTContext());
-
   DbModel::Type typeModel;
   _typeId = GENID(Type);
   typeModel.id = _typeId;
-  // Insert Cache
-  KeyType keyType = KeyGen::Type::makeKey(TD, TD->getASTContext());
-  INSERT_TYPE_CACHE(keyType, _typeId); // FIXME: testing is needed
+
   // Classify type
-  if (type->isBuiltinType()) { // FIXME: Miss track on `slight-case.cc`
-    // @builtintype
+  if (type->isBuiltinType()) {
     typeModel.type = static_cast<int>(TypeType::BUILTIN_TYPE);
     typeModel.associate_id =
-        processBuiltinType(cast<BuiltinType>(type), TD->getASTContext());
+        processBuiltinType(cast<BuiltinType>(type), *ast_context_);
   } else if (isDerivedType(type)) {
-    // @derivedtype
     typeModel.type = static_cast<int>(TypeType::DERIVED_TYPE);
-    typeModel.associate_id = processDerivedType(type, TD->getASTContext());
-  } else if (type->isRecordType() || type->isEnumeralType()) {
-    // @usertype
+    typeModel.associate_id = processDerivedType(type, *ast_context_);
+  } else if (type->isRecordType() || type->isEnumeralType() ||
+             type->isTypedefNameType()) {
     typeModel.type = static_cast<int>(TypeType::USER_TYPE);
-    typeModel.associate_id = processUserType(type, TD->getASTContext());
+    typeModel.associate_id = processUserType(type, *ast_context_);
   } else if (type->isFunctionType() || type->isFunctionProtoType()) {
-    // @routinetype
     typeModel.type = static_cast<int>(TypeType::ROUTINE_TYPE);
-    typeModel.associate_id = processRoutineType(type, TD->getASTContext());
+    typeModel.associate_id = processRoutineType(type, *ast_context_);
   } else if (type->isMemberPointerType()) {
-    // @ptrtomember
     typeModel.type = static_cast<int>(TypeType::PTR_TO_MEMBER);
-    typeModel.associate_id = processPtrToMemberType(
-        cast<MemberPointerType>(type), TD->getASTContext());
+    typeModel.associate_id =
+        processPtrToMemberType(cast<MemberPointerType>(type), *ast_context_);
   } else if (type->isDecltypeType()) {
-    // @decltype
     typeModel.type = static_cast<int>(TypeType::DECL_TYPE);
     typeModel.associate_id =
-        processDeclType(cast<DecltypeType>(type), TD->getASTContext());
+        processDeclType(cast<DecltypeType>(type), *ast_context_);
   } else {
     LOG_WARNING << "Unknown type classification" << std::endl;
-    // 不匹配已知类型分类的情况
-    typeModel.type = -1; // 未知类型
+    typeModel.type = -1; // Unknown type
     typeModel.associate_id = -1;
   }
+  STG.insertClassObj(typeModel);
+  return typeModel.id;
+}
+
+void TypeProcessor::routerProcess(const TypeDecl *TD) {
+  auto T = TD->getTypeForDecl();
+  if (!T) {
+    LOG_WARNING << "TypeDecl is null" << std::endl;
+    return;
+  }
+
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(TD, ast_context_);
+
+  _typeId = processType(T); // Call the new processType method
 
   DbModel::TypeDecl typeDecl = {_typeDeclId = GENID(TypeDecl), _typeId,
                                 locIdPair->spec_id};
@@ -77,7 +80,6 @@ void TypeProcessor::routerProcess(const TypeDecl *TD) {
 
   // Determine top type declaration
   recordTopTypeDecl(TD);
-  STG.insertClassObj(typeModel);
   STG.insertClassObj(typeDecl);
 }
 
@@ -113,12 +115,15 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
       ast_context.getTypeAlign(qualType) / ast_context.getCharWidth();
 
   // 创建并返回类型ID
-  DbModel::BuiltinType_ builtinTypeModel = {GENID(BuiltinType_),
-                                            BT->getNameAsCString(pp),
-                                            static_cast<int>(BT->getKind()),
-                                            size,
-                                            alignment,
-                                            getBuiltinTypeSign(BT)};
+  DbModel::BuiltinType_ builtinTypeModel = {
+      GENID(BuiltinType_),
+      BT->getNameAsCString(pp),
+      static_cast<int>(GetBuiltinTypeKind(BT)),
+      size,
+      getBuiltinTypeSign(BT),
+      alignment};
+  KeyType typeKey = KeyGen::Type::makeKey(QualType(BT, 0), ast_context);
+  INSERT_TYPE_CACHE(typeKey, builtinTypeModel.id);
   STG.insertClassObj(builtinTypeModel);
   return builtinTypeModel.id;
 }
@@ -168,11 +173,11 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
 
   // Get typename
   std::string typeName = TD->getNameAsString();
-  LOG_DEBUG << "Processing user type: " << typeName << std::endl;
 
   // Specify type kind
   int kind = static_cast<int>(
       UserTypeKind::UNKNOWN_USERTYPE); // unknown_usertype by default
+  LOG_DEBUG << "Processing user type: " << typeName << ", Kind: " << kind << std::endl;
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
       if (CXXRD->isClass())
@@ -205,7 +210,7 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
                : static_cast<int>(UserTypeKind::ENUM); // scoped_enum or enum
   else if (const TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(TD)) {
     if (isa<TypeAliasDecl>(TND))
-      kind = static_cast<int>(UserTypeKind::SCOPED_ENUM); // using_alias
+      kind = static_cast<int>(UserTypeKind::USING_ALIAS); // using_alias
     else
       kind = static_cast<int>(UserTypeKind::TYPEDEF); // typedef
   } else if (const TemplateTypeParmDecl *TTPD =
@@ -394,5 +399,68 @@ int getBuiltinTypeSign(const clang::BuiltinType *builtinType) {
   // 不适用(如void,bool等)
   default:
     return -1;
+  }
+}
+
+BuiltinTypeKind GetBuiltinTypeKind(const clang::BuiltinType *BT) {
+  switch (BT->getKind()) {
+  case clang::BuiltinType::Kind::Void:
+    return BuiltinTypeKind::VOID;
+  case clang::BuiltinType::Kind::Bool:
+    return BuiltinTypeKind::BOOLEAN;
+  case clang::BuiltinType::Kind::Char_S:
+  case clang::BuiltinType::Kind::Char_U:
+    return BuiltinTypeKind::CHAR;
+  case clang::BuiltinType::Kind::UChar:
+    return BuiltinTypeKind::UNSIGNED_CHAR;
+  case clang::BuiltinType::Kind::SChar:
+    return BuiltinTypeKind::SIGNED_CHAR;
+  case clang::BuiltinType::Kind::Short:
+    return BuiltinTypeKind::SHORT;
+  case clang::BuiltinType::Kind::UShort:
+    return BuiltinTypeKind::UNSIGNED_SHORT;
+  case clang::BuiltinType::Kind::Int:
+    return BuiltinTypeKind::INT;
+  case clang::BuiltinType::Kind::UInt:
+    return BuiltinTypeKind::UNSIGNED_INT;
+  case clang::BuiltinType::Kind::Long:
+    return BuiltinTypeKind::LONG;
+  case clang::BuiltinType::Kind::ULong:
+    return BuiltinTypeKind::UNSIGNED_LONG;
+  case clang::BuiltinType::Kind::LongLong:
+    return BuiltinTypeKind::LONG_LONG;
+  case clang::BuiltinType::Kind::ULongLong:
+    return BuiltinTypeKind::UNSIGNED_LONG_LONG;
+  case clang::BuiltinType::Kind::Float:
+    return BuiltinTypeKind::FLOAT;
+  case clang::BuiltinType::Kind::Double:
+    return BuiltinTypeKind::DOUBLE;
+  case clang::BuiltinType::Kind::LongDouble:
+    return BuiltinTypeKind::LONG_DOUBLE;
+  case clang::BuiltinType::Kind::WChar_S:
+  case clang::BuiltinType::Kind::WChar_U:
+    return BuiltinTypeKind::WCHAR_T;
+  case clang::BuiltinType::Kind::NullPtr:
+    return BuiltinTypeKind::DECLTYPE_NULLPTR;
+  case clang::BuiltinType::Kind::Int128:
+    return BuiltinTypeKind::INT128;
+  case clang::BuiltinType::Kind::UInt128:
+    return BuiltinTypeKind::UNSIGNED_INT128;
+  case clang::BuiltinType::Kind::Float128:
+    return BuiltinTypeKind::FLOAT128;
+  case clang::BuiltinType::Kind::Char16:
+    return BuiltinTypeKind::CHAR16_T;
+  case clang::BuiltinType::Kind::Char32:
+    return BuiltinTypeKind::CHAR32_T;
+  case clang::BuiltinType::Kind::Char8:
+    return BuiltinTypeKind::CHAR8_T;
+  case clang::BuiltinType::Kind::Float16:
+    return BuiltinTypeKind::FLOAT16;
+  case clang::BuiltinType::Kind::Half:
+    return BuiltinTypeKind::FP16;
+  case clang::BuiltinType::Kind::BFloat16:
+    return BuiltinTypeKind::STD_BFLOAT16;
+  default:
+    return BuiltinTypeKind::UNKOWNTYPE;
   }
 }

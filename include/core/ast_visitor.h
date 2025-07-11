@@ -46,6 +46,7 @@ public:
   bool VisitVarDecl(clang::VarDecl *decl);
 
   bool VisitTypeDecl(clang::TypeDecl *decl);
+  bool VisitTypedefDecl(clang::TypedefDecl *decl);
   bool VisitEnumDecl(clang::EnumDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);

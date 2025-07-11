@@ -1,6 +1,7 @@
 #include "core/ast_visitor.h"
 #include "core/srcloc_recorder.h"
 #include "util/logger/macros.h"
+#include <clang/AST/Decl.h>
 #include <memory>
 
 ASTVisitor::ASTVisitor(clang::ASTContext &context) : context_(context) {
@@ -27,6 +28,10 @@ bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *stmt) {
 // Function Family
 bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
   function_processor_->routerProcess(decl);
+  type_processor_->processType(decl->getReturnType().getTypePtr());
+  for (const auto &param : decl->parameters()) {
+    type_processor_->processType(param->getType().getTypePtr());
+  }
   return true;
 }
 bool ASTVisitor::VisitCXXConstructorDecl(clang::CXXConstructorDecl *decl) {
@@ -50,11 +55,18 @@ bool ASTVisitor::VisitCXXDeductionGuideDecl(
 // Variable Family
 bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
   variable_processor_->routerProcess(decl);
+  type_processor_->processType(decl->getType().getTypePtr());
   return true;
 }
 
 // Type Family
 bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) {
+  type_processor_->routerProcess(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitTypedefDecl(clang::TypedefDecl *decl) {
+  LOG_DEBUG << "visit typedefdecl node" << std::endl;
   type_processor_->routerProcess(decl);
   return true;
 }
