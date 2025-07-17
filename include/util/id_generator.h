@@ -5,19 +5,13 @@
 #include <atomic>
 #include <mutex>
 #include <type_traits>
-#include <typeindex>
-#include <unordered_map>
 
 #define GENID(type) IDGenerator::generateId<DbModel::type>()
 
 class IDGenerator {
 private:
   static std::mutex mutex_;
-  static std::unordered_map<std::type_index, std::atomic<int>> type_ids_;
-
-  template <typename T> static std::type_index getTypeIndex() {
-    return std::type_index(typeid(T));
-  }
+  static std::atomic<int> global_id_;
 
 public:
   template <typename T> static int generateId() {
@@ -25,10 +19,7 @@ public:
                   "Model must have an 'id' member");
 
     std::lock_guard<std::mutex> lock(mutex_);
-    auto &id_generator = type_ids_[getTypeIndex<T>()];
-    if (id_generator == 0)
-      id_generator = 1;
-    return id_generator.fetch_add(1);
+    return ++global_id_;
   }
 
   template <typename T> static int getLastGeneratedId() {
@@ -36,14 +27,8 @@ public:
                   "Model must have an 'id' member");
 
     std::lock_guard<std::mutex> lock(mutex_);
-    auto it = type_ids_.find(getTypeIndex<T>());
-    if (it == type_ids_.end()) {
-      LOG_WARNING << "No IDs generated yet for type: " << typeid(T).name()
-                  << std::endl;
-      return 0;
-    }
-    int last_id = it->second.load();
-    return last_id > 0 ? last_id - 1 : 0;
+    int current_id = global_id_.load();
+    return current_id > 0 ? current_id : 0;
   }
 
   template <typename T> static void generateAndSetId(const T &model) {
