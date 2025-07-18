@@ -47,7 +47,6 @@ template void StorageFacade::insertClassObj<DbModel::IsComplete&>(DbModel::IsCom
 template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbModel::IsStandartLayoutClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
-template void StorageFacade::insertClassObj<DbModel::LocalScopeVar&>(DbModel::LocalScopeVar&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
 template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::LocationDefault&);

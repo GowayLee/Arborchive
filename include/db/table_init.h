@@ -62,8 +62,9 @@ inline auto initStorage(const std::string &path) {
       FuncTableFn::coroutine_new(),
       FuncTableFn::coroutine_delete(),
       // Variable Tables
-      VarTableFn::variable(),
-      VarTableFn::localscopevariable(),
+      // TO BE REMOVED: Variable and LocalScopeVar tables - intermediary tables no longer needed
+      VarTableFn::variable(), // deprecated - intermediary table no longer needed
+      // VarTableFn::localscopevariable(),
       VarTableFn::localvariables(),
       VarTableFn::params(),
       VarTableFn::globalvariables(),
@@ -75,7 +76,7 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::is_structured_binding(),
       VarTableFn::var_requires(),
       // Type Tables
-      TypeTableFn::types(),
+      TypeTableFn::types(), // deprecated - intermediary table no longer needed
       TypeTableFn::type_decls(),
       TypeTableFn::type_def(),
       TypeTableFn::type_decl_top(),

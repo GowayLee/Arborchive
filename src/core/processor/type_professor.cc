@@ -25,40 +25,26 @@ int TypeProcessor::processType(const Type *T) {
   QualType qualType = T->getCanonicalTypeInternal();
   const clang::Type *type = qualType.getTypePtr();
 
-  DbModel::Type typeModel;
-  _typeId = GENID(Type);
-  typeModel.id = _typeId;
-
-  // Classify type
+  // Directly return specific type IDs instead of creating Type intermediary
   if (type->isBuiltinType()) {
-    typeModel.type = static_cast<int>(TypeType::BUILTIN_TYPE);
-    typeModel.associate_id =
-        processBuiltinType(cast<BuiltinType>(type), *ast_context_);
+    _typeId = processBuiltinType(cast<BuiltinType>(type), *ast_context_);
   } else if (isDerivedType(type)) {
-    typeModel.type = static_cast<int>(TypeType::DERIVED_TYPE);
-    typeModel.associate_id = processDerivedType(type, *ast_context_);
+    _typeId = processDerivedType(type, *ast_context_);
   } else if (type->isRecordType() || type->isEnumeralType() ||
              type->isTypedefNameType()) {
-    typeModel.type = static_cast<int>(TypeType::USER_TYPE);
-    typeModel.associate_id = processUserType(type, *ast_context_);
+    _typeId = processUserType(type, *ast_context_);
   } else if (type->isFunctionType() || type->isFunctionProtoType()) {
-    typeModel.type = static_cast<int>(TypeType::ROUTINE_TYPE);
-    typeModel.associate_id = processRoutineType(type, *ast_context_);
+    _typeId = processRoutineType(type, *ast_context_);
   } else if (type->isMemberPointerType()) {
-    typeModel.type = static_cast<int>(TypeType::PTR_TO_MEMBER);
-    typeModel.associate_id =
+    _typeId =
         processPtrToMemberType(cast<MemberPointerType>(type), *ast_context_);
   } else if (type->isDecltypeType()) {
-    typeModel.type = static_cast<int>(TypeType::DECL_TYPE);
-    typeModel.associate_id =
-        processDeclType(cast<DecltypeType>(type), *ast_context_);
+    _typeId = processDeclType(cast<DecltypeType>(type), *ast_context_);
   } else {
     LOG_WARNING << "Unknown type classification" << std::endl;
-    typeModel.type = -1; // Unknown type
-    typeModel.associate_id = -1;
+    _typeId = -1;
   }
-  STG.insertClassObj(typeModel);
-  return typeModel.id;
+  return _typeId;
 }
 
 void TypeProcessor::routerProcess(const TypeDecl *TD) {
@@ -177,7 +163,8 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
   // Specify type kind
   int kind = static_cast<int>(
       UserTypeKind::UNKNOWN_USERTYPE); // unknown_usertype by default
-  LOG_DEBUG << "Processing user type: " << typeName << ", Kind: " << kind << std::endl;
+  LOG_DEBUG << "Processing user type: " << typeName << ", Kind: " << kind
+            << std::endl;
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
       if (CXXRD->isClass())

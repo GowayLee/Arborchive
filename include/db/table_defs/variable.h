@@ -9,21 +9,23 @@ using namespace sqlite_orm;
 namespace VarTableFn {
 
 // clang-format off
-inline auto variable() {
-  return make_table(
-      "variable",
-      make_column("id", &DbModel::Variable::id, primary_key()),
-      make_column("associate_id", &DbModel::Variable::associate_id),
-      make_column("type", &DbModel::Variable::type));
-}
+// TO BE REMOVED: variable() function - intermediary table no longer needed
+ inline auto variable() {
+   return make_table(
+       "variable",
+       make_column("id", &DbModel::Variable::id, primary_key()),
+       make_column("associate_id", &DbModel::Variable::associate_id),
+       make_column("type", &DbModel::Variable::type));
+ }
 
-inline auto localscopevariable() {
-  return make_table(
-      "localscopevariable",
-      make_column("id", &DbModel::LocalScopeVar::id, primary_key()),
-      make_column("associate_id", &DbModel::LocalScopeVar::associate_id),
-      make_column("type", &DbModel::LocalScopeVar::type));
-}
+// TO BE REMOVED: localscopevariable() function - intermediary table no longer needed
+// inline auto localscopevariable() {
+//   return make_table(
+//       "localscopevariable",
+//       make_column("id", &DbModel::LocalScopeVar::id, primary_key()),
+//       make_column("associate_id", &DbModel::LocalScopeVar::associate_id),
+//       make_column("type", &DbModel::LocalScopeVar::type));
+// }
 
 inline auto localvariables() {
   return make_table(

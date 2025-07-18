@@ -19,24 +19,22 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
     return;
 
   int varId;
-  VarType varType;
 
   // Classify VarDecl first to get the specific variable ID
+  // REFACTORED: Use direct entity IDs instead of intermediary variable IDs
   if (llvm::isa<clang::FieldDecl>(VD) ||
       (VD->getDeclContext()->isRecord() && VD->isCXXClassMember())) {
     varId = processMemberVar(VD); // @membervariable
-    varType = VarType::MEMBER_VARIABLE;
   } else if (VD->hasGlobalStorage() && !VD->isStaticLocal() &&
              VD->getDeclContext()->isFileContext()) {
     varId = processGlobalVar(VD); // @globalvariable
-    varType = VarType::GLOBAL_VARIABLE;
   } else {
-    varId = processLocalScopeVar(VD); // @localscopevariable
-    varType = VarType::LOCAL_SCOPE_VARIABLE;
+    varId = processLocalScopeVar(VD); // @localvariables or @params directly
   }
 
-  DbModel::Variable variable = {_varId = GENID(Variable), varId,
-                                static_cast<int>(varType)};
+  // TO BE REMOVED: Variable intermediary - directly use varId instead
+  // DbModel::Variable variable = {_varId = GENID(Variable), varId,
+  //                              static_cast<int>(varType)};
 
   LocIdPair *locIdPair =
       SrcLocRecorder::processDefault(VD, &VD->getASTContext());
@@ -65,10 +63,11 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
 
   // Maintain cache
   KeyType VDKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
-  INSERT_VARIABLE_CACHE(VDKey, varDecl.id);
+  INSERT_VARIABLE_CACHE(VDKey, varId);
 
-  DbModel::Declaration declaration = {GENID(Declaration), _varDeclId,
-                                      static_cast<int>(DeclType::VARIABLE)};
+  // TO BE REMOVED: Declaration intermediary - direct entity references
+  // DbModel::Declaration declaration = {GENID(Declaration), _varDeclId,
+  //                                     static_cast<int>(DeclType::VARIABLE)};
 
   if (VD->isThisDeclarationADefinition()) {
     DbModel::VarDef varDef = {_varDeclId};
@@ -78,8 +77,8 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   recordSpecifier(VD);
   recordStructuredBinding(VD);
 
-  STG.insertClassObj(declaration);
-  STG.insertClassObj(variable);
+  // TO BE REMOVED: Variable and Declaration insertion - direct entity
+  // references STG.insertClassObj(declaration); STG.insertClassObj(variable);
   STG.insertClassObj(varDecl);
 }
 
@@ -225,24 +224,14 @@ void VariableProcessor::recordRequire(const VarDecl *VD) {
   }
 }
 
-// Process Local Scope Variable, return id @localscopevariable
+// Process Local Scope Variable, return direct entity ID
+// REFACTORED: Return direct entity IDs instead of LocalScopeVar intermediary
 int VariableProcessor::processLocalScopeVar(const VarDecl *VD) {
-  int associate_id;
-  LocalScopeVarType type;
-
   if (llvm::isa<clang::ParmVarDecl>(VD)) { // FIXME: No function context
-    associate_id = processParam(VD);       // @params
-    type = LocalScopeVarType::PARAMETER;
+    return processParam(VD);               // @params
   } else {
-    associate_id = processLocalVar(VD); // @localvariables
-    type = LocalScopeVarType::LOCAL_VARIABLE;
+    return processLocalVar(VD); // @localvariables
   }
-
-  int id;
-  DbModel::LocalScopeVar local_scope_var = {
-      id = GENID(LocalScopeVar), associate_id, static_cast<int>(type)};
-  STG.insertClassObj(local_scope_var);
-  return id;
 }
 
 // Process Local Variable. return id @localvariables
@@ -311,9 +300,11 @@ int VariableProcessor::processGlobalVar(const VarDecl *VD) {
 // Process Member Variable, return id @membervariable
 int VariableProcessor::processMemberVar(const VarDecl *VD) {
   DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
-  DbModel::Member member = {GENID(Member), memberVar.id,
-                            static_cast<int>(MemberType::MEMBERVARIABLE)};
+  // TO BE REMOVED: Member intermediary - use direct entity relationships
+  // DbModel::Member member = {GENID(Member), memberVar.id,
+  //                           static_cast<int>(MemberType::MEMBERVARIABLE)};
   STG.insertClassObj(memberVar);
-  STG.insertClassObj(member);
+  // TO BE REMOVED: Member insertion
+  // STG.insertClassObj(member);
   return memberVar.id;
 }

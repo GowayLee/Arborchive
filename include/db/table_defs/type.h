@@ -9,6 +9,7 @@ using namespace sqlite_orm;
 namespace TypeTableFn {
 
 // clang-format off
+// types() function deprecated - intermediary table no longer needed
 inline auto types() {
   return make_table(
       "types",
