@@ -99,3 +99,4 @@ Test C++ files are located in `tests/`:
   - Use the ASTVisitor framework in `@src/core/ast_visitor.cc`
   - Manage database records or entities under `@include/model/db/`
   - Implement core logics under `@src/core/processor/`
+- During refactoring task, you should not directly remove any code (for change tracking consideration). Please comment them
