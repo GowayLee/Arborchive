@@ -38,13 +38,13 @@ inline auto if_else() {
       make_column("then_id", &DbModel::IfElse::else_id));
 }
 
-inline auto stmt_for_or_range_based_for() {
-  return make_table(
-      "stmt_for_or_range_based_for",
-      make_column("id", &DbModel::StmtForOrRangeBased::id, primary_key()),
-      make_column("associated_id", &DbModel::StmtForOrRangeBased::associated_id),
-      make_column("type", &DbModel::StmtForOrRangeBased::type));
-}
+// inline auto stmt_for_or_range_based_for() {
+//   return make_table(
+//       "stmt_for_or_range_based_for",
+//       make_column("id", &DbModel::StmtForOrRangeBased::id, primary_key()),
+//       make_column("associated_id", &DbModel::StmtForOrRangeBased::associated_id),
+//       make_column("type", &DbModel::StmtForOrRangeBased::type));
+// }
 
 inline auto for_initialization() {
   return make_table(

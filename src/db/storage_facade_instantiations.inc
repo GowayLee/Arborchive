@@ -65,7 +65,6 @@ template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFu
 template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);
 template void StorageFacade::insertClassObj<DbModel::RoutineTypeArg&>(DbModel::RoutineTypeArg&);
 template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
-template void StorageFacade::insertClassObj<DbModel::StmtForOrRangeBased&>(DbModel::StmtForOrRangeBased&);
 template void StorageFacade::insertClassObj<DbModel::SwitchBody&>(DbModel::SwitchBody&);
 template void StorageFacade::insertClassObj<DbModel::SwitchCase&>(DbModel::SwitchCase&);
 template void StorageFacade::insertClassObj<DbModel::SwitchInit&>(DbModel::SwitchInit&);

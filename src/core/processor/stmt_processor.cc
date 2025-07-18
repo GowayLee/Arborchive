@@ -84,23 +84,23 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
 void StmtProcessor::processForStmt(ForStmt *forStmt) {
   int for_stmt_id = getStmtId(forStmt, StmtKind::FOR);
 
-  int for_or_range_id = GENID(StmtForOrRangeBased);
-  DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
-      for_or_range_id, static_cast<int>(ForType::FOR), for_stmt_id};
-  STG.insertClassObj(stmtForOrRangeBasedModel);
+  // int for_or_range_id = GENID(StmtForOrRangeBased);
+  // DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
+  //     for_or_range_id, static_cast<int>(ForType::FOR), for_stmt_id};
+  // STG.insertClassObj(stmtForOrRangeBasedModel);
 
   // 1. 处理初始化部分
   if (Stmt *init = forStmt->getInit()) {
     KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
-      DbModel::ForInit forInitModel = {for_or_range_id, *cachedId};
+      DbModel::ForInit forInitModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forInitModel);
     } else {
-      DbModel::ForInit forInitModel = {for_or_range_id, -1};
+      DbModel::ForInit forInitModel = {for_stmt_id, -1};
       STG.insertClassObj(forInitModel);
       PendingUpdate update{
-          stmtKey, CacheType::STMT, [for_or_range_id](int resolvedId) {
-            DbModel::ForInit updated_record = {for_or_range_id, resolvedId};
+          stmtKey, CacheType::STMT, [for_stmt_id](int resolvedId) {
+            DbModel::ForInit updated_record = {for_stmt_id, resolvedId};
             STG.insertClassObj(updated_record);
           }};
       DependencyManager::instance().addDependency(update);
@@ -165,23 +165,24 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
   int for_stmt_id = getStmtId((Stmt *)rangeForStmt, StmtKind::FOR);
 
-  int for_or_range_id = GENID(StmtForOrRangeBased);
-  DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
-      for_or_range_id, static_cast<int>(ForType::RANGE_BASED_FOR), for_stmt_id};
-  STG.insertClassObj(stmtForOrRangeBasedModel);
+  // int for_or_range_id = GENID(StmtForOrRangeBased);
+  // DbModel::StmtForOrRangeBased stmtForOrRangeBasedModel = {
+  //     for_or_range_id, static_cast<int>(ForType::RANGE_BASED_FOR),
+  //     for_stmt_id};
+  // STG.insertClassObj(stmtForOrRangeBasedModel);
 
   // 1. 处理范围声明（相当于初始化）
   if (Stmt *init = rangeForStmt->getInit()) {
     KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
-      DbModel::ForInit forInitModel = {for_or_range_id, *cachedId};
+      DbModel::ForInit forInitModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forInitModel);
     } else {
-      DbModel::ForInit forInitModel = {for_or_range_id, -1};
+      DbModel::ForInit forInitModel = {for_stmt_id, -1};
       STG.insertClassObj(forInitModel);
       PendingUpdate update{
-          stmtKey, CacheType::STMT, [for_or_range_id](int resolvedId) {
-            DbModel::ForInit updated_record = {for_or_range_id, resolvedId};
+          stmtKey, CacheType::STMT, [for_stmt_id](int resolvedId) {
+            DbModel::ForInit updated_record = {for_stmt_id, resolvedId};
             STG.insertClassObj(updated_record);
           }};
       DependencyManager::instance().addDependency(update);
