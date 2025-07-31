@@ -1,0 +1,192 @@
+### 183. **any_new_expr**
+```
+@any_new_expr = @new_expr +-+
+              | @new_array_expr;
+```
+
+### 184. **new_or_delete_expr**
+```
+@new_or_delete_expr = @any_new_expr
+                    | @delete_expr
+                    | @delete_array_expr;
+```
+
+### 185. **prefix_crement_expr**
+```
+@prefix_crement_expr = @preincrexpr | @predecrexpr;
+```
+
+### 186. **postfix_crement_expr**
+```
+@postfix_crement_expr = @postincrexpr | @postdecrexpr;
+```
+
+### 187. **increment_expr**
+```
+@increment_expr = @preincrexpr | @postincrexpr;
+```
+
+### 188. **decrement_expr**
+```
+@decrement_expr = @predecrexpr | @postdecrexpr;
+```
+
+### 189. **crement_expr**
+```
+@crement_expr = @increment_expr | @decrement_expr;
+```
+
+### 190. **un_arith_op_expr**
+```
+@un_arith_op_expr = @arithnegexpr
+                  | @unaryplusexpr
+                  | @conjugation
+                  | @realpartexpr
+                  | @imagpartexpr
+                  | @crement_expr
+                  ;
+```
+
+### 191. **un_bitwise_op_expr**
+```
+@un_bitwise_op_expr = @complementexpr;
+```
+
+### 192. **un_log_op_expr**
+```
+@un_log_op_expr = @notexpr;
+```
+
+### 193. **un_op_expr**
+```
+@un_op_expr = @address_of
+            | @indirect
+            | @un_arith_op_expr
+            | @un_bitwise_op_expr
+            | @builtinaddressof
+            | @vec_fill
+            | @un_log_op_expr
+            | @co_await
+            | @co_yield
+            ;
+```
+
+### 194. **bin_log_op_expr**
+```
+@bin_log_op_expr = @andlogicalexpr | @orlogicalexpr;
+```
+
+### 195. **cmp_op_expr**
+```
+@cmp_op_expr = @eq_op_expr | @rel_op_expr;
+```
+
+### 196. **eq_op_expr**
+```
+@eq_op_expr = @eqexpr | @neexpr;
+```
+
+### 197. **rel_op_expr**
+```
+@rel_op_expr = @gtexpr
+             | @ltexpr
+             | @geexpr
+             | @leexpr
+             | @spaceshipexpr
+             ;
+```
+
+### 198. **bin_bitwise_op_expr**
+```
+@bin_bitwise_op_expr = @lshiftexpr
+                     | @rshiftexpr
+                     | @andexpr
+                     | @orexpr
+                     | @xorexpr
+                     ;
+```
+
+### 199. **p_arith_op_expr**
+```
+@p_arith_op_expr = @paddexpr
+                 | @psubexpr
+                 | @pdiffexpr
+                 ;
+```
+
+### 200. **bin_arith_op_expr**
+```
+@bin_arith_op_expr = @addexpr
+                   | @subexpr
+                   | @mulexpr
+                   | @divexpr
+                   | @remexpr
+                   | @jmulexpr
+                   | @jdivexpr
+                   | @fjaddexpr
+                   | @jfaddexpr
+                   | @fjsubexpr
+                   | @jfsubexpr
+                   | @minexpr
+                   | @maxexpr
+                   | @p_arith_op_expr
+                   ;
+```
+
+### 201. **bin_op_expr**
+```
+@bin_op_expr = @bin_arith_op_expr
+             | @bin_bitwise_op_expr
+             | @cmp_op_expr
+             | @bin_log_op_expr
+             ;
+```
+
+### 202. **op_expr**
+```
+@op_expr = @un_op_expr
+         | @bin_op_expr
+         | @assign_expr
+         | @conditionalexpr
+         ;
+```
+
+### 203. **assign_arith_expr**
+```
+@assign_arith_expr = @assignaddexpr
+                   | @assignsubexpr
+                   | @assignmulexpr
+                   | @assigndivexpr
+                   | @assignremexpr
+                   ;
+```
+
+### 204. **assign_bitwise_expr**
+```
+@assign_bitwise_expr = @assignandexpr
+                     | @assignorexpr
+                     | @assignxorexpr
+                     | @assignlshiftexpr
+                     | @assignrshiftexpr
+                     ;
+```
+
+### 205. **assign_pointer_expr**
+```
+@assign_pointer_expr = @assignpaddexpr
+                     | @assignpsubexpr
+                     ;
+```
+
+### 206. **assign_op_expr**
+```
+@assign_op_expr = @assign_arith_expr
+                | @assign_bitwise_expr
+                | @assign_pointer_expr
+                ;
+```
+
+### 207. **assign_expr**
+```
+@assign_expr = @assignexpr | @assign_op_expr | @blockassignexpr
+```
