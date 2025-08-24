@@ -41,3 +41,9 @@ build/*
 # Project related
 ast.db*
 *-db/
+
+# Agent
+.crush/
+.claude/
+.crush.json
+.agent-sync.toml

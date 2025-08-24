@@ -16,7 +16,8 @@ namespace Type {
 KeyType makeKey(const QualType &qualType, const ASTContext &ctx) {
   std::string s;
   llvm::raw_string_ostream os(s);
-  qualType.getCanonicalType().print(os, ctx.getPrintingPolicy());
+  qualType.getCanonicalType().getUnqualifiedType().print(
+      os, ctx.getPrintingPolicy());
   return os.str();
 }
 
