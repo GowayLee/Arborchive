@@ -21,6 +21,7 @@ public:
   void processDoStmt(DoStmt *doStmt);
   void processSwitchStmt(SwitchStmt *switchStmt);
   void processBlockStmt(CompoundStmt *blockStmt);
+  void processReturnStmt(ReturnStmt *returnStmt);
 
   StmtProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~StmtProcessor() = default;

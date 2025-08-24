@@ -305,3 +305,8 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
 void StmtProcessor::processBlockStmt(CompoundStmt *blockStmt) {
   int block_stmt_id = getStmtId(blockStmt, StmtKind::BLOCK);
 }
+
+void StmtProcessor::processReturnStmt(ReturnStmt *returnStmt) {
+  // Just call getStmtId to create ReturnStmt record
+  getStmtId(returnStmt, StmtKind::RETURN);
+}

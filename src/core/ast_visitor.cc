@@ -102,6 +102,11 @@ bool ASTVisitor::VisitSwitchStmt(clang::SwitchStmt *switchStmt) {
   return true;
 }
 
+bool ASTVisitor::VisitReturnStmt(clang::ReturnStmt *returnStmt) {
+  stmt_processor_->processReturnStmt(returnStmt);
+  return true;
+}
+
 bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }

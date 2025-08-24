@@ -60,6 +60,7 @@ public:
   bool VisitSwitchStmt(clang::SwitchStmt *switchStmt);
   bool VisitDeclStmt(clang::DeclStmt *stmt);
   bool VisitCompoundStmt(clang::CompoundStmt *stmt);
+  bool VisitReturnStmt(clang::ReturnStmt *returnStmt);
 
   // Expr Family
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);

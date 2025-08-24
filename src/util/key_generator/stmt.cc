@@ -3,6 +3,7 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <clang/Basic/SourceManager.h>
+#include <filesystem>
 #include <string>
 
 using KeyType = std::string;
@@ -30,14 +31,30 @@ KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
     SourceLocation expBegin = srcMgr.getExpansionLoc(beginLoc);
     SourceLocation expEnd = srcMgr.getExpansionLoc(endLoc);
 
-    // Get file ID
+    // Get file information for begin location
     std::pair<FileID, unsigned> beginInfo = srcMgr.getDecomposedLoc(expBegin);
-    std::pair<FileID, unsigned> endInfo = srcMgr.getDecomposedLoc(expEnd);
+    unsigned beginLine =
+        srcMgr.getLineNumber(beginInfo.first, beginInfo.second);
+    unsigned beginCol =
+        srcMgr.getColumnNumber(beginInfo.first, beginInfo.second);
 
-    os << beginInfo.first.getHashValue() << "-";
-    os << beginInfo.second << "-";
-    os << endInfo.first.getHashValue() << "-";
-    os << endInfo.second;
+    // Get file information for end location
+    std::pair<FileID, unsigned> endInfo = srcMgr.getDecomposedLoc(expEnd);
+    unsigned endLine = srcMgr.getLineNumber(endInfo.first, endInfo.second);
+    unsigned endCol = srcMgr.getColumnNumber(endInfo.first, endInfo.second);
+
+    // Get filename
+    std::string filename;
+    llvm::StringRef fileName = srcMgr.getFilename(expBegin);
+    if (!fileName.empty()) {
+      filename = std::filesystem::path(fileName.str()).filename().string();
+    } else {
+      filename = "unknown";
+    }
+
+    // Format: filename:beginLine:beginCol-endLine:endCol
+    os << filename << ":" << beginLine << ":" << beginCol << "-" << endLine
+       << ":" << endCol;
   } else {
     // Use ptr address as fallback
     os << "addr-" << reinterpret_cast<uintptr_t>(stmt);
