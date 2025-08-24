@@ -12,7 +12,7 @@
       .getRepository<CacheRepository<DbModel::Expr>>()                         \
       .find(type)
 
-#define INSERT_EXPR_CACHE(type)                                                \
+#define INSERT_EXPR_CACHE(key, id)                                             \
   CacheManager::instance()                                                     \
       .getRepository<CacheRepository<DbModel::Expr>>()                         \
       .insert(key, id)

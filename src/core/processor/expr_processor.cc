@@ -4,7 +4,6 @@
 #include "model/db/expr.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
-#include "util/key_generator/stmt.h"
 #include "util/key_generator/values.h"
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
@@ -18,7 +17,7 @@ int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
   DbModel::Expr exprModel = {GENID(Expr), static_cast<int>(exprKind),
                              locIdPair->spec_id};
 
-  INSERT_STMT_CACHE(exprKey, exprModel.id);
+  INSERT_EXPR_CACHE(exprKey, exprModel.id);
   STG.insertClassObj(exprModel);
   return exprModel.id;
 }
@@ -89,7 +88,7 @@ void ExprProcessor::processUnaryOperator(const UnaryOperator *op) {
     return;
   }
 
-  int exprId = processBaseExpr(const_cast<UnaryOperator *>(op), exprType);
+  processBaseExpr(const_cast<UnaryOperator *>(op), exprType);
 
   // 递归处理子表达式
   // Traverse(op->getSubExpr());
