@@ -6,7 +6,9 @@
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/stmt.h"
+#include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
+#include <clang/AST/Decl.h>
 #include <clang/AST/Stmt.h>
 #include <clang/AST/StmtCXX.h>
 #include <clang/Basic/LLVM.h>
@@ -309,4 +311,9 @@ void StmtProcessor::processBlockStmt(CompoundStmt *blockStmt) {
 void StmtProcessor::processReturnStmt(ReturnStmt *returnStmt) {
   // Just call getStmtId to create ReturnStmt record
   getStmtId(returnStmt, StmtKind::RETURN);
+}
+
+void StmtProcessor::processDeclStmt(DeclStmt *declStmt) {
+  // Just call getStmtId to create DeclStmt record
+  getStmtId(declStmt, StmtKind::DECL);
 }

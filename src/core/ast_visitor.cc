@@ -20,11 +20,6 @@ void ASTVisitor::initProcessors() {
 
 // 实现各种Visit方法
 
-bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *stmt) {
-  SrcLocRecorder::processStmt(cast<Stmt>(stmt), &context_);
-  return true;
-}
-
 // Function Family
 bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
   function_processor_->routerProcess(decl);
@@ -107,16 +102,21 @@ bool ASTVisitor::VisitReturnStmt(clang::ReturnStmt *returnStmt) {
   return true;
 }
 
+bool ASTVisitor::VisitDeclStmt(clang::DeclStmt *declStmt) {
+  stmt_processor_->processDeclStmt(declStmt);
+  return true;
+}
+
+bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *compoundStmt) {
+  stmt_processor_->processBlockStmt(compoundStmt);
+  return true;
+}
+
 bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
 
 bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *decl) { return true; }
-
-bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *stmt) {
-  stmt_processor_->processBlockStmt(stmt);
-  return true;
-}
 
 bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
   expr_processor_->processDeclRef(expr);

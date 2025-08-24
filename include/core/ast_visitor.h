@@ -58,9 +58,9 @@ public:
   bool VisitWhileStmt(clang::WhileStmt *whileStmt);
   bool VisitDoStmt(clang::DoStmt *doStmt);
   bool VisitSwitchStmt(clang::SwitchStmt *switchStmt);
-  bool VisitDeclStmt(clang::DeclStmt *stmt);
-  bool VisitCompoundStmt(clang::CompoundStmt *stmt);
+  bool VisitCompoundStmt(clang::CompoundStmt *compoundStmt);
   bool VisitReturnStmt(clang::ReturnStmt *returnStmt);
+  bool VisitDeclStmt(clang::DeclStmt *declStmt);
 
   // Expr Family
   bool VisitDeclRefExpr(clang::DeclRefExpr *expr);

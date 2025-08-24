@@ -43,18 +43,8 @@ KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
     unsigned endLine = srcMgr.getLineNumber(endInfo.first, endInfo.second);
     unsigned endCol = srcMgr.getColumnNumber(endInfo.first, endInfo.second);
 
-    // Get filename
-    std::string filename;
-    llvm::StringRef fileName = srcMgr.getFilename(expBegin);
-    if (!fileName.empty()) {
-      filename = std::filesystem::path(fileName.str()).filename().string();
-    } else {
-      filename = "unknown";
-    }
-
-    // Format: filename:beginLine:beginCol-endLine:endCol
-    os << filename << ":" << beginLine << ":" << beginCol << "-" << endLine
-       << ":" << endCol;
+    // Format: beginLine:beginCol-endLine:endCol
+    os << beginLine << ":" << beginCol << "-" << endLine << ":" << endCol;
   } else {
     // Use ptr address as fallback
     os << "addr-" << reinterpret_cast<uintptr_t>(stmt);
