@@ -72,8 +72,6 @@ void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
     return;
   Stmt *body = decl->getBody();
   Stmt *entryStmt = getFirstNonCompoundStmt(body);
-  if (entryStmt == nullptr) // Skip if entry statement is not found
-    return;
   std::string stmtKey =
       KeyGen::Stmt_::makeKey(entryStmt, decl->getASTContext());
   LOG_DEBUG << "Function entry point StmtKey: " << stmtKey << std::endl;
@@ -442,12 +440,33 @@ void FunctionProcessor::processCXXDeductionGuide(
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {
   if (!S)
     return nullptr;
+
+  // Log the statement type
+  LOG_DEBUG << "getFirstNonCompoundStmt: processing statement of class "
+            << S->getStmtClassName() << std::endl;
+
   // Recursively process the first non-compound statement
   if (auto *CS = dyn_cast<clang::CompoundStmt>(S)) {
     if (CS->body_empty())
-      return nullptr; // return nullptr if the compound statement is empty
-    return getFirstNonCompoundStmt(*CS->body_begin());
+      return S;
+
+    // Get the first child statement
+    clang::Stmt *firstChild = *CS->body_begin();
+    clang::Stmt *result = getFirstNonCompoundStmt(firstChild);
+
+    // If the result is an expression (like CallExpr), return the original
+    // CompoundStmt instead
+    if (result && isa<clang::Expr>(result)) {
+      LOG_DEBUG << "getFirstNonCompoundStmt: first non-compound statement is "
+                   "an Expr ("
+                << result->getStmtClassName()
+                << "), returning original CompoundStmt instead" << std::endl;
+      return S; // Return the original CompoundStmt
+    }
+
+    return result;
   }
+
   // Non-compound statement directly returns itself
   return S;
 }
