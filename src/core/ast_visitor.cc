@@ -124,7 +124,7 @@ bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
 }
 
 bool ASTVisitor::VisitCallExpr(CallExpr *expr) {
-  // expr_processor_->Process(expr);
+  expr_processor_->processCallExpr(expr);
   return true;
 }
 

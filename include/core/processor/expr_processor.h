@@ -6,6 +6,7 @@
 #include "model/db/expr.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprCXX.h>
 #include <clang/AST/Stmt.h>
 
 using namespace clang;
@@ -29,6 +30,7 @@ public:
   void processAssignPointerExpr(const BinaryOperator *op);
   void processAssignOpExpr(const BinaryOperator *op);
   void processAssignExpr(const BinaryOperator *op);
+  void processCallExpr(const CallExpr *expr);
 
   ExprProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~ExprProcessor() = default;

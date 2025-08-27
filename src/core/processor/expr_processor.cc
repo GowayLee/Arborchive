@@ -1,9 +1,11 @@
 #include "core/processor/expr_processor.h"
 #include "core/srcloc_recorder.h"
+#include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/expr.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
+#include "util/key_generator/function.h"
 #include "util/key_generator/values.h"
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
@@ -400,4 +402,41 @@ int ExprProcessor::processLiteralValue(const std::string &value,
 void ExprProcessor::recordValueBindExpr(int valueId, int exprId) {
   DbModel::ValueBind valueBindModel = {valueId, exprId};
   STG.insertClassObj(valueBindModel);
+}
+
+void ExprProcessor::processCallExpr(const CallExpr *expr) {
+  int exprId =
+      processBaseExpr(const_cast<CallExpr *>(expr), ExprKind::CALLEXPR);
+
+  // Get the called function
+  const FunctionDecl *callee = expr->getDirectCallee();
+  if (callee) {
+    // Generate key for the called function
+    KeyType funcKey =
+        KeyGen::Function::makeKey(callee, callee->getASTContext());
+    LOG_DEBUG << "CallExpr function key: " << funcKey << std::endl;
+
+    // Check if function is in cache
+    if (auto cachedFuncId = SEARCH_FUNCTION_CACHE(funcKey)) {
+      // Create FunBind record linking expression to function
+      DbModel::FunBind funBindModel = {exprId, *cachedFuncId};
+      STG.insertClassObj(funBindModel);
+    } else {
+      // Function not in cache, create placeholder and add dependency
+      DbModel::FunBind funBindModel = {exprId, -1};
+      STG.insertClassObj(funBindModel);
+
+      PendingUpdate update{
+          funcKey, CacheType::FUNCTION, [exprId](int resolvedId) {
+            DbModel::FunBind updated_record = {exprId, resolvedId};
+            STG.insertClassObj(updated_record);
+          }};
+      DependencyManager::instance().addDependency(update);
+    }
+  }
+
+  // Create IsCall record to identify this as a call expression
+  DbModel::IsCall isCallModel = {exprId,
+                                 static_cast<int>(IsCallKind::MBRCALLEXPR)};
+  STG.insertClassObj(isCallModel);
 }

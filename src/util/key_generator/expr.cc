@@ -1,6 +1,7 @@
 #include "util/key_generator/expr.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprCXX.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/Basic/Specifiers.h>
 #include <llvm/ADT/SmallString.h>
@@ -127,6 +128,23 @@ KeyType makeKey(const Expr *expr, const ASTContext &ctx) {
                            .concat("-")
                            .concat(std::to_string(endCol))
                            .str();
+  
+  // Add expression-specific information to enhance uniqueness
+  if (auto callExpr = llvm::dyn_cast<CallExpr>(expr)) {
+    locStr += "-args-" + std::to_string(callExpr->getNumArgs());
+    // Add function name if available
+    if (auto *callee = callExpr->getDirectCallee()) {
+      locStr += "-func-" + callee->getNameAsString();
+    }
+  } else if (auto declRefExpr = llvm::dyn_cast<DeclRefExpr>(expr)) {
+    if (declRefExpr->getDecl()) {
+      locStr += "-decl-" + std::to_string(declRefExpr->getDecl()->getID());
+    }
+  } else if (auto binaryOp = llvm::dyn_cast<BinaryOperator>(expr)) {
+    locStr += "-opcode-" + std::to_string(binaryOp->getOpcode());
+  } else if (auto unaryOp = llvm::dyn_cast<UnaryOperator>(expr)) {
+    locStr += "-opcode-" + std::to_string(unaryOp->getOpcode());
+  }
   // // 生成MD5哈希
   // llvm::MD5 hash;
   // hash.update(locStr);
