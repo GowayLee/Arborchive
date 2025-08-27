@@ -238,7 +238,7 @@ void FunctionProcessor::recordTypedef(const FunctionDecl *decl) const {
       DbModel::UserType::KeyType userTypekey =
           KeyGen::Type::makeKey(TND, decl->getASTContext());
       LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
-      if (auto cachedId = SEARCH_USERTYPE_CACHE(userTypekey)) {
+      if (auto cachedId = SEARCH_TYPE_CACHE(userTypekey)) {
         DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
                                                           *cachedId};
         STG.insertClassObj(funDeclTypedefType);
@@ -421,7 +421,7 @@ void FunctionProcessor::processCXXDeductionGuide(
   KeyType key =
       KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
   LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;
-  if (auto cachedId = SEARCH_USERTYPE_CACHE(key)) {
+  if (auto cachedId = SEARCH_TYPE_CACHE(key)) {
     DbModel::DeductionGuideForClass deducGuide = {_funcId, *cachedId};
     STG.insertClassObj(deducGuide);
   } else {

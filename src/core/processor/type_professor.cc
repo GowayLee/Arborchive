@@ -207,7 +207,8 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
 
   DbModel::UserType userTypeModel = {GENID(UserType), typeName, kind};
   KeyType userTypeKey = KeyGen::Type::makeKey(TD, ast_context);
-  INSERT_USERTYPE_CACHE(userTypeKey, userTypeModel.id);
+  LOG_DEBUG << "UserType Key: " << userTypeKey << std::endl;
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
 
   // Process more detail about user_type
