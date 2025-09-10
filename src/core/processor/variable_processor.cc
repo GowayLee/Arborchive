@@ -12,9 +12,10 @@
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclCXX.h>
 #include <clang/Basic/LLVM.h>
 
-void VariableProcessor::routerProcess(const VarDecl *VD) {
+void VariableProcessor::processVarDecl(const VarDecl *VD) {
   if (!VD || VD->isImplicit())
     return;
 
@@ -31,10 +32,6 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   } else {
     varId = processLocalScopeVar(VD); // @localvariables or @params directly
   }
-
-  // TO BE REMOVED: Variable intermediary - directly use varId instead
-  // DbModel::Variable variable = {_varId = GENID(Variable), varId,
-  //                              static_cast<int>(varType)};
 
   LocIdPair *locIdPair =
       SrcLocRecorder::processDefault(VD, &VD->getASTContext());
@@ -65,10 +62,6 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   KeyType VDKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
   INSERT_VARIABLE_CACHE(VDKey, varId);
 
-  // TO BE REMOVED: Declaration intermediary - direct entity references
-  // DbModel::Declaration declaration = {GENID(Declaration), _varDeclId,
-  //                                     static_cast<int>(DeclType::VARIABLE)};
-
   if (VD->isThisDeclarationADefinition()) {
     DbModel::VarDef varDef = {_varDeclId};
     STG.insertClassObj(varDef);
@@ -77,8 +70,6 @@ void VariableProcessor::routerProcess(const VarDecl *VD) {
   recordSpecifier(VD);
   recordStructuredBinding(VD);
 
-  // TO BE REMOVED: Variable and Declaration insertion - direct entity
-  // references STG.insertClassObj(declaration); STG.insertClassObj(variable);
   STG.insertClassObj(varDecl);
 }
 
@@ -266,6 +257,11 @@ int VariableProcessor::processParam(const VarDecl *VD) {
       break;
     }
 
+  // Extract type information of the param and insert into cache
+  const QualType QT = PVD->getOriginalType();
+  KeyType paramTypeKey = KeyGen::Type::makeKey(QT, FD->getASTContext());
+  // TODO: get type id info
+
   // Get parameterized element
   KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
   int elementId = -1;
@@ -300,11 +296,18 @@ int VariableProcessor::processGlobalVar(const VarDecl *VD) {
 // Process Member Variable, return id @membervariable
 int VariableProcessor::processMemberVar(const VarDecl *VD) {
   DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
-  // TO BE REMOVED: Member intermediary - use direct entity relationships
-  // DbModel::Member member = {GENID(Member), memberVar.id,
-  //                           static_cast<int>(MemberType::MEMBERVARIABLE)};
   STG.insertClassObj(memberVar);
-  // TO BE REMOVED: Member insertion
-  // STG.insertClassObj(member);
   return memberVar.id;
+}
+
+void VariableProcessor::processParmVarDecl(const ParmVarDecl *PVD) {
+  if (!PVD || PVD->isImplicit())
+    return;
+
+  // Use the existing parameter processing logic
+  processVarDecl(PVD);
+}
+
+void VariableProcessor::processFieldDecl(const FieldDecl *FD) {
+  // TODO: implement me
 }

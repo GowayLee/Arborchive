@@ -1,6 +1,4 @@
 #include "core/ast_visitor.h"
-#include "core/srcloc_recorder.h"
-#include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <memory>
 
@@ -49,20 +47,41 @@ bool ASTVisitor::VisitCXXDeductionGuideDecl(
 
 // Variable Family
 bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
-  variable_processor_->routerProcess(decl);
+  variable_processor_->processVarDecl(decl);
   type_processor_->processType(decl->getType().getTypePtr());
   return true;
 }
 
-// Type Family
-bool ASTVisitor::VisitTypeDecl(clang::TypeDecl *decl) {
-  type_processor_->routerProcess(decl);
+bool ASTVisitor::VisitParmVarDecl(clang::ParmVarDecl *decl) {
+  variable_processor_->processParmVarDecl(decl);
+  type_processor_->processType(decl->getType().getTypePtr());
+  return true;
+}
+
+bool ASTVisitor::VisitFieldDecl(clang::FieldDecl *decl) {
+  variable_processor_->processFieldDecl(decl);
+  type_processor_->processType(decl->getType().getTypePtr());
+  return true;
+}
+
+// Type Declaration Family
+bool ASTVisitor::VisitRecordDecl(clang::RecordDecl *decl) {
+  type_processor_->processRecordDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) {
+  type_processor_->processEnumDecl(decl);
   return true;
 }
 
 bool ASTVisitor::VisitTypedefDecl(clang::TypedefDecl *decl) {
-  LOG_DEBUG << "visit typedefdecl node" << std::endl;
-  type_processor_->routerProcess(decl);
+  type_processor_->processTypedefDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
+  type_processor_->processTemplateTypeParmDecl(decl);
   return true;
 }
 
@@ -111,8 +130,6 @@ bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *compoundStmt) {
   stmt_processor_->processBlockStmt(compoundStmt);
   return true;
 }
-
-bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) { return true; }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
 

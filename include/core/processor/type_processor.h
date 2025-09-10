@@ -10,8 +10,13 @@ using namespace clang;
 
 class TypeProcessor : public BaseProcessor {
 public:
-  void routerProcess(const TypeDecl *TD);
   int processType(const Type *T);
+
+  // Specific type declaration processing methods
+  void processRecordDecl(const RecordDecl *RD);
+  void processEnumDecl(const EnumDecl *ED);
+  void processTypedefDecl(const TypedefDecl *TND);
+  void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
 
   TypeProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~TypeProcessor() = default;
@@ -27,6 +32,7 @@ private:
   int processPtrToMemberType(const MemberPointerType *MPT, ASTContext &ast_context);
   int processDeclType(const DecltypeType *DT, ASTContext &ast_context);
 
+  void recordTypeProcessing(const TypeDecl *TD);
   void recordTypeDef(const TypeDecl *TD);
   void recordTopTypeDecl(const TypeDecl *TD);
 };

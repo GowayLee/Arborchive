@@ -10,7 +10,9 @@ using namespace clang;
 
 class VariableProcessor : public BaseProcessor {
 public:
-  void routerProcess(const VarDecl *VD);
+  void processVarDecl(const VarDecl *VD);
+  void processParmVarDecl(const ParmVarDecl *PVD);
+  void processFieldDecl(const FieldDecl *FD);
 
   VariableProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
   ~VariableProcessor() = default;

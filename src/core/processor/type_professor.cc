@@ -9,6 +9,7 @@
 #include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
+#include <clang/AST/Decl.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Specifiers.h>
 #include <iostream>
@@ -47,16 +48,41 @@ int TypeProcessor::processType(const Type *T) {
   return _typeId;
 }
 
-void TypeProcessor::routerProcess(const TypeDecl *TD) {
-  auto T = TD->getTypeForDecl();
-  if (!T) {
-    LOG_WARNING << "TypeDecl is null" << std::endl;
-    return;
+void TypeProcessor::processRecordDecl(const RecordDecl *RD) {
+  auto T = RD->getTypeForDecl();
+  if (T) {
+    _typeId = processType(T);
+    recordTypeProcessing(RD);
   }
+}
 
+void TypeProcessor::processEnumDecl(const EnumDecl *ED) {
+  auto T = ED->getTypeForDecl();
+  if (T) {
+    _typeId = processType(T);
+    recordTypeProcessing(ED);
+  }
+}
+
+void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
+  auto T = TND->getTypeForDecl();
+  if (T) {
+    _typeId = processType(T);
+    recordTypeProcessing(TND);
+  }
+}
+
+void TypeProcessor::processTemplateTypeParmDecl(
+    const TemplateTypeParmDecl *TTPD) {
+  auto T = TTPD->getTypeForDecl();
+  if (T) {
+    _typeId = processType(T);
+    recordTypeProcessing(TTPD);
+  }
+}
+
+void TypeProcessor::recordTypeProcessing(const TypeDecl *TD) {
   LocIdPair *locIdPair = SrcLocRecorder::processDefault(TD, ast_context_);
-
-  _typeId = processType(T); // Call the new processType method
 
   DbModel::TypeDecl typeDecl = {_typeDeclId = GENID(TypeDecl), _typeId,
                                 locIdPair->spec_id};

@@ -47,3 +47,6 @@ ast.db*
 .claude/
 .crush.json
 .agent-sync.toml
+
+# test
+tests/*.local/

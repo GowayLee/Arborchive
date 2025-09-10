@@ -44,10 +44,13 @@ public:
 
   // Variable Family
   bool VisitVarDecl(clang::VarDecl *decl);
+  bool VisitParmVarDecl(clang::ParmVarDecl *decl);
+  bool VisitFieldDecl(clang::FieldDecl *decl);
 
-  bool VisitTypeDecl(clang::TypeDecl *decl);
-  bool VisitTypedefDecl(clang::TypedefDecl *decl);
+  bool VisitRecordDecl(clang::RecordDecl *decl);
   bool VisitEnumDecl(clang::EnumDecl *decl);
+  bool VisitTypedefDecl(clang::TypedefDecl *decl);
+  bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
 
