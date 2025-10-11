@@ -120,6 +120,10 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
   pp.SuppressTagKeyword = true;
   pp.SuppressScope = false;
 
+  KeyType typeKey = KeyGen::Type::makeKey(QualType(BT, 0), ast_context);
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
   // 获取类型大小和对齐
   clang::QualType qualType(BT, 0);
   int size = ast_context.getTypeSize(qualType) / ast_context.getCharWidth();
@@ -134,18 +138,22 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
       size,
       getBuiltinTypeSign(BT),
       alignment};
-  KeyType typeKey = KeyGen::Type::makeKey(QualType(BT, 0), ast_context);
   INSERT_TYPE_CACHE(typeKey, builtinTypeModel.id);
   STG.insertClassObj(builtinTypeModel);
   return builtinTypeModel.id;
 }
 
 int TypeProcessor::processDerivedType(const Type *TP, ASTContext &ast_context) {
+  KeyType derivedTypeKey = KeyGen::Type::makeKey(QualType(TP, 0), ast_context);
+  if (auto cachedId = SEARCH_TYPE_CACHE(derivedTypeKey))
+    return *cachedId;
+
   QualType QT = getUnderlyingType(TP);
   KeyType typeKey = KeyGen::Type::makeKey(QT, ast_context);
-  LOG_DEBUG << "DerivedType TypeKey: " << typeKey << std::endl;
+  LOG_DEBUG << "DerivedType TypeKey: " << derivedTypeKey << std::endl;
 
   int derivedTypeId = GENID(DerivedType);
+  INSERT_TYPE_CACHE(derivedTypeKey, derivedTypeId);
   std::string derivedTypeName = getDerivedTypeName(TP, ast_context);
   int derivedTypeKind = getDerivedTypeKind(TP);
 
