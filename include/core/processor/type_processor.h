@@ -17,6 +17,8 @@ public:
   void processEnumDecl(const EnumDecl *ED);
   void processTypedefDecl(const TypedefDecl *TND);
   void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
+  void processTypeDecl(const TypeDecl *TD);
+  void processRecordType(const RecordType *RT, ASTContext &ast_context);
   int processBuiltinType(const BuiltinType *BT, ASTContext &ast_context);
 
   TypeProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
@@ -29,7 +31,8 @@ private:
   int processDerivedType(const Type *TP, ASTContext &ast_context);
   int processUserType(const Type *TP, ASTContext &ast_context);
   int processRoutineType(const Type *TP, ASTContext &ast_context);
-  int processPtrToMemberType(const MemberPointerType *MPT, ASTContext &ast_context);
+  int processPtrToMemberType(const MemberPointerType *MPT,
+                             ASTContext &ast_context);
   int processDeclType(const DecltypeType *DT, ASTContext &ast_context);
   void processRecordType(const TypeDecl *TD);
 

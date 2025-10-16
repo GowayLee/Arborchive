@@ -50,6 +50,7 @@ public:
   bool VisitFieldDecl(clang::FieldDecl *decl);
 
   bool VisitRecordDecl(clang::RecordDecl *decl);
+  bool VisitRecordType(clang::RecordType *T);
   bool VisitEnumDecl(clang::EnumDecl *decl);
   bool VisitTypedefDecl(clang::TypedefDecl *decl);
   bool VisitBuiltinType(clang::BuiltinType *BT);

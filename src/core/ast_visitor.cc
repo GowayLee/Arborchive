@@ -70,6 +70,11 @@ bool ASTVisitor::VisitRecordDecl(clang::RecordDecl *decl) {
   return true;
 }
 
+bool ASTVisitor::VisitRecordType(clang::RecordType *RT) {
+  type_processor_->processRecordType(RT, context_);
+  return true;
+}
+
 bool ASTVisitor::VisitEnumDecl(clang::EnumDecl *decl) {
   type_processor_->processEnumDecl(decl);
   return true;

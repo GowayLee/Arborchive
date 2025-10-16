@@ -29,8 +29,7 @@ int TypeProcessor::processType(const Type *T) {
   // Directly return specific type IDs instead of creating Type intermediary
   if (isDerivedType(type)) {
     _typeId = processDerivedType(type, *ast_context_);
-  } else if (type->isRecordType() || type->isEnumeralType() ||
-             type->isTypedefNameType()) {
+  } else if (type->isEnumeralType() || type->isTypedefNameType()) {
     _typeId = processUserType(type, *ast_context_);
   } else if (type->isFunctionType() || type->isFunctionProtoType()) {
     _typeId = processRoutineType(type, *ast_context_);
@@ -50,7 +49,7 @@ void TypeProcessor::processRecordDecl(const RecordDecl *RD) {
   auto T = RD->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    processRecordType(RD);
+    processTypeDecl(RD);
   }
 }
 
@@ -58,7 +57,7 @@ void TypeProcessor::processEnumDecl(const EnumDecl *ED) {
   auto T = ED->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    processRecordType(ED);
+    processTypeDecl(ED);
   }
 }
 
@@ -69,7 +68,7 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
   auto T = TND->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    processRecordType(TND);
+    processTypeDecl(TND);
   }
 }
 
@@ -78,11 +77,11 @@ void TypeProcessor::processTemplateTypeParmDecl(
   auto T = TTPD->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    processRecordType(TTPD);
+    processTypeDecl(TTPD);
   }
 }
 
-void TypeProcessor::processRecordType(const TypeDecl *TD) {
+void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
   LocIdPair *locIdPair = SrcLocRecorder::processDefault(TD, ast_context_);
 
   DbModel::TypeDecl typeDecl = {_typeDeclId = GENID(TypeDecl), _typeId,
@@ -94,6 +93,63 @@ void TypeProcessor::processRecordType(const TypeDecl *TD) {
   // Determine top type declaration
   recordTopTypeDecl(TD);
   STG.insertClassObj(typeDecl);
+}
+
+void TypeProcessor::processRecordType(const RecordType *RT,
+                                      ASTContext &ast_context) {
+  // Extract the RecordDecl from the RecordType
+  const RecordDecl *RD = RT->getDecl();
+  if (!RD)
+    return;
+
+  // Get typename
+  std::string typeName = RD->getNameAsString();
+  if (typeName.empty()) {
+    // Handle anonymous types
+    typeName = "<anonymous>";
+  }
+
+  // Determine the UserTypeKind
+  int kind = static_cast<int>(UserTypeKind::UNKNOWN_USERTYPE);
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+    if (CXXRD->isClass())
+      kind = CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                 ? static_cast<int>(UserTypeKind::CLASS)
+                 : static_cast<int>(UserTypeKind::TEMPLATE_CLASS);
+    else if (CXXRD->isStruct())
+      kind = CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                 ? static_cast<int>(UserTypeKind::STRUCT)
+                 : static_cast<int>(UserTypeKind::TEMPLATE_STRUCT);
+    else if (CXXRD->isUnion())
+      kind = CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
+                 ? static_cast<int>(UserTypeKind::UNION)
+                 : static_cast<int>(UserTypeKind::TEMPLATE_UNION);
+  } else {
+    if (RD->isStruct())
+      kind = static_cast<int>(UserTypeKind::STRUCT);
+    else if (RD->isUnion())
+      kind = static_cast<int>(UserTypeKind::UNION);
+  }
+
+  LOG_DEBUG << "Processing RecordType user type: " << typeName
+            << ", Kind: " << kind << std::endl;
+
+  // Create UserType model
+  DbModel::UserType userTypeModel = {GENID(UserType), typeName, kind};
+  KeyType userTypeKey = KeyGen::Type::makeKey(RD, ast_context);
+  LOG_DEBUG << "RecordType UserType Key: " << userTypeKey << std::endl;
+
+  // Check cache first
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey))
+    return;
+
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+
+  // Process additional type details (similar to processUserType)
+  record_is_pod_class(RT, ast_context, userTypeModel.id);
+  record_is_standard_layout_class(RT, ast_context, userTypeModel.id);
+  record_is_complete(RT, ast_context, userTypeModel.id);
 }
 
 void TypeProcessor::recordTypeDef(const TypeDecl *TD) {
@@ -200,33 +256,7 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext &ast_context) {
       UserTypeKind::UNKNOWN_USERTYPE); // unknown_usertype by default
   LOG_DEBUG << "Processing user type: " << typeName << ", Kind: " << kind
             << std::endl;
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
-    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
-      if (CXXRD->isClass())
-        kind =
-            CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
-                ? static_cast<int>(UserTypeKind::CLASS)
-                : static_cast<int>(
-                      UserTypeKind::TEMPLATE_CLASS); // class or template_class
-      else if (CXXRD->isStruct())
-        kind = CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
-                   ? static_cast<int>(UserTypeKind::STRUCT)
-                   : static_cast<int>(
-                         UserTypeKind::TEMPLATE_STRUCT); // struct or
-                                                         // template_struct
-      else if (CXXRD->isUnion())
-        kind =
-            CXXRD->getTemplateSpecializationKind() == TSK_Undeclared
-                ? static_cast<int>(UserTypeKind::UNION)
-                : static_cast<int>(
-                      UserTypeKind::TEMPLATE_UNION); // union or template_union
-    } else {
-      if (RD->isStruct())
-        kind = static_cast<int>(UserTypeKind::STRUCT); // struct
-      else if (RD->isUnion())
-        kind = static_cast<int>(UserTypeKind::UNION); // union
-    }
-  } else if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD))
+  if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD))
     kind = ED->isScoped()
                ? static_cast<int>(UserTypeKind::SCOPED_ENUM)
                : static_cast<int>(UserTypeKind::ENUM); // scoped_enum or enum
