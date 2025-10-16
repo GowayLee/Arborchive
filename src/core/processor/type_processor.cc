@@ -27,9 +27,7 @@ int TypeProcessor::processType(const Type *T) {
   const clang::Type *type = qualType.getTypePtr();
 
   // Directly return specific type IDs instead of creating Type intermediary
-  if (type->isBuiltinType()) {
-    _typeId = processBuiltinType(cast<BuiltinType>(type), *ast_context_);
-  } else if (isDerivedType(type)) {
+  if (isDerivedType(type)) {
     _typeId = processDerivedType(type, *ast_context_);
   } else if (type->isRecordType() || type->isEnumeralType() ||
              type->isTypedefNameType()) {
@@ -65,6 +63,9 @@ void TypeProcessor::processEnumDecl(const EnumDecl *ED) {
 }
 
 void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
+  std::string typedefName = TND->getNameAsString();
+  LOG_INFO << "Processing TypedefDecl: " << typedefName << std::endl;
+
   auto T = TND->getTypeForDecl();
   if (T) {
     _typeId = processType(T);

@@ -85,6 +85,17 @@ bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
   return true;
 }
 
+bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
+  // LOG_DEBUG << "Visiting CXXRecordDecl" << std::endl;
+
+  return true;
+}
+
+bool ASTVisitor::VisitBuiltinType(clang::BuiltinType *BT) {
+  type_processor_->processBuiltinType(BT, context_);
+  return true;
+}
+
 // Stmt Family
 bool ASTVisitor::VisitIfStmt(clang::IfStmt *ifStmt) {
   stmt_processor_->processIfStmt(ifStmt);
@@ -187,11 +198,5 @@ bool ASTVisitor::VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *literal) {
 
 bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
   namespace_processor_->processNamespaceDecl(decl);
-  return true;
-}
-
-bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
-  // LOG_DEBUG << "Visiting CXXRecordDecl" << std::endl;
-
   return true;
 }

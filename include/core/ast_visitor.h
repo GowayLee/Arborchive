@@ -28,6 +28,8 @@ private:
 public:
   explicit ASTVisitor(clang::ASTContext &context);
 
+  bool shouldVisitImplicitCode() const { return true; }
+
   // 为各种AST节点类型实现Visit方法
 
   // 声明类型
@@ -50,6 +52,7 @@ public:
   bool VisitRecordDecl(clang::RecordDecl *decl);
   bool VisitEnumDecl(clang::EnumDecl *decl);
   bool VisitTypedefDecl(clang::TypedefDecl *decl);
+  bool VisitBuiltinType(clang::BuiltinType *BT);
   bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
