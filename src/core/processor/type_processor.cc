@@ -1,5 +1,5 @@
-#include "core/processor/derivedtype_helper.h"
 #include "core/processor/type_processor.h"
+#include "core/processor/derivedtype_helper.h"
 #include "core/processor/usertype_helper.h"
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"
@@ -52,7 +52,7 @@ void TypeProcessor::processRecordDecl(const RecordDecl *RD) {
   auto T = RD->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    recordTypeProcessing(RD);
+    processRecordType(RD);
   }
 }
 
@@ -60,7 +60,7 @@ void TypeProcessor::processEnumDecl(const EnumDecl *ED) {
   auto T = ED->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    recordTypeProcessing(ED);
+    processRecordType(ED);
   }
 }
 
@@ -68,7 +68,7 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
   auto T = TND->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    recordTypeProcessing(TND);
+    processRecordType(TND);
   }
 }
 
@@ -77,11 +77,11 @@ void TypeProcessor::processTemplateTypeParmDecl(
   auto T = TTPD->getTypeForDecl();
   if (T) {
     _typeId = processType(T);
-    recordTypeProcessing(TTPD);
+    processRecordType(TTPD);
   }
 }
 
-void TypeProcessor::recordTypeProcessing(const TypeDecl *TD) {
+void TypeProcessor::processRecordType(const TypeDecl *TD) {
   LocIdPair *locIdPair = SrcLocRecorder::processDefault(TD, ast_context_);
 
   DbModel::TypeDecl typeDecl = {_typeDeclId = GENID(TypeDecl), _typeId,
