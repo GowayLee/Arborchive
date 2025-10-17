@@ -6,8 +6,9 @@
 
 class NamespaceProcessor : public BaseProcessor {
 public:
-  NamespaceProcessor(clang::ASTContext *ast_context)
-      : BaseProcessor(ast_context) {}
+  NamespaceProcessor(const clang::ASTContext &ast_context,
+                     const clang::PrintingPolicy pp)
+      : BaseProcessor(ast_context, pp) {}
   ~NamespaceProcessor() = default;
 
   void processNamespaceDecl(const clang::NamespaceDecl *decl);

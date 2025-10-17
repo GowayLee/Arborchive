@@ -1,7 +1,6 @@
 #ifndef _AST_VISITOR_H_
 #define _AST_VISITOR_H_
 
-#include "core/processor/class_processor.h"
 #include "core/processor/expr_processor.h"
 #include "core/processor/function_processor.h"
 #include "core/processor/namespace_processor.h"
@@ -14,10 +13,10 @@
 
 class ASTVisitor : public clang::RecursiveASTVisitor<ASTVisitor> {
 private:
-  clang::ASTContext &context_;
+  const clang::ASTContext &context_;
+  clang::PrintingPolicy pp_;
 
   ////// Processors /////////
-  std::unique_ptr<ClassDeclProcessor> class_decl_processor_ = nullptr;
   std::unique_ptr<FunctionProcessor> function_processor_ = nullptr;
   std::unique_ptr<NamespaceProcessor> namespace_processor_ = nullptr;
   std::unique_ptr<VariableProcessor> variable_processor_ = nullptr;
@@ -50,7 +49,7 @@ public:
   bool VisitFieldDecl(clang::FieldDecl *decl);
 
   bool VisitRecordDecl(clang::RecordDecl *decl);
-  bool VisitRecordType(clang::RecordType *T);
+  bool VisitRecordType(clang::RecordType *RT);
   bool VisitEnumDecl(clang::EnumDecl *decl);
   bool VisitTypedefDecl(clang::TypedefDecl *decl);
   bool VisitBuiltinType(clang::BuiltinType *BT);
@@ -75,6 +74,7 @@ public:
   bool VisitUnaryOperator(const clang::UnaryOperator *op);
   bool VisitBinaryOperator(const clang::BinaryOperator *op);
   bool VisitConditionalOperator(const clang::ConditionalOperator *op);
+  bool VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE);
 
   // Literal Family
   bool VisitStringLiteral(const clang::StringLiteral *literal);

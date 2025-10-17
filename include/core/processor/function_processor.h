@@ -19,7 +19,8 @@ public:
   void processUserDefinedLiteral(const FunctionDecl *decl);
   void processNormalFunc(const FunctionDecl *decl);
 
-  FunctionProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
+  FunctionProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+      : BaseProcessor(ast_context, pp) {};
   ~FunctionProcessor() = default;
 
 private:

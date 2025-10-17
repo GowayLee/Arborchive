@@ -12,56 +12,56 @@ using namespace DbModel;
 
 LocIdPair *SrcLocRecorder::processDefault(const SourceLocation beginLoc,
                                           const SourceLocation endLoc,
-                                          const ASTContext *context) {
+                                          const ASTContext &context) {
   return process(beginLoc, endLoc, LocationType::DEFAULT, context);
 }
 
 LocIdPair *SrcLocRecorder::processStmt(const SourceLocation beginLoc,
                                        const SourceLocation endLoc,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(beginLoc, endLoc, LocationType::STMT, context);
 }
 
 LocIdPair *SrcLocRecorder::processExpr(const SourceLocation beginLoc,
                                        const SourceLocation endLoc,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(beginLoc, endLoc, LocationType::EXPR, context);
 }
 
 LocIdPair *SrcLocRecorder::processDefault(const Stmt *stmt,
-                                          const ASTContext *context) {
+                                          const ASTContext &context) {
 
   return process(stmt->getBeginLoc(), stmt->getEndLoc(), LocationType::DEFAULT,
                  context);
 }
 
 LocIdPair *SrcLocRecorder::processStmt(const Stmt *stmt,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(stmt->getBeginLoc(), stmt->getEndLoc(), LocationType::STMT,
                  context);
 }
 
 LocIdPair *SrcLocRecorder::processExpr(const Stmt *stmt,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(stmt->getBeginLoc(), stmt->getEndLoc(), LocationType::EXPR,
                  context);
 }
 
 LocIdPair *SrcLocRecorder::processDefault(const Decl *decl,
-                                          const ASTContext *context) {
+                                          const ASTContext &context) {
 
   return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::DEFAULT,
                  context);
 }
 
 LocIdPair *SrcLocRecorder::processStmt(const Decl *decl,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::STMT,
                  context);
 }
 
 LocIdPair *SrcLocRecorder::processExpr(const Decl *decl,
-                                       const ASTContext *context) {
+                                       const ASTContext &context) {
   return process(decl->getBeginLoc(), decl->getEndLoc(), LocationType::EXPR,
                  context);
 }
@@ -70,8 +70,8 @@ LocIdPair *SrcLocRecorder::processExpr(const Decl *decl,
 LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
                                    const SourceLocation endLoc,
                                    const LocationType type,
-                                   const ASTContext *context) {
-  const auto &sourceManager = context->getSourceManager();
+                                   const ASTContext &context) {
+  const auto &sourceManager = context.getSourceManager();
 
   // if (beginLoc.isInvalid() || endLoc.isInvalid()) {
   //   std::cout << "Invalid source location for statement" << std::endl;
@@ -96,7 +96,8 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
     llvm::StringRef fileName = sourceManager.getFilename(beginLoc);
     filename = std::filesystem::path(fileName.str()).filename().string();
   } else
-    LOG_WARNING << "Could not determine file for statement, use default value" << std::endl;
+    LOG_WARNING << "Could not determine file for statement, use default value"
+                << std::endl;
 
   // 创建位置模型
   // FIXME: Currently, only one source file will be parsed, so container_id here

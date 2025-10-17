@@ -34,7 +34,7 @@ void VariableProcessor::processVarDecl(const VarDecl *VD) {
   }
 
   LocIdPair *locIdPair =
-      SrcLocRecorder::processDefault(VD, &VD->getASTContext());
+      SrcLocRecorder::processDefault(VD, VD->getASTContext());
   _name = VD->getNameAsString();
   _varDeclId = GENID(VarDecl);
 

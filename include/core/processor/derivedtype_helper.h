@@ -8,118 +8,66 @@
 
 using namespace clang;
 
-// Determine whether a type is derived
-bool isDerivedType(const Type *type) {
-  if (!type)
-    return false;
-  return type->isPointerType() ||         // 指针类型 (T*)
-         type->isReferenceType() ||       // 引用类型 (T&)
-         type->isArrayType() ||           // 数组类型 (T[])
-         type->isVectorType() ||          // 向量类型
-         type->isFunctionPointerType() || // 函数指针类型
-         type->isMemberPointerType() ||   // 成员指针类型 (T Class::*)
-         type->isBlockPointerType() ||    // Block指针类型
-         type->isLValueReferenceType() || // 左值引用类型 (T&)
-         type->isRValueReferenceType() || // 右值引用类型 (T&&)
-         type->isComplexType() ||         // 复数类型
-         // type->isTypedefType() ||         // typedef类型
-         isa<AttributedType>(type) || // 带属性的类型
-         type->isDecltypeType();      // decltype类型
-  // type->isAdjustedType() ||        // 调整后的类型
-  // type->isParenType();             // 带括号的类型
-}
+std::optional<std::pair<DerivedTypeKind, QualType>>
+analyzeDerivedType(const Type *T) {
+  if (!T)
+    return std::nullopt;
 
-// Get the kind of derived type
-int getDerivedTypeKind(const Type *type) {
-  // 指针类型
-  if (type->isPointerType())
-    return static_cast<int>(DerivedTypeKind::POINTER);
+  // 1. Pointer Type
+  if (const auto *PT = llvm::dyn_cast<PointerType>(T)) {
+    QualType pointeeType = PT->getPointeeType();
 
-  // 引用类型
-  if (const auto *refType = dyn_cast<ReferenceType>(type)) {
-    if (isa<LValueReferenceType>(refType))
-      return static_cast<int>(DerivedTypeKind::REFERENCE);
-    else if (isa<RValueReferenceType>(refType))
-      return static_cast<int>(DerivedTypeKind::RVALUE_REFERENCE);
+    // 6. 判断是否为函数指针 (Routine Pointer)
+    if (pointeeType->isFunctionType())
+      return std::make_pair(DerivedTypeKind::ROUTINEPTR, pointeeType);
+
+    // 普通指针
+    return std::make_pair(DerivedTypeKind::POINTER, pointeeType);
   }
 
-  // 数组类型
-  if (type->isArrayType())
-    return static_cast<int>(DerivedTypeKind::ARRAY);
+  // 2. LValue Reference Type
+  if (const auto *LRT = llvm::dyn_cast<LValueReferenceType>(T)) {
+    QualType pointeeType = LRT->getPointeeType();
 
-  // 向量类型
-  if (type->isVectorType())
-    return static_cast<int>(DerivedTypeKind::GNU_VECTOR);
+    // 7. 判断是否为函数引用 (Routine Reference)
+    if (pointeeType->isFunctionType())
+      return std::make_pair(DerivedTypeKind::ROUTINEREFERENCE, pointeeType);
 
-  // 函数指针类型
-  if (type->isFunctionPointerType())
-    return static_cast<int>(DerivedTypeKind::ROUTINEPTR);
+    // 普通引用
+    return std::make_pair(DerivedTypeKind::REFERENCE, pointeeType);
+  }
 
-  // 函数引用类型
-  if (const auto *refType = dyn_cast<ReferenceType>(type))
-    if (refType->getPointeeType()->isFunctionType())
-      return static_cast<int>(DerivedTypeKind::ROUTINEREFERENCE);
+  // 8. RValue Reference Type (C++11)
+  if (const auto *RRT = llvm::dyn_cast<RValueReferenceType>(T))
+    return std::make_pair(DerivedTypeKind::RVALUE_REFERENCE,
+                          RRT->getPointeeType());
 
-  // Block类型
-  if (type->isBlockPointerType())
-    return static_cast<int>(DerivedTypeKind::BLOCK);
+  // 4. Array Type
+  if (const auto *AT = llvm::dyn_cast<ArrayType>(T))
+    return std::make_pair(DerivedTypeKind::ARRAY, AT->getElementType());
 
-  // 带有类型修饰符的类型
-  if (isa<AttributedType>(type) || type->isSpecifierType())
-    return static_cast<int>(DerivedTypeKind::TYPE_WITH_SPECIFIERS);
+  // 5. GNU Vector Type
+  if (const auto *VT = llvm::dyn_cast<VectorType>(T))
+    return std::make_pair(DerivedTypeKind::GNU_VECTOR, VT->getElementType());
 
-  return -1;
-}
+  // 10. Block Type (Objective-C blocks)
+  if (const auto *BT = llvm::dyn_cast<BlockPointerType>(T))
+    return std::make_pair(DerivedTypeKind::BLOCK, BT->getPointeeType());
 
-QualType getUnderlyingType(const Type *type) {
-  // 指针类型
-  if (const auto *ptrType = dyn_cast<PointerType>(type))
-    return ptrType->getPointeeType();
+  // 3. Type with Specifiers
+  // 检查是否有限定符 (const, volatile, restrict)
+  QualType QT(T, 0);
+  if (QT.hasLocalQualifiers())
+    return std::make_pair(DerivedTypeKind::TYPE_WITH_SPECIFIERS,
+                          QT.getLocalUnqualifiedType());
 
-  // 引用类型
-  if (const auto *refType = dyn_cast<ReferenceType>(type))
-    return refType->getPointeeType();
+  // 检查 AttributedType (带属性的类型，如 __attribute__)
+  if (const auto *AT = llvm::dyn_cast<AttributedType>(T))
+    return std::make_pair(DerivedTypeKind::TYPE_WITH_SPECIFIERS,
+                          AT->getModifiedType());
 
-  // 数组类型
-  if (const auto *arrayType = dyn_cast<ArrayType>(type))
-    return arrayType->getElementType();
-
-  // 向量类型
-  if (const auto *vectorType = dyn_cast<VectorType>(type))
-    return vectorType->getElementType();
-
-  // Block类型
-  if (const auto *blockType = dyn_cast<BlockPointerType>(type))
-    return blockType->getPointeeType();
-
-  // 带属性的类型
-  if (const auto *attrType = dyn_cast<AttributedType>(type))
-    return attrType->getModifiedType();
-
-  // 处理带有限定符的类型（const、volatile等）
-  QualType qualType(type, 0);
-  if (qualType.hasLocalQualifiers())
-    return qualType.getUnqualifiedType();
-
-  // 处理类型别名和糖化类型
-  if (const auto *typedefType = dyn_cast<TypedefType>(type))
-    return typedefType->desugar();
-
-  if (const auto *elaboratedType = dyn_cast<ElaboratedType>(type))
-    return elaboratedType->getNamedType();
-
-  // 其他情况返回原类型
-  return QualType(type, 0);
-}
-
-std::string getDerivedTypeName(const Type *type, ASTContext &context) {
-  QualType qualType(type, 0);
-
-  PrintingPolicy policy = context.getPrintingPolicy();
-  policy.SuppressTagKeyword = true;
-  policy.SuppressScope = false;
-
-  return qualType.getAsString(policy);
+  // 不是派生类型
+  return std::nullopt;
 }
 
 #endif // _DERIVEDTYPE_HELPER_H_

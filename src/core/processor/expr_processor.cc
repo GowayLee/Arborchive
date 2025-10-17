@@ -1,4 +1,5 @@
 #include "core/processor/expr_processor.h"
+#include "core/processor/type_processor.h"
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"
 #include "db/storage_facade.h"
@@ -13,7 +14,7 @@
 #include <clang/AST/ExprCXX.h>
 
 int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
-  KeyType exprKey = KeyGen::Expr_::makeKey(expr, *ast_context_);
+  KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context_);
   LocIdPair *locIdPair = SrcLocRecorder::processExpr(expr, ast_context_);
 
   DbModel::Expr exprModel = {GENID(Expr), static_cast<int>(exprKind),
@@ -439,4 +440,10 @@ void ExprProcessor::processCallExpr(const CallExpr *expr) {
   DbModel::IsCall isCallModel = {exprId,
                                  static_cast<int>(IsCallKind::MBRCALLEXPR)};
   STG.insertClassObj(isCallModel);
+}
+
+void ExprProcessor::processImplicitCastExpr(const ImplicitCastExpr *ICE) {
+  CastKind CK = ICE->getCastKind();
+  QualType SrcType = ICE->getSubExpr()->getType();
+  QualType DstType = ICE->getType();
 }

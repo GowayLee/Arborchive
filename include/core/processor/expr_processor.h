@@ -32,7 +32,10 @@ public:
   void processAssignExpr(const BinaryOperator *op);
   void processCallExpr(const CallExpr *expr);
 
-  ExprProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
+  void processImplicitCastExpr(const ImplicitCastExpr *ICE);
+
+  ExprProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+      : BaseProcessor(ast_context, pp) {};
   ~ExprProcessor() = default;
 
 private:

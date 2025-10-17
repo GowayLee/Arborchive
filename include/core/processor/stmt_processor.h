@@ -11,7 +11,6 @@ using namespace clang;
 
 class StmtProcessor : public BaseProcessor {
 public:
-
   int getStmtId(Stmt *stmt, StmtKind stmtKind);
 
   void processIfStmt(IfStmt *ifStmt);
@@ -24,7 +23,8 @@ public:
   void processReturnStmt(ReturnStmt *returnStmt);
   void processDeclStmt(DeclStmt *declStmt);
 
-  StmtProcessor(ASTContext *ast_context) : BaseProcessor(ast_context) {};
+  StmtProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+      : BaseProcessor(ast_context, pp) {};
   ~StmtProcessor() = default;
 
 private:
@@ -32,7 +32,6 @@ private:
   int _varId;
   int _varDeclId;
   std::string _name;
-
 };
 
 #endif // _STMT_PROCESSOR_H_

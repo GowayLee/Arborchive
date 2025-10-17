@@ -2,18 +2,20 @@
 #include <clang/AST/Decl.h>
 #include <memory>
 
-ASTVisitor::ASTVisitor(clang::ASTContext &context) : context_(context) {
+ASTVisitor::ASTVisitor(clang::ASTContext &context)
+    : context_(context), pp_(context.getPrintingPolicy()) {
   initProcessors();
+  pp_.SuppressScope = false;
+  pp_.SuppressTagKeyword = true;
 }
 
 void ASTVisitor::initProcessors() {
-  class_decl_processor_ = std::make_unique<ClassDeclProcessor>(&context_);
-  function_processor_ = std::make_unique<FunctionProcessor>(&context_);
-  namespace_processor_ = std::make_unique<NamespaceProcessor>(&context_);
-  variable_processor_ = std::make_unique<VariableProcessor>(&context_);
-  type_processor_ = std::make_unique<TypeProcessor>(&context_);
-  stmt_processor_ = std::make_unique<StmtProcessor>(&context_);
-  expr_processor_ = std::make_unique<ExprProcessor>(&context_);
+  function_processor_ = std::make_unique<FunctionProcessor>(context_, pp_);
+  namespace_processor_ = std::make_unique<NamespaceProcessor>(context_, pp_);
+  variable_processor_ = std::make_unique<VariableProcessor>(context_, pp_);
+  type_processor_ = std::make_unique<TypeProcessor>(context_, pp_);
+  stmt_processor_ = std::make_unique<StmtProcessor>(context_, pp_);
+  expr_processor_ = std::make_unique<ExprProcessor>(context_, pp_);
 }
 
 // 实现各种Visit方法
@@ -64,7 +66,7 @@ bool ASTVisitor::VisitFieldDecl(clang::FieldDecl *decl) {
   return true;
 }
 
-// Type Declaration Family
+// Type Family
 bool ASTVisitor::VisitRecordDecl(clang::RecordDecl *decl) {
   type_processor_->processRecordDecl(decl);
   return true;
@@ -98,6 +100,10 @@ bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
 
 bool ASTVisitor::VisitBuiltinType(clang::BuiltinType *BT) {
   type_processor_->processBuiltinType(BT, context_);
+  return true;
+}
+
+bool ASTVisitor::VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE) {
   return true;
 }
 

@@ -9,7 +9,7 @@
 
 using namespace clang;
 
-void record_is_pod_class(const Type *TP, ASTContext &ast_context,
+void record_is_pod_class(const Type *TP, const ASTContext &ast_context,
                          int usertype_id) {
   if (!TP) {
     LOG_WARNING << "Null type pointer" << std::endl;
@@ -36,7 +36,8 @@ void record_is_pod_class(const Type *TP, ASTContext &ast_context,
   STG.insertClassObj(isPodClassModel);
 }
 
-void record_is_standard_layout_class(const Type *TP, ASTContext &ast_context,
+void record_is_standard_layout_class(const Type *TP,
+                                     const ASTContext &ast_context,
                                      int userTypeId) {
   if (!TP) {
     LOG_WARNING << "Null type pointer" << std::endl;
@@ -61,7 +62,7 @@ void record_is_standard_layout_class(const Type *TP, ASTContext &ast_context,
   STG.insertClassObj(isStandardLayoutClassModel);
 }
 
-void record_is_complete(const Type *TP, ASTContext &ast_context,
+void record_is_complete(const Type *TP, const ASTContext &ast_context,
                         int userTypeId) {
   if (!TP) {
     LOG_WARNING << "Null type pointer" << std::endl;

@@ -14,7 +14,7 @@
 #include <clang/Basic/LLVM.h>
 
 int StmtProcessor::getStmtId(Stmt *stmt, StmtKind stmtKind) {
-  KeyType stmtKey = KeyGen::Stmt_::makeKey(stmt, *ast_context_);
+  KeyType stmtKey = KeyGen::Stmt_::makeKey(stmt, ast_context_);
   LocIdPair *locIdPair = SrcLocRecorder::processStmt(stmt, ast_context_);
 
   DbModel::Stmt stmtModel = {GENID(Stmt), static_cast<int>(stmtKind),
@@ -30,7 +30,7 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
 
   // 1. 处理初始化部分
   if (Stmt *init = ifStmt->getInit()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::IfInit ifInitModel = {if_stmt_id, *cachedId};
       STG.insertClassObj(ifInitModel);
@@ -48,7 +48,7 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
 
   // 2. 处理then部分
   if (Stmt *then = ifStmt->getThen()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(then, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(then, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::IfThen ifThenModel = {if_stmt_id, *cachedId};
       STG.insertClassObj(ifThenModel);
@@ -66,7 +66,7 @@ void StmtProcessor::processIfStmt(IfStmt *ifStmt) {
 
   // 3. 处理else部分
   if (Stmt *elseStmt = ifStmt->getElse()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(elseStmt, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(elseStmt, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::IfElse ifElseModel = {if_stmt_id, *cachedId};
       STG.insertClassObj(ifElseModel);
@@ -93,7 +93,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 
   // 1. 处理初始化部分
   if (Stmt *init = forStmt->getInit()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::ForInit forInitModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forInitModel);
@@ -111,7 +111,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 
   // 2. 处理条件部分
   if (Expr *cond = forStmt->getCond()) {
-    KeyType exprKey = KeyGen::Expr_::makeKey(cond, *ast_context_);
+    KeyType exprKey = KeyGen::Expr_::makeKey(cond, ast_context_);
     if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
       DbModel::ForCond forCondModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forCondModel);
@@ -129,7 +129,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 
   // 3. 处理更新部分
   if (Expr *inc = forStmt->getInc()) {
-    KeyType exprKey = KeyGen::Expr_::makeKey(inc, *ast_context_);
+    KeyType exprKey = KeyGen::Expr_::makeKey(inc, ast_context_);
     if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
       DbModel::ForUpdate forUpdateModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forUpdateModel);
@@ -147,7 +147,7 @@ void StmtProcessor::processForStmt(ForStmt *forStmt) {
 
   // 4. 处理循环体
   if (Stmt *body = forStmt->getBody()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::ForBody forBodyModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forBodyModel);
@@ -175,7 +175,7 @@ void StmtProcessor::processCXXForRangeStmt(CXXForRangeStmt *rangeForStmt) {
 
   // 1. 处理范围声明（相当于初始化）
   if (Stmt *init = rangeForStmt->getInit()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::ForInit forInitModel = {for_stmt_id, *cachedId};
       STG.insertClassObj(forInitModel);
@@ -197,7 +197,7 @@ void StmtProcessor::processWhileStmt(WhileStmt *whileStmt) {
 
   // 处理循环体
   if (Stmt *body = whileStmt->getBody()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::WhileBody whileBodyModel = {while_stmt_id, *cachedId};
       STG.insertClassObj(whileBodyModel);
@@ -219,7 +219,7 @@ void StmtProcessor::processDoStmt(DoStmt *doStmt) {
 
   // 处理循环体
   if (Stmt *body = doStmt->getBody()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::DoBody doBodyModel = {do_stmt_id, *cachedId};
       STG.insertClassObj(doBodyModel);
@@ -241,7 +241,7 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
 
   // 1. 处理初始化部分
   if (Stmt *init = switchStmt->getInit()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(init, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::SwitchInit switchInitModel = {switch_stmt_id, *cachedId};
       STG.insertClassObj(switchInitModel);
@@ -259,7 +259,7 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
 
   // 2. 处理主体部分
   if (Stmt *body = switchStmt->getBody()) {
-    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, *ast_context_);
+    KeyType stmtKey = KeyGen::Stmt_::makeKey(body, ast_context_);
     if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
       DbModel::SwitchBody switchBodyModel = {switch_stmt_id, *cachedId};
       STG.insertClassObj(switchBodyModel);
@@ -280,7 +280,7 @@ void StmtProcessor::processSwitchStmt(SwitchStmt *switchStmt) {
       for (Stmt *child : compoundBody->children()) {
         if (SwitchCase *switchCase = dyn_cast<SwitchCase>(child)) {
           int case_id = getStmtId(switchCase, StmtKind::SWITCH_CASE);
-          KeyType caseKey = KeyGen::Stmt_::makeKey(switchCase, *ast_context_);
+          KeyType caseKey = KeyGen::Stmt_::makeKey(switchCase, ast_context_);
           if (auto cachedId = SEARCH_STMT_CACHE(caseKey)) {
             DbModel::SwitchCase switchCaseModel = {switch_stmt_id, case_index,
                                                    *cachedId};
