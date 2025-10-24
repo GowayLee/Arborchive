@@ -33,16 +33,16 @@ namespace KeyGen {
 namespace Type {
 
 // For clang::QualType
-KeyType makeKey(const QualType &qualType, const ASTContext &ctx);
+KeyType makeKey(const QualType &qualType, ASTContext *ctx);
 
 // For clang::NamedDecl
-KeyType makeKey(const NamedDecl *decl, const ASTContext &ctx);
+KeyType makeKey(const NamedDecl *decl, ASTContext *ctx);
 
 // clang::TemplateDecl -> clang::NamedDecl
-KeyType makeKey(const TemplateDecl *decl, const ASTContext &ctx);
+KeyType makeKey(const TemplateDecl *decl, ASTContext *ctx);
 
 // clang::TypeDecl -> clang::NamedDecl
-KeyType makeKey(const TypeDecl *decl, const ASTContext &ctx);
+KeyType makeKey(const TypeDecl *decl, ASTContext *ctx);
 
 } // namespace Type
 

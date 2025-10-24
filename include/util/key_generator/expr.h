@@ -24,7 +24,7 @@ namespace KeyGen {
 
 namespace Expr_ {
 // For clang::Expr
-KeyType makeKey(const Expr *expr, const ASTContext &ctx);
+KeyType makeKey(const Expr *expr, ASTContext *ctx);
 
 } // namespace Expr_
 

@@ -106,8 +106,8 @@ namespace Expr_ {
 //   return os.str();
 // }
 
-KeyType makeKey(const Expr *expr, const ASTContext &ctx) {
-  const SourceManager &SM = ctx.getSourceManager();
+KeyType makeKey(const Expr *expr, ASTContext *ctx) {
+  const SourceManager &SM = ctx->getSourceManager();
 
   auto range = expr->getSourceRange();
   auto start = SM.getSpellingLoc(range.getBegin());
@@ -128,7 +128,7 @@ KeyType makeKey(const Expr *expr, const ASTContext &ctx) {
                            .concat("-")
                            .concat(std::to_string(endCol))
                            .str();
-  
+
   // Add expression-specific information to enhance uniqueness
   if (auto callExpr = llvm::dyn_cast<CallExpr>(expr)) {
     locStr += "-args-" + std::to_string(callExpr->getNumArgs());

@@ -23,7 +23,7 @@ public:
   void processReturnStmt(ReturnStmt *returnStmt);
   void processDeclStmt(DeclStmt *declStmt);
 
-  StmtProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+  StmtProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};
   ~StmtProcessor() = default;
 

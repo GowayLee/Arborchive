@@ -11,9 +11,9 @@ namespace KeyGen {
 
 namespace Var {
 // For clang::VarDecl
-KeyType makeKey(const VarDecl *VD, const ASTContext &ctx) {
+KeyType makeKey(const VarDecl *VD, ASTContext *ctx) {
   // 第一部分：处理源位置信息
-  const SourceManager &srcMgr = ctx.getSourceManager();
+  const SourceManager &srcMgr = ctx->getSourceManager();
   SourceLocation loc = srcMgr.getExpansionLoc(VD->getLocation());
   std::pair<FileID, unsigned> fileLoc = srcMgr.getDecomposedLoc(loc);
   unsigned line = srcMgr.getLineNumber(fileLoc.first, fileLoc.second);

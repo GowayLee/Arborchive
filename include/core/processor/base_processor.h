@@ -5,12 +5,11 @@
 
 class BaseProcessor {
 protected:
-  const clang::ASTContext &ast_context_;
+  clang::ASTContext *ast_context_;
   clang::PrintingPolicy pp_;
 
 public:
-  BaseProcessor(const clang::ASTContext &ast_context,
-                const clang::PrintingPolicy pp)
+  BaseProcessor(clang::ASTContext *ast_context, const clang::PrintingPolicy pp)
       : ast_context_(ast_context), pp_(pp) {
     pp_.SuppressTagKeyword = true;
     pp_.SuppressScope = false;

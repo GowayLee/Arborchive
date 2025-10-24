@@ -13,7 +13,7 @@
 
 class ASTVisitor : public clang::RecursiveASTVisitor<ASTVisitor> {
 private:
-  const clang::ASTContext &context_;
+  clang::ASTContext *context_;
   clang::PrintingPolicy pp_;
 
   ////// Processors /////////
@@ -25,9 +25,10 @@ private:
   std::unique_ptr<ExprProcessor> expr_processor_ = nullptr;
 
 public:
-  explicit ASTVisitor(clang::ASTContext &context);
+  explicit ASTVisitor(clang::ASTContext *context);
 
   bool shouldVisitImplicitCode() const { return true; }
+  bool shouldVisitTemplateInstantiations() const { return true; }
 
   // 为各种AST节点类型实现Visit方法
 

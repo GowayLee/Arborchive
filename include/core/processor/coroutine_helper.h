@@ -50,11 +50,11 @@ bool isCoroutineFunction(const FunctionDecl *FD) {
   return Finder.HasCoroutineKeyword;
 }
 
-ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &Context) {
+const ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &ast_context) {
   // 查找std命名空间
   NamespaceDecl *StdNamespace = nullptr;
-  auto StdIdentifier = &Context.Idents.get("std");
-  auto Result = Context.getTranslationUnitDecl()->lookup(StdIdentifier);
+  auto StdIdentifier = &ast_context.Idents.get("std");
+  auto Result = ast_context.getTranslationUnitDecl()->lookup(StdIdentifier);
   for (auto *Decl : Result)
     if (auto *NamespaceDecl = llvm::dyn_cast<clang::NamespaceDecl>(Decl)) {
       StdNamespace = NamespaceDecl;
@@ -65,7 +65,7 @@ ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &Context) {
     return nullptr;
 
   // 尝试在std命名空间中查找coroutine_traits (C++20)
-  auto TraitsIdentifier = &Context.Idents.get("coroutine_traits");
+  auto TraitsIdentifier = &ast_context.Idents.get("coroutine_traits");
   auto TraitsResult = StdNamespace->lookup(TraitsIdentifier);
   for (auto *Decl : TraitsResult)
     if (auto *TmplDecl = llvm::dyn_cast<ClassTemplateDecl>(Decl))
@@ -73,7 +73,7 @@ ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &Context) {
 
   // 查找std::experimental命名空间
   NamespaceDecl *StdExpNamespace = nullptr;
-  auto ExpIdentifier = &Context.Idents.get("experimental");
+  auto ExpIdentifier = &ast_context.Idents.get("experimental");
   auto ExpResult = StdNamespace->lookup(ExpIdentifier);
   for (auto *Decl : ExpResult)
     if (auto *NamespaceDecl = llvm::dyn_cast<clang::NamespaceDecl>(Decl)) {
@@ -91,7 +91,7 @@ ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &Context) {
       return TmplDecl;
 
   // 尝试查找std::experimental::resumable_traits (早期实验版本)
-  auto ResumableIdentifier = &Context.Idents.get("resumable_traits");
+  auto ResumableIdentifier = &ast_context.Idents.get("resumable_traits");
   auto ResumableResult = StdExpNamespace->lookup(ResumableIdentifier);
   for (auto *Decl : ResumableResult)
     if (auto *TmplDecl = llvm::dyn_cast<ClassTemplateDecl>(Decl))
@@ -100,44 +100,35 @@ ClassTemplateDecl *findCoroutineTraitsTemplate(ASTContext &Context) {
   return nullptr;
 }
 
-QualType getCoroutineTraitsType(ASTContext &Context, const FunctionDecl *FD,
-                                ClassTemplateDecl *TraitsTemplate) {
-  if (!TraitsTemplate)
+QualType getCoroutineTraitsType(const FunctionDecl *FD,
+                                const ClassTemplateDecl *CTD,
+                                ASTContext &ast_context) {
+  if (!CTD)
     return QualType();
 
-  // 构建模板参数列表
-  llvm::SmallVector<TemplateArgument, 8> TemplateArgs;
+  llvm::SmallVector<TemplateArgument> TemplateArgs;
 
   // 1. 返回类型
-  QualType ReturnType = FD->getReturnType();
-  TemplateArgs.push_back(TemplateArgument(ReturnType));
+  TemplateArgs.push_back(TemplateArgument(FD->getReturnType()));
 
   // 2. 参数类型
   for (const auto *Param : FD->parameters()) {
-    QualType ParamType = Param->getType();
-    TemplateArgs.push_back(TemplateArgument(ParamType));
+    TemplateArgs.push_back(TemplateArgument(Param->getType()));
   }
 
-  // 3. this指针类型
-  if (auto *Method = llvm::dyn_cast<CXXMethodDecl>(FD)) {
-    if (!Method->isStatic()) {
-      QualType ThisType = Method->getThisType();
-      TemplateArgs.push_back(TemplateArgument(ThisType));
-    }
-  }
+  // 3. this指针类型（成员函数）
+  if (auto *Method = llvm::dyn_cast<CXXMethodDecl>(FD))
+    if (!Method->isStatic())
+      TemplateArgs.push_back(TemplateArgument(Method->getThisType()));
 
-  // 创建模板名称
-  TemplateName TemplateName(TraitsTemplate);
-
-  // 创建模板特化类型
-  QualType TraitsType = Context.getTemplateSpecializationType(
-      TemplateName, TemplateArgs, QualType());
-
-  return TraitsType;
+  // 创建特化类型
+  return ast_context.getTemplateSpecializationType(
+      TemplateName(const_cast<ClassTemplateDecl *>(CTD)),
+      TemplateArgs,  // SpecifiedArgs
+      TemplateArgs); // CanonicalArgs (coroutine_traits通常两者相同)
 }
 
-FunctionDecl *getCoroutineNewFunction(const FunctionDecl *FD,
-                                      ASTContext &Context) {
+FunctionDecl *getCoroutineNewFunction(const FunctionDecl *FD) {
   if (!FD->hasBody())
     return nullptr;
 
@@ -159,8 +150,7 @@ FunctionDecl *getCoroutineNewFunction(const FunctionDecl *FD,
   return nullptr;
 }
 
-FunctionDecl *getCoroutineDeleteFunction(const FunctionDecl *FD,
-                                         ASTContext &Context) {
+FunctionDecl *getCoroutineDeleteFunction(const FunctionDecl *FD) {
   if (!FD->hasBody())
     return nullptr;
 

@@ -30,7 +30,7 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   _funcDeclId = GENID(FunDecl); // Generate ID early for dependency capturing
 
   // Insert Cache
-  KeyType funcKey = KeyGen::Function::makeKey(decl, decl->getASTContext());
+  KeyType funcKey = KeyGen::Function::makeKey(decl, ast_context_);
   LOG_DEBUG << "Function FunctionKey: " << funcKey << std::endl;
   INSERT_FUNCTION_CACHE(funcKey, _funcId);
 
@@ -72,8 +72,7 @@ void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {
     return;
   Stmt *body = decl->getBody();
   Stmt *entryStmt = getFirstNonCompoundStmt(body);
-  std::string stmtKey =
-      KeyGen::Stmt_::makeKey(entryStmt, decl->getASTContext());
+  std::string stmtKey = KeyGen::Stmt_::makeKey(entryStmt, ast_context_);
   LOG_DEBUG << "Function entry point StmtKey: " << stmtKey << std::endl;
 
   if (auto cachedId = SEARCH_STMT_CACHE(stmtKey)) {
@@ -120,8 +119,7 @@ void FunctionProcessor::recordBasicInfo(const FunctionDecl *decl) const {
 
 void FunctionProcessor::recordReturnType(const FunctionDecl *decl) {
   // Check Type cache for Id for returnType
-  KeyType typeKey =
-      KeyGen::Type::makeKey(decl->getReturnType(), decl->getASTContext());
+  KeyType typeKey = KeyGen::Type::makeKey(decl->getReturnType(), ast_context_);
   LOG_DEBUG << "Function TypeKey: " << typeKey << std::endl;
 
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
@@ -173,7 +171,7 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
     // 处理 throw(Type1, Type2, ...)
     int index = 0;
     for (const auto &qt : funcProtoType->exceptions()) {
-      KeyType typeKey = KeyGen::Type::makeKey(qt, decl->getASTContext());
+      KeyType typeKey = KeyGen::Type::makeKey(qt, ast_context_);
       if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
         DbModel::FunDeclThrow funDeclThrow = {_funcDeclId, index, *cachedId};
         STG.insertClassObj(funDeclThrow);
@@ -203,8 +201,7 @@ void FunctionProcessor::recordException(const clang::FunctionDecl *decl) const {
   case EST_NoexceptFalse: {
     const Expr *noexceptExpr = funcProtoType->getNoexceptExpr();
     if (noexceptExpr) {
-      KeyType exprKey =
-          KeyGen::Expr_::makeKey(noexceptExpr, decl->getASTContext());
+      KeyType exprKey = KeyGen::Expr_::makeKey(noexceptExpr, ast_context_);
       LOG_DEBUG << "Expr key: " << exprKey << std::endl;
       if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
         DbModel::FunDeclNoexcept funDeclNoexcept = {_funcDeclId, *cachedId};
@@ -236,7 +233,7 @@ void FunctionProcessor::recordTypedef(const FunctionDecl *decl) const {
   auto processTypedef = [&](const TypedefNameDecl *TND) {
     if (TND) {
       DbModel::UserType::KeyType userTypekey =
-          KeyGen::Type::makeKey(TND, decl->getASTContext());
+          KeyGen::Type::makeKey(TND, ast_context_);
       LOG_DEBUG << "Function Typedef typeKey" << userTypekey << std::endl;
       if (auto cachedId = SEARCH_TYPE_CACHE(userTypekey)) {
         DbModel::FunDeclTypedefType funDeclTypedefType = {_funcDeclId,
@@ -270,16 +267,16 @@ void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
   if (!isCoroutineFunction(FD))
     return;
 
-  ASTContext &Context = FD->getASTContext();
-  auto *TraitsTemplate = findCoroutineTraitsTemplate(Context);
+  ASTContext &ast_context = FD->getASTContext();
+  auto *TraitsTemplate = findCoroutineTraitsTemplate(ast_context);
   if (!TraitsTemplate)
     return;
 
-  QualType TraitsType = getCoroutineTraitsType(Context, FD, TraitsTemplate);
+  QualType TraitsType = getCoroutineTraitsType(FD, TraitsTemplate, ast_context);
   if (TraitsType.isNull())
     return;
 
-  KeyType typeKey = KeyGen::Type::makeKey(TraitsType, FD->getASTContext());
+  KeyType typeKey = KeyGen::Type::makeKey(TraitsType, ast_context_);
   LOG_DEBUG << "Coroutine Trait TypeKey: " << typeKey << std::endl;
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
     DbModel::Coroutine coroutine = {_funcId, *cachedId};
@@ -295,9 +292,9 @@ void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
     DependencyManager::instance().addDependency(update);
   }
 
-  FunctionDecl *NewFD = getCoroutineNewFunction(FD, Context);
+  FunctionDecl *NewFD = getCoroutineNewFunction(FD);
   if (NewFD) {
-    KeyType newFuncKey = KeyGen::Function::makeKey(NewFD, FD->getASTContext());
+    KeyType newFuncKey = KeyGen::Function::makeKey(NewFD, ast_context_);
     LOG_DEBUG << "Function FuncKey: " << newFuncKey << std::endl;
     if (auto cachedId = SEARCH_FUNCTION_CACHE(newFuncKey)) {
       DbModel::CoroutineNew couroutine_new = {_funcId, *cachedId};
@@ -314,9 +311,9 @@ void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
     }
   }
 
-  FunctionDecl *DelFD = getCoroutineDeleteFunction(FD, Context);
+  FunctionDecl *DelFD = getCoroutineDeleteFunction(FD);
   if (DelFD) {
-    KeyType delFuncKey = KeyGen::Function::makeKey(DelFD, FD->getASTContext());
+    KeyType delFuncKey = KeyGen::Function::makeKey(DelFD, ast_context_);
     LOG_DEBUG << "Function FuncKey: " << delFuncKey << std::endl;
     if (auto cachedId = SEARCH_FUNCTION_CACHE(delFuncKey)) {
       DbModel::CoroutineDelete couroutine_delete = {_funcId, *cachedId};
@@ -418,8 +415,7 @@ void FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
 void FunctionProcessor::processCXXDeductionGuide(
     const CXXDeductionGuideDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
-  KeyType key =
-      KeyGen::Type::makeKey(decl->getDeducedTemplate(), decl->getASTContext());
+  KeyType key = KeyGen::Type::makeKey(decl->getDeducedTemplate(), ast_context_);
   LOG_DEBUG << "Deduction Guide Key: " << key << std::endl;
   if (auto cachedId = SEARCH_TYPE_CACHE(key)) {
     DbModel::DeductionGuideForClass deducGuide = {_funcId, *cachedId};

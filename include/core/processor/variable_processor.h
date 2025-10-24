@@ -14,7 +14,7 @@ public:
   void processParmVarDecl(const ParmVarDecl *PVD);
   void processFieldDecl(const FieldDecl *FD);
 
-  VariableProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+  VariableProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};
   ~VariableProcessor() = default;
 

@@ -9,7 +9,7 @@ KeyType makeKeyFromFuncKey(const KeyType funcKey) {
   return "function-" + funcKey;
 }
 
-KeyType makeKey(const FunctionDecl *FD, ASTContext &Context) {
+KeyType makeKey(const FunctionDecl *FD, ASTContext *Context) {
   return makeKeyFromFuncKey(KeyGen::Function::makeKey(FD, Context));
 }
 

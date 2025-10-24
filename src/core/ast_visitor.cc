@@ -2,8 +2,8 @@
 #include <clang/AST/Decl.h>
 #include <memory>
 
-ASTVisitor::ASTVisitor(clang::ASTContext &context)
-    : context_(context), pp_(context.getPrintingPolicy()) {
+ASTVisitor::ASTVisitor(clang::ASTContext *context)
+    : context_(context), pp_(context->getPrintingPolicy()) {
   initProcessors();
   pp_.SuppressScope = false;
   pp_.SuppressTagKeyword = true;
@@ -73,7 +73,7 @@ bool ASTVisitor::VisitRecordDecl(clang::RecordDecl *decl) {
 }
 
 bool ASTVisitor::VisitRecordType(clang::RecordType *RT) {
-  type_processor_->processRecordType(RT, context_);
+  type_processor_->processRecordType(RT);
   return true;
 }
 
@@ -103,7 +103,13 @@ bool ASTVisitor::VisitBuiltinType(clang::BuiltinType *BT) {
   return true;
 }
 
+// TODO: Implement processing ImplicitCastExpr, record DerivedTypes of it
 bool ASTVisitor::VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE) {
+  const clang::Type *sourceType = ICE->getSubExpr()->getType().getTypePtr();
+  const clang::Type *targetType = ICE->getType().getTypePtr();
+
+  type_processor_->processType(sourceType);
+  type_processor_->processType(targetType);
   return true;
 }
 

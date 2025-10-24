@@ -3,7 +3,6 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <clang/Basic/SourceManager.h>
-#include <filesystem>
 #include <string>
 
 using KeyType = std::string;
@@ -13,7 +12,7 @@ namespace KeyGen {
 
 namespace Stmt_ {
 // For clang::Stmt
-KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
+KeyType makeKey(const Stmt *stmt, ASTContext *ctx) {
   std::string s;
   llvm::raw_string_ostream os(s);
 
@@ -22,7 +21,7 @@ KeyType makeKey(const Stmt *stmt, const ASTContext &ctx) {
   os << stmtClass << "-";
 
   // Get src location
-  const SourceManager &srcMgr = ctx.getSourceManager();
+  const SourceManager &srcMgr = ctx->getSourceManager();
   SourceLocation beginLoc = stmt->getBeginLoc();
   SourceLocation endLoc = stmt->getEndLoc();
 

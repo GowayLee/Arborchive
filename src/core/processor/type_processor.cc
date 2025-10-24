@@ -95,8 +95,7 @@ void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
   STG.insertClassObj(typeDecl);
 }
 
-void TypeProcessor::processRecordType(const RecordType *RT,
-                                      const ASTContext &ast_context) {
+void TypeProcessor::processRecordType(const RecordType *RT) {
   // Extract the RecordDecl from the RecordType
   const RecordDecl *RD = RT->getDecl();
   if (!RD)
@@ -136,7 +135,7 @@ void TypeProcessor::processRecordType(const RecordType *RT,
 
   // Create UserType model
   DbModel::UserType userTypeModel = {GENID(UserType), typeName, kind};
-  KeyType userTypeKey = KeyGen::Type::makeKey(RD, ast_context);
+  KeyType userTypeKey = KeyGen::Type::makeKey(RD, ast_context_);
   LOG_DEBUG << "RecordType UserType Key: " << userTypeKey << std::endl;
 
   // Check cache first
@@ -147,9 +146,9 @@ void TypeProcessor::processRecordType(const RecordType *RT,
   STG.insertClassObj(userTypeModel);
 
   // Process additional type details (similar to processUserType)
-  record_is_pod_class(RT, ast_context, userTypeModel.id);
-  record_is_standard_layout_class(RT, ast_context, userTypeModel.id);
-  record_is_complete(RT, ast_context, userTypeModel.id);
+  record_is_pod_class(RT, userTypeModel.id);
+  record_is_standard_layout_class(RT, userTypeModel.id);
+  record_is_complete(RT, userTypeModel.id);
 }
 
 void TypeProcessor::recordTypeDef(const TypeDecl *TD) {
@@ -171,11 +170,9 @@ void TypeProcessor::recordTopTypeDecl(const TypeDecl *TD) {
 }
 
 int TypeProcessor::processBuiltinType(const BuiltinType *BT,
-                                      const ASTContext &ast_context) {
+                                      ASTContext *ast_context) {
   // 获取类型名称
-  PrintingPolicy pp(ast_context.getLangOpts());
-  pp.SuppressTagKeyword = true;
-  pp.SuppressScope = false;
+  // PrintingPolicy pp(ast_context.getLangOpts());
 
   KeyType typeKey = KeyGen::Type::makeKey(QualType(BT, 0), ast_context);
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
@@ -183,14 +180,14 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
 
   // 获取类型大小和对齐
   clang::QualType qualType(BT, 0);
-  int size = ast_context.getTypeSize(qualType) / ast_context.getCharWidth();
+  int size = ast_context->getTypeSize(qualType) / ast_context->getCharWidth();
   int alignment =
-      ast_context.getTypeAlign(qualType) / ast_context.getCharWidth();
+      ast_context->getTypeAlign(qualType) / ast_context->getCharWidth();
 
   // 创建并返回类型ID
   DbModel::BuiltinType_ builtinTypeModel = {
       GENID(BuiltinType_),
-      BT->getNameAsCString(pp),
+      BT->getNameAsCString(pp_),
       static_cast<int>(GetBuiltinTypeKind(BT)),
       size,
       getBuiltinTypeSign(BT),
@@ -203,7 +200,7 @@ int TypeProcessor::processBuiltinType(const BuiltinType *BT,
 int TypeProcessor::processDerivedType(
     const Type *T,
     const std::optional<std::pair<DerivedTypeKind, QualType>> derived_result,
-    const ASTContext &ast_context) {
+    ASTContext *ast_context) {
   QualType derivedType(T, 0);
   KeyType derivedTypeKey = KeyGen::Type::makeKey(derivedType, ast_context);
   if (auto cachedId = SEARCH_TYPE_CACHE(derivedTypeKey))
@@ -239,8 +236,7 @@ int TypeProcessor::processDerivedType(
   return derivedTypeId;
 }
 
-int TypeProcessor::processUserType(const Type *TP,
-                                   const ASTContext &ast_context) {
+int TypeProcessor::processUserType(const Type *TP, ASTContext *ast_context) {
   // Get typedecl
   const TypeDecl *TD = TP->getAsTagDecl();
   if (!TD) {
@@ -283,15 +279,14 @@ int TypeProcessor::processUserType(const Type *TP,
   STG.insertClassObj(userTypeModel);
 
   // Process more detail about user_type
-  record_is_pod_class(TP, ast_context, userTypeModel.id);
-  record_is_standard_layout_class(TP, ast_context, userTypeModel.id);
-  record_is_complete(TP, ast_context, userTypeModel.id);
+  record_is_pod_class(TP, userTypeModel.id);
+  record_is_standard_layout_class(TP, userTypeModel.id);
+  record_is_complete(TP, userTypeModel.id);
 
   return userTypeModel.id;
 }
 
-int TypeProcessor::processRoutineType(const Type *TP,
-                                      const ASTContext &ast_context) {
+int TypeProcessor::processRoutineType(const Type *TP, ASTContext *ast_context) {
   const FunctionType *FT = TP->getAs<FunctionType>();
   if (!FT)
     return -1;
@@ -341,10 +336,10 @@ int TypeProcessor::processRoutineType(const Type *TP,
 }
 
 int TypeProcessor::processPtrToMemberType(const MemberPointerType *MPT,
-                                          const ASTContext &ast_context) {
+                                          ASTContext *ast_context) {
   int ptrToMemberId = GENID(PtrToMember);
   QualType pointeeType = MPT->getPointeeType();
-  const Type *classType = MPT->getClass();
+  const Type *classType = MPT->getAs<Type>();
 
   KeyType pointeeTypeKey = KeyGen::Type::makeKey(pointeeType, ast_context);
   KeyType classTypeKey =
@@ -384,7 +379,7 @@ int TypeProcessor::processPtrToMemberType(const MemberPointerType *MPT,
 }
 
 int TypeProcessor::processDeclType(const DecltypeType *DT,
-                                   const ASTContext &ast_context) {
+                                   ASTContext *ast_context) {
   int declTypeId = GENID(DeclType);
   const Expr *expr = DT->getUnderlyingExpr();
   QualType baseType = DT->getUnderlyingType();

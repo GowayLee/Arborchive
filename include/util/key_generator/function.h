@@ -24,7 +24,7 @@ namespace KeyGen {
 
 namespace Function {
 
-KeyType makeKey(const FunctionDecl *FD, ASTContext &Context);
+KeyType makeKey(const FunctionDecl *FD, ASTContext *Context);
 
 } // namespace Function
 

@@ -11,7 +11,7 @@ namespace KeyGen {
 
 namespace Function {
 
-KeyType makeKey(const FunctionDecl *FD, ASTContext &Context) {
+KeyType makeKey(const FunctionDecl *FD, ASTContext *Context) {
   if (!FD) {
     LOG_ERROR << "Null FunctionDecl" << std::endl;
     return "ERRORKEY";
@@ -23,7 +23,7 @@ KeyType makeKey(const FunctionDecl *FD, ASTContext &Context) {
     return "ERRORKEY";
   }
 
-  MangleContext *MangleCtx = Context.createMangleContext();
+  MangleContext *MangleCtx = Context->createMangleContext();
   if (!MangleCtx) {
     LOG_ERROR << "MangleCtx is not available for "
               << CanonicalFD->getQualifiedNameAsString() << std::endl;

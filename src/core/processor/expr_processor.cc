@@ -39,7 +39,7 @@ void ExprProcessor::recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr) {
   // Search VarID from Variable Cache
   // Since Variable should be declared before ref, so ID in the cache is
   // promising
-  KeyType varKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
+  KeyType varKey = KeyGen::Var::makeKey(VD, ast_context_);
   LOG_DEBUG << "Searching variable cache for " << varKey << std::endl;
   int cachedVarId = -1;
   if (auto cachedId = SEARCH_VARIABLE_CACHE(varKey))
@@ -413,8 +413,7 @@ void ExprProcessor::processCallExpr(const CallExpr *expr) {
   const FunctionDecl *callee = expr->getDirectCallee();
   if (callee) {
     // Generate key for the called function
-    KeyType funcKey =
-        KeyGen::Function::makeKey(callee, callee->getASTContext());
+    KeyType funcKey = KeyGen::Function::makeKey(callee, ast_context_);
     LOG_DEBUG << "CallExpr function key: " << funcKey << std::endl;
 
     // Check if function is in cache

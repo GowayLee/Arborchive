@@ -18,10 +18,10 @@ public:
   void processTypedefDecl(const TypedefDecl *TND);
   void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
   void processTypeDecl(const TypeDecl *TD);
-  void processRecordType(const RecordType *RT, const ASTContext &ast_context);
-  int processBuiltinType(const BuiltinType *BT, const ASTContext &ast_context);
+  void processRecordType(const RecordType *RT);
+  int processBuiltinType(const BuiltinType *BT, ASTContext *ast_context);
 
-  TypeProcessor(const ASTContext &ast_context, const PrintingPolicy pp)
+  TypeProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};
   ~TypeProcessor() = default;
 
@@ -32,13 +32,13 @@ private:
   int processDerivedType(
       const Type *T,
       const std::optional<std::pair<DerivedTypeKind, QualType>> derived_result,
-      const ASTContext &ast_context);
-  int processUserType(const Type *TP, const ASTContext &ast_context);
-  int processRoutineType(const Type *TP, const ASTContext &ast_context);
+      ASTContext *ast_context);
+  int processUserType(const Type *TP, ASTContext *ast_context);
+  int processRoutineType(const Type *TP, ASTContext *ast_context);
   int processPtrToMemberType(const MemberPointerType *MPT,
-                             const ASTContext &ast_context);
-  int processDeclType(const DecltypeType *DT, const ASTContext &ast_context);
-  void processRecordType(const TypeDecl *TD);
+                             ASTContext *ast_context);
+  int processDeclType(const DecltypeType *DT, ASTContext *ast_context);
+  // void processRecordType(const RecordType *RT);
 
   void recordTypeDef(const TypeDecl *TD);
   void recordTopTypeDecl(const TypeDecl *TD);

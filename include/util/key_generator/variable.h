@@ -23,7 +23,7 @@ namespace KeyGen {
 
 namespace Var {
 // For clang::VarDecl
-KeyType makeKey(const VarDecl *VD, const ASTContext &ctx);
+KeyType makeKey(const VarDecl *VD, ASTContext *ctx);
 } // namespace Var
 
 } // namespace KeyGen

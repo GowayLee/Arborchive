@@ -24,7 +24,7 @@ namespace KeyGen {
 
 namespace Stmt_ {
 // For clang::Stmt
-KeyType makeKey(const Stmt *stmt, const ASTContext &ctx);
+KeyType makeKey(const Stmt *stmt, ASTContext *ctx);
 } // namespace Stmt_
 
 } // namespace KeyGen

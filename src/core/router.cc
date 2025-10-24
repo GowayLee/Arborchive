@@ -55,7 +55,7 @@ void Router::parseAST(const std::string &source_path) {
       source_path,
       [this](clang::ASTContext &context) { // 这里定义具体的AST处理逻辑
         // 创建并运行AST访问者
-        ASTVisitor visitor(context);
-        visitor.TraverseDecl(context.getTranslationUnitDecl());
+        ASTVisitor visitor(&context);
+        visitor.TraverseAST(context);
       });
 }

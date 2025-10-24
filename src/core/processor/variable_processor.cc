@@ -33,13 +33,12 @@ void VariableProcessor::processVarDecl(const VarDecl *VD) {
     varId = processLocalScopeVar(VD); // @localvariables or @params directly
   }
 
-  LocIdPair *locIdPair =
-      SrcLocRecorder::processDefault(VD, VD->getASTContext());
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(VD, ast_context_);
   _name = VD->getNameAsString();
   _varDeclId = GENID(VarDecl);
 
   // Handle Type Dependency
-  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), VD->getASTContext());
+  KeyType typeKey = KeyGen::Type::makeKey(VD->getType(), ast_context_);
   LOG_DEBUG << "Variable TypeKey: " << typeKey << std::endl;
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
     _typeId = *cachedId;
@@ -59,7 +58,7 @@ void VariableProcessor::processVarDecl(const VarDecl *VD) {
                               locIdPair->spec_id};
 
   // Maintain cache
-  KeyType VDKey = KeyGen::Var::makeKey(VD, VD->getASTContext());
+  KeyType VDKey = KeyGen::Var::makeKey(VD, ast_context_);
   INSERT_VARIABLE_CACHE(VDKey, varId);
 
   if (VD->isThisDeclarationADefinition()) {
@@ -195,10 +194,10 @@ void VariableProcessor::recordStructuredBinding(const VarDecl *VD) {
 
 void VariableProcessor::recordRequire(const VarDecl *VD) {
   // 获取约束表达式
-  const clang::Expr *CE = VD->getTrailingRequiresClause();
+  const clang::Expr *CE = VD->getTrailingRequiresClause().ConstraintExpr;
   if (!CE)
     return;
-  KeyType exprKey = KeyGen::Expr_::makeKey(CE, VD->getASTContext());
+  KeyType exprKey = KeyGen::Expr_::makeKey(CE, ast_context_);
   LOG_DEBUG << "Variable require Expr key: " << exprKey << std::endl;
   if (auto cachedId = SEARCH_EXPR_CACHE(exprKey)) {
     DbModel::VarRequire varRequire = {_varDeclId, *cachedId};
@@ -259,11 +258,11 @@ int VariableProcessor::processParam(const VarDecl *VD) {
 
   // Extract type information of the param and insert into cache
   const QualType QT = PVD->getOriginalType();
-  KeyType paramTypeKey = KeyGen::Type::makeKey(QT, FD->getASTContext());
+  KeyType paramTypeKey = KeyGen::Type::makeKey(QT, ast_context_);
   // TODO: get type id info
 
   // Get parameterized element
-  KeyType elementKey = KeyGen::Element::makeKey(FD, FD->getASTContext());
+  KeyType elementKey = KeyGen::Element::makeKey(FD, ast_context_);
   int elementId = -1;
   if (auto cachedId = SEARCH_ELEMENT_CACHE(elementKey)) {
     elementId = *cachedId;
