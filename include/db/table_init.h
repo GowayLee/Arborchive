@@ -10,6 +10,7 @@
 #include "table_defs/expr.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
+#include "table_defs/specifiers.h"
 #include "table_defs/stmt.h"
 #include "table_defs/type.h"
 
@@ -116,7 +117,12 @@ inline auto initStorage(const std::string &path) {
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;
-      ClassTableFn::memeber()
+      ClassTableFn::memeber(),
+      // Specifier Tables
+      SpecifierTableFn::specifiers(),
+      SpecifierTableFn::typespecifiers(),
+      SpecifierTableFn::funspecifiers(),
+      SpecifierTableFn::varspecifiers()
     );
   // clang-format on
 }

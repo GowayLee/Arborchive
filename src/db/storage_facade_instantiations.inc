@@ -32,6 +32,7 @@ template void StorageFacade::insertClassObj<DbModel::FunDeclTypedefType&>(DbMode
 template void StorageFacade::insertClassObj<DbModel::FunDef&>(DbModel::FunDef&);
 template void StorageFacade::insertClassObj<DbModel::FunImplicit&>(DbModel::FunImplicit&);
 template void StorageFacade::insertClassObj<DbModel::FunSpecialized&>(DbModel::FunSpecialized&);
+template void StorageFacade::insertClassObj<DbModel::FunSpecifiers&>(DbModel::FunSpecifiers&);
 template void StorageFacade::insertClassObj<DbModel::FuncDefaulted&>(DbModel::FuncDefaulted&);
 template void StorageFacade::insertClassObj<DbModel::FuncDeleted&>(DbModel::FuncDeleted&);
 template void StorageFacade::insertClassObj<DbModel::FuncEntryPt&>(DbModel::FuncEntryPt&);
@@ -63,6 +64,7 @@ template void StorageFacade::insertClassObj<DbModel::PtrToMember&>(DbModel::PtrT
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
 template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);
 template void StorageFacade::insertClassObj<DbModel::RoutineTypeArg&>(DbModel::RoutineTypeArg&);
+template void StorageFacade::insertClassObj<DbModel::Specifier&>(DbModel::Specifier&);
 template void StorageFacade::insertClassObj<DbModel::Stmt&>(DbModel::Stmt&);
 template void StorageFacade::insertClassObj<DbModel::SwitchBody&>(DbModel::SwitchBody&);
 template void StorageFacade::insertClassObj<DbModel::SwitchCase&>(DbModel::SwitchCase&);
@@ -71,6 +73,7 @@ template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);
 template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDecl&);
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);
 template void StorageFacade::insertClassObj<DbModel::TypeDef&>(DbModel::TypeDef&);
+template void StorageFacade::insertClassObj<DbModel::TypeSpecifiers&>(DbModel::TypeSpecifiers&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
 template void StorageFacade::insertClassObj<DbModel::ValueBind&>(DbModel::ValueBind&);
 template void StorageFacade::insertClassObj<DbModel::ValueText&>(DbModel::ValueText&);
@@ -81,5 +84,6 @@ template void StorageFacade::insertClassObj<DbModel::VarDeclSpec&>(DbModel::VarD
 template void StorageFacade::insertClassObj<DbModel::VarDef&>(DbModel::VarDef&);
 template void StorageFacade::insertClassObj<DbModel::VarRequire&>(DbModel::VarRequire&);
 template void StorageFacade::insertClassObj<DbModel::VarSpecialized&>(DbModel::VarSpecialized&);
+template void StorageFacade::insertClassObj<DbModel::VarSpecifiers&>(DbModel::VarSpecifiers&);
 template void StorageFacade::insertClassObj<DbModel::Variable&>(DbModel::Variable&);
 template void StorageFacade::insertClassObj<DbModel::WhileBody&>(DbModel::WhileBody&);
