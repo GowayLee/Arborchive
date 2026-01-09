@@ -15,9 +15,9 @@
 #include <clang/AST/DeclCXX.h>
 #include <clang/Basic/LLVM.h>
 
-void VariableProcessor::processVarDecl(const VarDecl *VD) {
+int VariableProcessor::processVarDecl(const VarDecl *VD) {
   if (!VD || VD->isImplicit())
-    return;
+    return -1;
 
   int varId;
 
@@ -66,10 +66,10 @@ void VariableProcessor::processVarDecl(const VarDecl *VD) {
     STG.insertClassObj(varDef);
   }
   recordSpecialize(VD);
-  recordSpecifier(VD);
   recordStructuredBinding(VD);
 
   STG.insertClassObj(varDecl);
+  return _varDeclId;
 }
 
 void VariableProcessor::recordSpecialize(const VarDecl *VD) {
@@ -78,111 +78,6 @@ void VariableProcessor::recordSpecialize(const VarDecl *VD) {
     DbModel::VarSpecialized varSpecialized = {_varDeclId};
     STG.insertClassObj(varSpecialized);
   }
-}
-
-void VariableProcessor::recordSpecifier(const VarDecl *VD) {
-  // 处理存储类说明符（storage class specifiers）
-  clang::StorageClass storageClass = VD->getStorageClass();
-  if (storageClass != clang::SC_None) {
-    std::string storageClassStr;
-    switch (storageClass) {
-    case clang::SC_Static:
-      storageClassStr = "static";
-      break;
-    case clang::SC_Extern:
-      storageClassStr = "extern";
-      break;
-    case clang::SC_PrivateExtern:
-      storageClassStr = "private_extern";
-      break;
-    case clang::SC_Auto:
-      storageClassStr = "auto";
-      break;
-    case clang::SC_Register:
-      storageClassStr = "register";
-      break;
-    default:
-      storageClassStr = "unknown";
-    }
-    if (storageClassStr != "unknown") {
-      DbModel::VarDeclSpec varDeclSpec = {_varDeclId, storageClassStr};
-      STG.insertClassObj(varDeclSpec);
-    }
-  }
-
-  // 处理类型限定符（type qualifiers）
-  clang::QualType qualType = VD->getType();
-
-  if (qualType.isConstQualified()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "const"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  if (qualType.isVolatileQualified()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "volatile"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  if (qualType.isRestrictQualified()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "restrict"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  // 检查是否为线程局部存储
-  if (VD->getTLSKind() != clang::VarDecl::TLS_None) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "thread_local"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  // 检查是否为内联变量（C++17特性）
-  if (VD->isInline()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "inline"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  // 检查是否为constexpr变量
-  if (VD->isConstexpr()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "constexpr"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  // 检查是否为静态成员变量
-  if (VD->isStaticDataMember()) {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "static_member"};
-    STG.insertClassObj(varDeclSpec);
-  }
-
-  // 检查可见性属性
-  switch (VD->getVisibility()) {
-  case clang::DefaultVisibility:
-    break;
-  case clang::HiddenVisibility: {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "visibility_hidden"};
-    STG.insertClassObj(varDeclSpec);
-    break;
-  }
-  case clang::ProtectedVisibility: {
-    DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "visibility_protected"};
-    STG.insertClassObj(varDeclSpec);
-    break;
-  }
-  }
-
-  // // 检查对齐方式
-  // if (VD->hasAttr<clang::AlignedAttr>()) {
-  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "aligned"};
-  //   STG.insertClassObj(varDeclSpec);
-  // }
-
-  // // 检查其他常见属性
-  // if (VD->hasAttr<clang::DeprecatedAttr>()) {
-  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "deprecated"};
-  //   STG.insertClassObj(varDeclSpec);
-  // }
-  // if (VD->hasAttr<clang::UnusedAttr>()) {
-  //   DbModel::VarDeclSpec varDeclSpec = {_varDeclId, "unused"};
-  //   STG.insertClassObj(varDeclSpec);
-  // }
 }
 
 void VariableProcessor::recordStructuredBinding(const VarDecl *VD) {
@@ -299,14 +194,76 @@ int VariableProcessor::processMemberVar(const VarDecl *VD) {
   return memberVar.id;
 }
 
-void VariableProcessor::processParmVarDecl(const ParmVarDecl *PVD) {
+int VariableProcessor::processParmVarDecl(const ParmVarDecl *PVD) {
   if (!PVD || PVD->isImplicit())
-    return;
+    return -1;
 
-  // Use the existing parameter processing logic
-  processVarDecl(PVD);
+  // Process parameter and get var ID
+  int varId = processParam(PVD);
+
+  // Generate var_decl_id and create VarDecl record
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(PVD, ast_context_);
+  _name = PVD->getNameAsString();
+  _varDeclId = GENID(VarDecl);
+
+  // Handle Type Dependency
+  KeyType typeKey = KeyGen::Type::makeKey(PVD->getType(), ast_context_);
+  LOG_DEBUG << "Parameter TypeKey: " << typeKey << std::endl;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    _typeId = *cachedId;
+  } else {
+    _typeId = -1;
+    PendingUpdate update{typeKey, CacheType::TYPE,
+                         [_varDeclId = _varDeclId, varId = varId, name = _name,
+                          spec_id = locIdPair->spec_id](int resolvedId) {
+                           DbModel::VarDecl updated_record = {
+                               _varDeclId, varId, resolvedId, name, spec_id};
+                           STG.insertClassObj(updated_record);
+                         }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  DbModel::VarDecl varDecl = {_varDeclId, varId, _typeId, _name,
+                              locIdPair->spec_id};
+  STG.insertClassObj(varDecl);
+  return _varDeclId;
 }
 
-void VariableProcessor::processFieldDecl(const FieldDecl *FD) {
-  // TODO: implement me
+int VariableProcessor::processFieldDecl(const FieldDecl *FD) {
+  if (!FD)
+    return -1;
+
+  // Process member variable and get var ID
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(FD, ast_context_);
+  _name = FD->getNameAsString();
+  _varDeclId = GENID(VarDecl);
+
+  // Handle Type Dependency - _typeId will be set by ASTVisitor before calling
+  // this
+  KeyType typeKey = KeyGen::Type::makeKey(FD->getType(), ast_context_);
+  LOG_DEBUG << "Field TypeKey: " << typeKey << std::endl;
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    _typeId = *cachedId;
+  } else {
+    _typeId = -1;
+    // Note: For fields, we don't create a VarDecl record with dependency
+    // because the type will be processed by ASTVisitor
+  }
+
+  // Process member variable to get varId
+  int varId = processMemberVar(FD);
+
+  DbModel::VarDecl varDecl = {_varDeclId, varId, _typeId, _name,
+                              locIdPair->spec_id};
+  STG.insertClassObj(varDecl);
+  return _varDeclId;
+}
+
+int VariableProcessor::processMemberVar(const FieldDecl *FD) {
+  // For fields, _typeId should be set by the caller before calling this method
+  _name = FD->getNameAsString();
+
+  DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
+  STG.insertClassObj(memberVar);
+  return memberVar.id;
 }

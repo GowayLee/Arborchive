@@ -9,7 +9,8 @@ int SpecifierProcessor::getOrCreateSpecifier(const std::string &str) {
   // TODO: Implement specifier cache lookup
   // For now, generate a new ID each time
   GENID(Specifier);
-  DbModel::Specifier specifier = {IDGenerator::getLastGeneratedId<DbModel::Specifier>(), str};
+  DbModel::Specifier specifier = {
+      IDGenerator::getLastGeneratedId<DbModel::Specifier>(), str};
   STG.insertClassObj(specifier);
   return specifier.id;
 }
@@ -31,7 +32,8 @@ void SpecifierProcessor::processTypeQualifiers(int type_id, QualType qualType) {
   }
 }
 
-void SpecifierProcessor::processFunctionSpecifiers(int func_id, const FunctionDecl *FD) {
+void SpecifierProcessor::processFunctionSpecifiers(int func_id,
+                                                   const FunctionDecl *FD) {
   // static (仅成员函数)
   if (FD->isStatic()) {
     int spec_id = getOrCreateSpecifier("static");
@@ -80,7 +82,8 @@ void SpecifierProcessor::processFunctionSpecifiers(int func_id, const FunctionDe
   }
 }
 
-void SpecifierProcessor::processVariableSpecifiers(int var_id, const VarDecl *VD) {
+void SpecifierProcessor::processVariableSpecifiers(int var_id,
+                                                   const VarDecl *VD) {
   // 处理存储类说明符（storage class specifiers）
   StorageClass storageClass = VD->getStorageClass();
   if (storageClass != SC_None) {
@@ -151,6 +154,46 @@ void SpecifierProcessor::processVariableSpecifiers(int var_id, const VarDecl *VD
     break;
   case ProtectedVisibility:
     insertVarSpecifiers(var_id, getOrCreateSpecifier("visibility_protected"));
+    break;
+  default:
+    break;
+  }
+}
+
+void SpecifierProcessor::processVariableSpecifiers(int var_id,
+                                                   const FieldDecl *FD) {
+  // FieldDecl 继承自 DeclaratorDecl，提供类似 VarDecl 的接口
+
+  // 处理类型限定符（type qualifiers）
+  QualType qualType = FD->getType();
+
+  if (qualType.isConstQualified()) {
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("const"));
+  }
+
+  if (qualType.isVolatileQualified()) {
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("volatile"));
+  }
+
+  if (qualType.isRestrictQualified()) {
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("restrict"));
+  }
+
+  // 可变成员（mutable）
+  if (FD->isMutable()) {
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("mutable"));
+  }
+
+  // 访问说明符
+  switch (FD->getAccess()) {
+  case AS_public:
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("public"));
+    break;
+  case AS_protected:
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("protected"));
+    break;
+  case AS_private:
+    insertVarSpecifiers(var_id, getOrCreateSpecifier("private"));
     break;
   default:
     break;

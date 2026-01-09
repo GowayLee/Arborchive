@@ -16,16 +16,30 @@ void ASTVisitor::initProcessors() {
   type_processor_ = std::make_unique<TypeProcessor>(context_, pp_);
   stmt_processor_ = std::make_unique<StmtProcessor>(context_, pp_);
   expr_processor_ = std::make_unique<ExprProcessor>(context_, pp_);
+  specifier_processor_ = std::make_unique<SpecifierProcessor>(context_, pp_);
 }
 
 // 实现各种Visit方法
 
 // Function Family
 bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
-  function_processor_->routerProcess(decl);
-  type_processor_->processType(decl->getReturnType().getTypePtr());
+  int func_id = function_processor_->routerProcess(decl);
+
+  // Process function specifiers
+  if (func_id != -1)
+    specifier_processor_->processFunctionSpecifiers(func_id, decl);
+
+  // Process return type with qualifiers
+  int return_type_id =
+      type_processor_->processType(decl->getReturnType().getTypePtr());
+  specifier_processor_->processTypeQualifiers(return_type_id,
+                                              decl->getReturnType());
+
   for (const auto &param : decl->parameters()) {
-    type_processor_->processType(param->getType().getTypePtr());
+    int param_type_id =
+        type_processor_->processType(param->getType().getTypePtr());
+    specifier_processor_->processTypeQualifiers(param_type_id,
+                                                param->getType());
   }
   return true;
 }
@@ -49,20 +63,42 @@ bool ASTVisitor::VisitCXXDeductionGuideDecl(
 
 // Variable Family
 bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
-  variable_processor_->processVarDecl(decl);
-  type_processor_->processType(decl->getType().getTypePtr());
+  int var_decl_id = variable_processor_->processVarDecl(decl);
+
+  // Process variable specifiers
+  if (var_decl_id != -1)
+    specifier_processor_->processVariableSpecifiers(var_decl_id, decl);
+
+  // Process type with qualifiers
+  int type_id = type_processor_->processType(decl->getType().getTypePtr());
+  specifier_processor_->processTypeQualifiers(type_id, decl->getType());
   return true;
 }
 
 bool ASTVisitor::VisitParmVarDecl(clang::ParmVarDecl *decl) {
-  variable_processor_->processParmVarDecl(decl);
-  type_processor_->processType(decl->getType().getTypePtr());
+  int var_decl_id = variable_processor_->processParmVarDecl(decl);
+
+  // Process variable specifiers
+  if (var_decl_id != -1)
+    specifier_processor_->processVariableSpecifiers(var_decl_id, decl);
+
+  // Process type with qualifiers
+  int type_id = type_processor_->processType(decl->getType().getTypePtr());
+  specifier_processor_->processTypeQualifiers(type_id, decl->getType());
   return true;
 }
 
 bool ASTVisitor::VisitFieldDecl(clang::FieldDecl *decl) {
-  variable_processor_->processFieldDecl(decl);
-  type_processor_->processType(decl->getType().getTypePtr());
+  // Process type first to set _typeId in VariableProcessor
+  int type_id = type_processor_->processType(decl->getType().getTypePtr());
+
+  int var_decl_id = variable_processor_->processFieldDecl(decl);
+
+  // Process variable specifiers
+  if (var_decl_id != -1)
+    specifier_processor_->processVariableSpecifiers(var_decl_id, decl);
+
+  specifier_processor_->processTypeQualifiers(type_id, decl->getType());
   return true;
 }
 
@@ -108,8 +144,12 @@ bool ASTVisitor::VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE) {
   const clang::Type *sourceType = ICE->getSubExpr()->getType().getTypePtr();
   const clang::Type *targetType = ICE->getType().getTypePtr();
 
-  type_processor_->processType(sourceType);
-  type_processor_->processType(targetType);
+  int source_type_id = type_processor_->processType(sourceType);
+  specifier_processor_->processTypeQualifiers(source_type_id,
+                                              ICE->getSubExpr()->getType());
+
+  int target_type_id = type_processor_->processType(targetType);
+  specifier_processor_->processTypeQualifiers(target_type_id, ICE->getType());
   return true;
 }
 

@@ -10,9 +10,9 @@ using namespace clang;
 
 class VariableProcessor : public BaseProcessor {
 public:
-  void processVarDecl(const VarDecl *VD);
-  void processParmVarDecl(const ParmVarDecl *PVD);
-  void processFieldDecl(const FieldDecl *FD);
+  int processVarDecl(const VarDecl *VD);
+  int processParmVarDecl(const ParmVarDecl *PVD);
+  int processFieldDecl(const FieldDecl *FD);
 
   VariableProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};
@@ -24,7 +24,6 @@ private:
   int _varDeclId;
   std::string _name;
 
-  void recordSpecifier(const VarDecl *VD);
   void recordSpecialize(const VarDecl *VD);
   void recordStructuredBinding(const VarDecl *VD);
   void recordRequire(const VarDecl *VD);
@@ -32,6 +31,7 @@ private:
   int processLocalScopeVar(const VarDecl *VD);
   int processGlobalVar(const VarDecl *VD);
   int processMemberVar(const VarDecl *VD);
+  int processMemberVar(const FieldDecl *FD);
 
   int processLocalVar(const VarDecl *VD);
   int processParam(const VarDecl *VD);

@@ -25,6 +25,9 @@ public:
       : BaseProcessor(ast_context, pp) {};
   ~TypeProcessor() = default;
 
+  // Getter for the last processed type ID
+  int getLastTypeId() const { return _typeId; }
+
 private:
   int _typeId;
   int _typeDeclId;

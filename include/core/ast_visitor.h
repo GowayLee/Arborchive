@@ -4,6 +4,7 @@
 #include "core/processor/expr_processor.h"
 #include "core/processor/function_processor.h"
 #include "core/processor/namespace_processor.h"
+#include "core/processor/specifier_processor.h"
 #include "core/processor/stmt_processor.h"
 #include "core/processor/type_processor.h"
 #include "core/processor/variable_processor.h"
@@ -23,6 +24,7 @@ private:
   std::unique_ptr<TypeProcessor> type_processor_ = nullptr;
   std::unique_ptr<StmtProcessor> stmt_processor_ = nullptr;
   std::unique_ptr<ExprProcessor> expr_processor_ = nullptr;
+  std::unique_ptr<SpecifierProcessor> specifier_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext *context);

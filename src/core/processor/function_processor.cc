@@ -333,25 +333,23 @@ void FunctionProcessor::recordCoroutine(const FunctionDecl *FD) {
 
 // Router to process functions of @operator @builtin_function
 // @user_defined_function, @normal_function
-void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
+int FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
   auto kind = decl->getKind();
   // Return first, will be processed by other functions
   if (kind == Decl::CXXConstructor || kind == Decl::CXXDestructor ||
       kind == Decl::CXXConversion || kind == Decl::CXXDeductionGuide)
-    return;
+    return -1; // Will be processed by specific visit methods
 
   // Determine isOperator
   if (decl->isOverloadedOperator()) {
-    processOperatorFunc(cast<FunctionDecl>(decl));
-    return;
+    return processOperatorFunc(cast<FunctionDecl>(decl));
   }
 
   // Determine isBuiltin
 
   // Check isBuiltin without nameValid
   if (decl->getBuiltinID() != 0) {
-    processBuiltinFunc(cast<FunctionDecl>(decl));
-    return;
+    return processBuiltinFunc(cast<FunctionDecl>(decl));
   }
 
   // Check isBuiltin with nameValid
@@ -361,15 +359,13 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
     // Check is starts with "__builtin__"
     if (name.starts_with(
             "__builtin__")) { // FIXME: may be official API support?
-      processBuiltinFunc(cast<FunctionDecl>(decl));
-      return;
+      return processBuiltinFunc(cast<FunctionDecl>(decl));
     }
 
     // Check isUserDefinedLiteral
     if (name.find("operator"
                   "") == 0) { // FIXME: maybe official API support?
-      processUserDefinedLiteral(cast<FunctionDecl>(decl));
-      return;
+      return processUserDefinedLiteral(cast<FunctionDecl>(decl));
     }
   } else {
     LOG_DEBUG << "Function has no identifier, skipping name-based checks"
@@ -377,42 +373,49 @@ void FunctionProcessor::routerProcess(const clang::FunctionDecl *decl) {
   }
 
   // Otherwise, isNormalFunction
-  processNormalFunc(cast<FunctionDecl>(decl));
+  return processNormalFunc(cast<FunctionDecl>(decl));
 }
 
-void FunctionProcessor::processBuiltinFunc(const clang::FunctionDecl *decl) {
+int FunctionProcessor::processBuiltinFunc(const clang::FunctionDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::BUILDIN_FUNC);
+  return _funcId;
 }
 
-void FunctionProcessor::processUserDefinedLiteral(
+int FunctionProcessor::processUserDefinedLiteral(
     const clang::FunctionDecl *decl) {
 
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::USER_DEFINED_LITERAL);
+  return _funcId;
 }
 
-void FunctionProcessor::processOperatorFunc(const clang::FunctionDecl *decl) {
+int FunctionProcessor::processOperatorFunc(const clang::FunctionDecl *decl) {
 
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::OPERATOR);
+  return _funcId;
 }
 
-void FunctionProcessor::processNormalFunc(const clang::FunctionDecl *decl) {
+int FunctionProcessor::processNormalFunc(const clang::FunctionDecl *decl) {
 
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::NORM_FUNC);
+  return _funcId;
 }
 
-void FunctionProcessor::processCXXConstructor(const CXXConstructorDecl *decl) {
+int FunctionProcessor::processCXXConstructor(const CXXConstructorDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONSTRUCTOR);
+  return _funcId;
 }
 
-void FunctionProcessor::processCXXDestructor(const CXXDestructorDecl *decl) {
+int FunctionProcessor::processCXXDestructor(const CXXDestructorDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DESTRUCTOR);
+  return _funcId;
 }
 
-void FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
+int FunctionProcessor::processCXXConversion(const CXXConversionDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::CONVERSION_FUNC);
+  return _funcId;
 }
 
-void FunctionProcessor::processCXXDeductionGuide(
+int FunctionProcessor::processCXXDeductionGuide(
     const CXXDeductionGuideDecl *decl) {
   handleBaseFunc(cast<FunctionDecl>(decl), FuncType::DEDUCTION_GUIDE);
   KeyType key = KeyGen::Type::makeKey(decl->getDeducedTemplate(), ast_context_);
@@ -431,6 +434,7 @@ void FunctionProcessor::processCXXDeductionGuide(
                          }};
     DependencyManager::instance().addDependency(update);
   }
+  return _funcId;
 }
 
 Stmt *getFirstNonCompoundStmt(clang::Stmt *S) {

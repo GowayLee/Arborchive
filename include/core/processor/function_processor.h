@@ -9,15 +9,15 @@ using namespace clang;
 
 class FunctionProcessor : public BaseProcessor {
 public:
-  void routerProcess(const FunctionDecl *decl);
-  void processCXXConstructor(const CXXConstructorDecl *decl);
-  void processCXXDestructor(const CXXDestructorDecl *decl);
-  void processCXXConversion(const CXXConversionDecl *decl);
-  void processCXXDeductionGuide(const CXXDeductionGuideDecl *decl);
-  void processOperatorFunc(const FunctionDecl *decl);
-  void processBuiltinFunc(const FunctionDecl *decl);
-  void processUserDefinedLiteral(const FunctionDecl *decl);
-  void processNormalFunc(const FunctionDecl *decl);
+  int routerProcess(const FunctionDecl *decl);
+  int processCXXConstructor(const CXXConstructorDecl *decl);
+  int processCXXDestructor(const CXXDestructorDecl *decl);
+  int processCXXConversion(const CXXConversionDecl *decl);
+  int processCXXDeductionGuide(const CXXDeductionGuideDecl *decl);
+  int processOperatorFunc(const FunctionDecl *decl);
+  int processBuiltinFunc(const FunctionDecl *decl);
+  int processUserDefinedLiteral(const FunctionDecl *decl);
+  int processNormalFunc(const FunctionDecl *decl);
 
   FunctionProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};

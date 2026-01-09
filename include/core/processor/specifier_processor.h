@@ -20,6 +20,7 @@ public:
 
   // 处理变量的说明符
   void processVariableSpecifiers(int var_id, const VarDecl *VD);
+  void processVariableSpecifiers(int var_id, const FieldDecl *FD);
 
   SpecifierProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};

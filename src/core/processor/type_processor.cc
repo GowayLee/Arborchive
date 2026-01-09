@@ -42,6 +42,7 @@ int TypeProcessor::processType(const Type *T) {
     LOG_WARNING << "Unknown type classification" << std::endl;
     _typeId = -1;
   }
+
   return _typeId;
 }
 
