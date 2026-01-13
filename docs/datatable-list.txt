@@ -1,10 +1,10 @@
-    1. compilations
-    2. compilation_args
-    3. compilation_build_mode
+DONE     1. compilations
+DONE     2. compilation_args
+DONE     3. compilation_build_mode
     4. compilation_compiling_files
-    5. compilation_time
+DONE     5. compilation_time
     6. diagnostic_for
-    7. compilation_finished
+DONE     7. compilation_finished
     8. externalData
     9. sourceLocationPrefix
    10. external_packages
@@ -14,13 +14,13 @@
    14. svnentrymsg
    15. svnchurn
    16. extractor_version
-   17. locations_default
-   18. locations_stmt
-   19. locations_expr
+DONE    17. locations_default
+DONE    18. locations_stmt
+DONE    19. locations_expr
    20. numlines
    21. diagnostics
-   22. files
-   23. folders
+DONE    22. files
+DONE    23. folders
    24. containerparent
    25. fileannotations
    26. inmacroexpansion
@@ -30,69 +30,69 @@
    30. macrolocationbind
    31. macro_argument_unexpanded
    32. macro_argument_expanded
-   33. functions
-   34. function_entry_point
-   35. function_return_type
-   36. coroutine
+DONE    33. functions
+DONE    34. function_entry_point
+DONE    35. function_return_type
+DONE    36. coroutine
    37. coroutine_placeholder_variable
-   38. coroutine_new
-   39. coroutine_delete
-   40. purefunctions
-   41. function_deleted
-   42. function_defaulted
-   43. function_prototyped
-   44. deduction_guide_for_class
+DONE    38. coroutine_new
+DONE    39. coroutine_delete
+DONE    40. purefunctions
+DONE    41. function_deleted
+DONE    42. function_defaulted
+DONE    43. function_prototyped
+DONE    44. deduction_guide_for_class
    45. member_function_this_type
-   46. fun_decls
-   47. fun_def
-   48. fun_specialized
-   49. fun_implicit
+DONE    46. fun_decls
+DONE    47. fun_def
+DONE    48. fun_specialized
+DONE    49. fun_implicit
    50. fun_decl_specifiers
-   51. fun_decl_throws
-   52. fun_decl_empty_throws
-   53. fun_decl_noexcept
-   54. fun_decl_empty_noexcept
-   55. fun_decl_typedef_type
+DONE    51. fun_decl_throws
+DONE    52. fun_decl_empty_throws
+DONE    53. fun_decl_noexcept
+DONE    54. fun_decl_empty_noexcept
+DONE    55. fun_decl_typedef_type
    56. fun_requires
    57. param_decl_bind
-   58. var_decls
-   59. var_def
-   60. var_specialized
-   61. var_decl_specifiers
-   62. is_structured_binding
-   63. var_requires
-   64. type_decls
-   65. type_def
-   66. type_decl_top
+DONE    58. var_decls
+DONE    59. var_def
+DONE    60. var_specialized
+DONE    61. var_decl_specifiers
+DONE    62. is_structured_binding
+DONE    63. var_requires
+DONE    64. type_decls
+DONE    65. type_def
+DONE    66. type_decl_top
    67. type_requires
    68. namespace_decls
    69. usings
    70. using_container
    71. static_asserts
-   72. params
+DONE    72. params
    73. overrides
-   74. membervariables
-   75. globalvariables
-   76. localvariables
+DONE    74. membervariables
+DONE    75. globalvariables
+DONE    76. localvariables
    77. autoderivation
    78. orphaned_variables
    79. enumconstants
-   80. builtintypes
-   81. derivedtypes
+DONE    80. builtintypes
+DONE    81. derivedtypes
    82. pointerishsize
    83. arraysizes
    84. typedefbase
-   85. decltypes
-   86. usertypes
+DONE    85. decltypes
+DONE    86. usertypes
    87. usertypesize
    88. usertype_final
    89. usertype_uuid
    90. nontype_template_parameters
    91. type_template_type_constraint
    92. mangled_name
-   93. is_pod_class
-   94. is_standard_layout_class
-   95. is_complete
+DONE    93. is_pod_class
+DONE    94. is_standard_layout_class
+DONE    95. is_complete
    96. is_class_template
    97. class_instantiation
    98. class_template_argument
@@ -115,13 +115,13 @@
   115. is_type_constraint
   116. concept_template_argument
   117. concept_template_argument_value
-  118. routinetypes
-  119. routinetypeargs
-  120. ptrtomembers
-  121. specifiers
-  122. typespecifiers
-  123. funspecifiers
-  124. varspecifiers
+DONE   118. routinetypes
+DONE   119. routinetypeargs
+DONE   120. ptrtomembers
+DONE   121. specifiers
+DONE   122. typespecifiers
+DONE   123. funspecifiers
+DONE   124. varspecifiers
   125. explicit_specifier_exprs
   126. attributes
   127. attribute_args
@@ -135,7 +135,7 @@
   135. varattributes
   136. stmtattributes
   137. unspecifiedtype
-  138. member
+DONE   138. member
   139. enclosingfunction
   140. derivations
   141. derspecifiers
@@ -147,68 +147,68 @@
   147. exprconv
   148. compgenerated
   149. synthetic_destructor_call
-  150. namespaces
-  151. namespace_inline
-  152. namespacembrs
+DONE   150. namespaces
+DONE   151. namespace_inline
+DONE   152. namespacembrs
   153. exprparents
   154. expr_isload
   155. conversionkinds
-  156. iscall
+DONE   156. iscall
   157. numtemplatearguments
   158. specialnamequalifyingelements
   159. namequalifiers
-  160. varbind
-  161. funbind
+DONE   160. varbind
+DONE   161. funbind
   162. expr_allocator
   163. expr_deallocator
   164. expr_cond_two_operand
   165. expr_cond_guard
   166. expr_cond_true
   167. expr_cond_false
-  168. values
-  169. valuetext
-  170. valuebind
+DONE   168. values
+DONE   169. valuetext
+DONE   170. valuebind
   171. fieldoffsets
   172. bitfield
   173. initialisers
   174. braced_initialisers
   175. expr_ancestor
-  176. exprs
+DONE   176. exprs
   177. expr_reuse
   178. expr_types
   179. compound_requirement_is_noexcept
   180. new_allocated_type
   181. new_array_allocated_type
-  182. aggregate_field_init
-  183. aggregate_array_init
+DONE   182. aggregate_field_init
+DONE   183. aggregate_array_init
   184. condition_decl_bind
   185. typeid_bind
   186. uuidof_bind
-  187. sizeof_bind
+DONE   187. sizeof_bind
   188. code_block
   189. lambdas
   190. lambda_capture
   191. fold
-  192. stmts
+DONE   192. stmts
   193. type_vla
   194. variable_vla
   195. if_initialization
-  196. if_then
-  197. if_else
+DONE   196. if_then
+DONE   197. if_else
   198. constexpr_if_initialization
   199. constexpr_if_then
   200. constexpr_if_else
   201. consteval_if_then
   202. consteval_if_else
-  203. while_body
-  204. do_body
-  205. switch_initialization
-  206. switch_case
-  207. switch_body
-  208. for_initialization
-  209. for_condition
-  210. for_update
-  211. for_body
+DONE   203. while_body
+DONE   204. do_body
+DONE   205. switch_initialization
+DONE   206. switch_case
+DONE   207. switch_body
+DONE   208. for_initialization
+DONE   209. for_condition
+DONE   210. for_update
+DONE   211. for_body
   212. stmtparents
   213. ishandler
   214. stmt_decl_bind
