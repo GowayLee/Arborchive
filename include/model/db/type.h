@@ -193,6 +193,37 @@ struct IsComplete {
   int id;
 };
 
+// For enumconstants table
+struct EnumConstant {
+  int id;
+  int parent;        // @usertype ref - parent enum
+  int index;         // Position in enum definition
+  int type_id;       // @type ref - type of the enum constant
+  std::string name;  // Constant name
+  int location;      // @location_default ref
+};
+
+// For typedefbase table
+struct TypedefBase {
+  int id;            // @usertype ref - the typedef
+  int type_id;       // @type ref - underlying type
+};
+
+// For arraysizes table
+struct ArraySizes {
+  int id;            // @derivedtype ref - the array type
+  int num_elements;  // Number of elements (0 for incomplete arrays)
+  int bytesize;      // Total size in bytes
+  int alignment;     // Alignment requirement in bytes
+};
+
+// For pointerishsize table
+struct PointerishSize {
+  int id;            // @derivedtype ref - the pointer type
+  int size;          // Pointer size in bytes
+  int alignment;     // Pointer alignment in bytes
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_TYPE_H_

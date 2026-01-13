@@ -43,6 +43,12 @@ private:
   int processDeclType(const DecltypeType *DT, ASTContext *ast_context);
   // void processRecordType(const RecordType *RT);
 
+  // New C language feature processing methods
+  void processEnumConstants(const EnumDecl *ED, int parentEnumId);
+  void processTypedefBase(const TypedefNameDecl *TND, int typedefId);
+  void processArraySizes(const ArrayType *AT, int derivedTypeId);
+  void processPointerishSize(const Type *T, int derivedTypeId);
+
   void recordTypeDef(const TypeDecl *TD);
   void recordTopTypeDecl(const TypeDecl *TD);
 };

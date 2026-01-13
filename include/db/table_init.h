@@ -91,6 +91,10 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::is_pod_class(),
       TypeTableFn::is_standard_layout_class(),
       TypeTableFn::is_complete(),
+      TypeTableFn::enumconstants(),
+      TypeTableFn::typedefbase(),
+      TypeTableFn::arraysizes(),
+      TypeTableFn::pointerishsize(),
       // Stmt Tables
       StmtTableFn::stmts(),
       StmtTableFn::if_initalization(),

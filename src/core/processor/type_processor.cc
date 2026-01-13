@@ -66,8 +66,22 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
   std::string typedefName = TND->getNameAsString();
   LOG_INFO << "Processing TypedefDecl: " << typedefName << std::endl;
 
+  // Create a UserType entry for the typedef
+  int typedefKind = static_cast<int>(UserTypeKind::TYPEDEF);
+  DbModel::UserType userTypeModel = {GENID(UserType), typedefName, typedefKind};
+  KeyType userTypeKey = KeyGen::Type::makeKey(TND, ast_context_);
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+
+  // Process the underlying type and create typedef base mapping
   auto T = TND->getTypeForDecl();
   if (T) {
+    int underlyingTypeId = processType(T);
+    // Create typedef base mapping
+    DbModel::TypedefBase typedefBase = {userTypeModel.id, underlyingTypeId};
+    STG.insertClassObj(typedefBase);
+    LOG_DEBUG << "Created typedef base: " << typedefName << " -> type_id: " << underlyingTypeId << std::endl;
+
     _typeId = processType(T);
     processTypeDecl(TND);
   }
@@ -234,22 +248,41 @@ int TypeProcessor::processDerivedType(
         }};
     DependencyManager::instance().addDependency(update);
   }
+
+  // Process array sizes for array types
+  if (derived_result->first == DerivedTypeKind::ARRAY) {
+    const ArrayType *AT = cast<ArrayType>(T);
+    processArraySizes(AT, derivedTypeId);
+  }
+  // Process pointer sizes for pointer/reference types
+  else if (derived_result->first == DerivedTypeKind::POINTER ||
+           derived_result->first == DerivedTypeKind::REFERENCE ||
+           derived_result->first == DerivedTypeKind::RVALUE_REFERENCE) {
+    processPointerishSize(T, derivedTypeId);
+  }
+
   return derivedTypeId;
 }
 
 int TypeProcessor::processUserType(const Type *TP, ASTContext *ast_context) {
-  // Get typedecl
-  const TypeDecl *TD = TP->getAsTagDecl();
-  if (!TD) {
-    // 对于typedef和using alias的情况，需要特殊处理
-    if (const TypedefType *TT = dyn_cast<TypedefType>(TP))
-      TD = TT->getDecl();
-    else if (const auto *ET = dyn_cast<ElaboratedType>(TP))
-      // 处理可能的elaborated type
-      return processUserType(ET->getNamedType().getTypePtr(), ast_context);
+  // Check for typedef types FIRST before getting tag decl
+  // This is important because a typedef of an enum should be processed as a typedef
+  const TypedefNameDecl *TND = nullptr;
+  const TypeDecl *TD = nullptr;
+
+  if (const TypedefType *TT = dyn_cast<TypedefType>(TP)) {
+    TND = TT->getDecl();
+    TD = TND;
+  } else if (const auto *ET = dyn_cast<ElaboratedType>(TP)) {
+    // 处理可能的elaborated type
+    return processUserType(ET->getNamedType().getTypePtr(), ast_context);
+  } else {
+    TD = TP->getAsTagDecl();
   }
-  if (!TD)
+
+  if (!TD) {
     return -1;
+  }
 
   // Get typename
   std::string typeName = TD->getNameAsString();
@@ -263,7 +296,7 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext *ast_context) {
     kind = ED->isScoped()
                ? static_cast<int>(UserTypeKind::SCOPED_ENUM)
                : static_cast<int>(UserTypeKind::ENUM); // scoped_enum or enum
-  else if (const TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(TD)) {
+  else if (TND) {
     if (isa<TypeAliasDecl>(TND))
       kind = static_cast<int>(UserTypeKind::USING_ALIAS); // using_alias
     else
@@ -284,7 +317,98 @@ int TypeProcessor::processUserType(const Type *TP, ASTContext *ast_context) {
   record_is_standard_layout_class(TP, userTypeModel.id);
   record_is_complete(TP, userTypeModel.id);
 
+  // Process enum constants (only if NOT a typedef)
+  if (!TND) {
+    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD)) {
+      LOG_DEBUG << "Processing enum constants for: " << userTypeModel.name << std::endl;
+      processEnumConstants(ED, userTypeModel.id);
+    }
+  }
+  // Process typedef base type
+  if (TND) {
+    LOG_DEBUG << "Processing typedef base for: " << userTypeModel.name << std::endl;
+    processTypedefBase(TND, userTypeModel.id);
+  }
+
   return userTypeModel.id;
+}
+
+void TypeProcessor::processEnumConstants(const EnumDecl *ED, int parentEnumId) {
+  LOG_DEBUG << "processEnumConstants: Processing enum with parent ID: " << parentEnumId << std::endl;
+  int index = 0;
+  for (const EnumConstantDecl *ECD : ED->enumerators()) {
+    LOG_DEBUG << "processEnumConstants: Processing constant: " << ECD->getNameAsString()
+              << " at index " << index << std::endl;
+
+    // Record location
+    LocIdPair *locIdPair = SrcLocRecorder::processDefault(ECD, ast_context_);
+
+    // Create enum constant record
+    // Note: type_id is set to parentEnumId since enum constants have the enum type
+    GENID(EnumConstant);
+    DbModel::EnumConstant enumConstant = {
+        IDGenerator::getLastGeneratedId<DbModel::EnumConstant>(),
+        parentEnumId,
+        index,
+        parentEnumId,  // Enum constants have the same type as their parent enum
+        ECD->getNameAsString(),
+        locIdPair->spec_id};
+
+    STG.insertClassObj(enumConstant);
+    LOG_DEBUG << "processEnumConstants: Inserted enum constant with ID: "
+              << enumConstant.id << std::endl;
+
+    index++;
+  }
+}
+
+void TypeProcessor::processTypedefBase(const TypedefNameDecl *TND, int typedefId) {
+  // Get the underlying type
+  QualType underlyingType = TND->getUnderlyingType();
+  int type_id = processType(underlyingType.getTypePtr());
+
+  // Create typedef base mapping
+  DbModel::TypedefBase typedefBase = {typedefId, type_id};
+  STG.insertClassObj(typedefBase);
+}
+
+void TypeProcessor::processArraySizes(const ArrayType *AT, int derivedTypeId) {
+  // Get number of elements (0 for incomplete arrays)
+  int num_elements = 0;
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+    num_elements = CAT->getZExtSize();
+  }
+
+  // Calculate byte size and alignment
+  int bytesize = 0;
+  int alignment = 0;
+
+  if (ast_context_) {
+    bytesize = ast_context_->getTypeSize(AT) / ast_context_->getCharWidth();
+    alignment = ast_context_->getTypeAlign(AT) / ast_context_->getCharWidth();
+  }
+
+  // Create array sizes record
+  DbModel::ArraySizes arraySizes = {derivedTypeId, num_elements, bytesize,
+                                    alignment};
+  STG.insertClassObj(arraySizes);
+}
+
+void TypeProcessor::processPointerishSize(const Type *T, int derivedTypeId) {
+  // Get pointer size and alignment from AST context
+  int size = 0;
+  int alignment = 0;
+
+  if (ast_context_) {
+    QualType qualType = T->getCanonicalTypeInternal();
+    size = ast_context_->getTypeSize(qualType) / ast_context_->getCharWidth();
+    alignment =
+        ast_context_->getTypeAlign(qualType) / ast_context_->getCharWidth();
+  }
+
+  // Create pointerish size record
+  DbModel::PointerishSize pointerishSize = {derivedTypeId, size, alignment};
+  STG.insertClassObj(pointerishSize);
 }
 
 int TypeProcessor::processRoutineType(const Type *TP, ASTContext *ast_context) {

@@ -2,6 +2,7 @@
 
 template void StorageFacade::insertClassObj<DbModel::AggregateArrayInit&>(DbModel::AggregateArrayInit&);
 template void StorageFacade::insertClassObj<DbModel::AggregateFieldInit&>(DbModel::AggregateFieldInit&);
+template void StorageFacade::insertClassObj<DbModel::ArraySizes&>(DbModel::ArraySizes&);
 template void StorageFacade::insertClassObj<DbModel::BuiltinType_&>(DbModel::BuiltinType_&);
 template void StorageFacade::insertClassObj<DbModel::Compilation&>(DbModel::Compilation&);
 template void StorageFacade::insertClassObj<DbModel::CompilationArg&>(DbModel::CompilationArg&);
@@ -17,6 +18,7 @@ template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Decl
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
 template void StorageFacade::insertClassObj<DbModel::DerivedType&>(DbModel::DerivedType&);
 template void StorageFacade::insertClassObj<DbModel::DoBody&>(DbModel::DoBody&);
+template void StorageFacade::insertClassObj<DbModel::EnumConstant&>(DbModel::EnumConstant&);
 template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
@@ -62,6 +64,7 @@ template void StorageFacade::insertClassObj<DbModel::NamespaceInline&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::NamespaceMember&>(DbModel::NamespaceMember&);
 template void StorageFacade::insertClassObj<DbModel::Parameter&>(DbModel::Parameter&);
 template void StorageFacade::insertClassObj<DbModel::ParameterizedElement&>(DbModel::ParameterizedElement&);
+template void StorageFacade::insertClassObj<DbModel::PointerishSize&>(DbModel::PointerishSize&);
 template void StorageFacade::insertClassObj<DbModel::PtrToMember&>(DbModel::PtrToMember&);
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
 template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);
@@ -77,6 +80,7 @@ template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDec
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);
 template void StorageFacade::insertClassObj<DbModel::TypeDef&>(DbModel::TypeDef&);
 template void StorageFacade::insertClassObj<DbModel::TypeSpecifiers&>(DbModel::TypeSpecifiers&);
+template void StorageFacade::insertClassObj<DbModel::TypedefBase&>(DbModel::TypedefBase&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
 template void StorageFacade::insertClassObj<DbModel::ValueBind&>(DbModel::ValueBind&);
 template void StorageFacade::insertClassObj<DbModel::ValueText&>(DbModel::ValueText&);

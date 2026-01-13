@@ -3,6 +3,7 @@
 
 #include "../third_party/sqlite_orm.h"
 #include "model/db/type.h"
+#include "model/db/location.h"
 
 using namespace sqlite_orm;
 
@@ -114,6 +115,42 @@ inline auto is_complete() {
   return make_table(
       "is_complete",
       make_column("id", &DbModel::IsComplete::id, primary_key()));
+}
+
+// New C language feature tables
+inline auto enumconstants() {
+  return make_table(
+      "enumconstants",
+      make_column("id", &DbModel::EnumConstant::id, primary_key()),
+      make_column("parent", &DbModel::EnumConstant::parent),
+      make_column("index", &DbModel::EnumConstant::index),
+      make_column("type_id", &DbModel::EnumConstant::type_id),
+      make_column("name", &DbModel::EnumConstant::name),
+      make_column("location", &DbModel::EnumConstant::location));
+}
+
+inline auto typedefbase() {
+  return make_table(
+      "typedefbase",
+      make_column("id", &DbModel::TypedefBase::id, primary_key()),
+      make_column("type_id", &DbModel::TypedefBase::type_id));
+}
+
+inline auto arraysizes() {
+  return make_table(
+      "arraysizes",
+      make_column("id", &DbModel::ArraySizes::id, primary_key()),
+      make_column("num_elements", &DbModel::ArraySizes::num_elements),
+      make_column("bytesize", &DbModel::ArraySizes::bytesize),
+      make_column("alignment", &DbModel::ArraySizes::alignment));
+}
+
+inline auto pointerishsize() {
+  return make_table(
+      "pointerishsize",
+      make_column("id", &DbModel::PointerishSize::id, primary_key()),
+      make_column("size", &DbModel::PointerishSize::size),
+      make_column("alignment", &DbModel::PointerishSize::alignment));
 }
 // clang-format on
 
