@@ -307,6 +307,31 @@ struct ValueBind {
   int expr;
 };
 
+// 数组元素初始化：链接初始化列表到数组元素
+// aggregate_array_init(aggregate: @aggregateliteral ref, initializer: @expr ref, element_index: int ref, position: int ref)
+struct AggregateArrayInit {
+  int aggregate;      // InitListExpr ID (@aggregateliteral)
+  int initializer;    // 初始化表达式 ID (@expr)
+  int element_index;  // 数组中的索引
+  int position;       // 位置信息
+};
+
+// 结构体/联合体字段初始化：链接初始化列表到字段
+// aggregate_field_init(aggregate: @aggregateliteral ref, initializer: @expr ref, field: @membervariable ref, position: int ref)
+struct AggregateFieldInit {
+  int aggregate;      // InitListExpr ID (@aggregateliteral)
+  int initializer;    // 初始化表达式 ID (@expr)
+  int field;          // 字段 ID (@membervariable ref)
+  int position;       // 位置信息
+};
+
+// sizeof 绑定：链接到类型
+// sizeof_bind(unique int expr: @expr ref, type_id: @type ref)
+struct SizeOfBind {
+  int expr;      // UnaryExprOrTypeTraitExpr ID (unique, 主键)
+  int type_id;   // 类型 ID (@type ref)
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_EXPR_H_

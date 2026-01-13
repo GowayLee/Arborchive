@@ -253,6 +253,15 @@ int VariableProcessor::processFieldDecl(const FieldDecl *FD) {
   // Process member variable to get varId
   int varId = processMemberVar(FD);
 
+  // Cache the MemberVar ID for use in ExprProcessor
+  // Use a composite key: "recordName.fieldName"
+  const RecordDecl *record = FD->getParent();
+  std::string recordName = record ? record->getNameAsString() : "";
+  std::string fieldKey = "membervariable:" + recordName + "." + _name;
+  INSERT_VARIABLE_CACHE(fieldKey, varId);
+  LOG_DEBUG << "Cached MemberVar '" << _name << "' in '" << recordName
+            << "' with key: " << fieldKey << " -> ID: " << varId << std::endl;
+
   DbModel::VarDecl varDecl = {_varDeclId, varId, _typeId, _name,
                               locIdPair->spec_id};
   STG.insertClassObj(varDecl);

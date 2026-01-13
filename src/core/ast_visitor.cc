@@ -15,7 +15,7 @@ void ASTVisitor::initProcessors() {
   variable_processor_ = std::make_unique<VariableProcessor>(context_, pp_);
   type_processor_ = std::make_unique<TypeProcessor>(context_, pp_);
   stmt_processor_ = std::make_unique<StmtProcessor>(context_, pp_);
-  expr_processor_ = std::make_unique<ExprProcessor>(context_, pp_);
+  expr_processor_ = std::make_unique<ExprProcessor>(context_, pp_, type_processor_.get());
   specifier_processor_ = std::make_unique<SpecifierProcessor>(context_, pp_);
 }
 
@@ -255,5 +255,20 @@ bool ASTVisitor::VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *literal) {
 
 bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
   namespace_processor_->processNamespaceDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr) {
+  expr_processor_->processArraySubscriptExpr(expr);
+  return true;
+}
+
+bool ASTVisitor::VisitInitListExpr(clang::InitListExpr *expr) {
+  expr_processor_->processInitListExpr(expr);
+  return true;
+}
+
+bool ASTVisitor::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr) {
+  expr_processor_->processUnaryExprOrTypeTraitExpr(expr);
   return true;
 }

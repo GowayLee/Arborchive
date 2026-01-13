@@ -114,6 +114,9 @@ inline auto initStorage(const std::string &path) {
       ExprTableFn::values(),
       ExprTableFn::valuetext(),
       ExprTableFn::valuebind(),
+      ExprTableFn::aggregatearrayinit(),
+      ExprTableFn::aggregatefieldinit(),
+      ExprTableFn::sizeofbind(),
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;

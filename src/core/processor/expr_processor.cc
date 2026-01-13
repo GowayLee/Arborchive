@@ -446,3 +446,154 @@ void ExprProcessor::processImplicitCastExpr(const ImplicitCastExpr *ICE) {
   QualType SrcType = ICE->getSubExpr()->getType();
   QualType DstType = ICE->getType();
 }
+
+void ExprProcessor::processArraySubscriptExpr(const ArraySubscriptExpr *expr) {
+  processBaseExpr(const_cast<ArraySubscriptExpr *>(expr),
+                  ExprKind::SUBSCRIPTEXPR);
+}
+
+void ExprProcessor::processInitListExpr(const InitListExpr *expr) {
+  int exprId = processBaseExpr(const_cast<InitListExpr *>(expr),
+                               ExprKind::BRACED_INIT_LIST);
+
+  QualType initType = expr->getType();
+
+  if (initType->isArrayType()) {
+    recordAggregateArrayInit(exprId, expr);
+  } else if (initType->isRecordType()) {
+    recordAggregateFieldInit(exprId, expr);
+  } else {
+    LOG_DEBUG << "InitListExpr for neither array nor record type" << std::endl;
+  }
+}
+
+void ExprProcessor::recordAggregateArrayInit(int initListExprId,
+                                             const InitListExpr *expr) {
+  unsigned numInits = expr->getNumInits();
+
+  for (unsigned i = 0; i < numInits; ++i) {
+    const Expr *init = expr->getInit(i);
+    if (!init) continue;
+
+    KeyType initKey = KeyGen::Expr_::makeKey(init, ast_context_);
+    int initExprId = SEARCH_EXPR_CACHE(initKey).value_or(-1);
+
+    if (initExprId == -1) {
+      LOG_WARNING << "Init expression not in cache for index " << i << std::endl;
+      continue;
+    }
+
+    DbModel::AggregateArrayInit initModel = {
+      initListExprId,     // aggregate (@aggregateliteral ref)
+      initExprId,         // initializer (@expr ref)
+      static_cast<int>(i), // element_index (int ref)
+      static_cast<int>(i)  // position (int ref)
+    };
+    STG.insertClassObj(initModel);
+  }
+}
+
+void ExprProcessor::recordAggregateFieldInit(int initListExprId,
+                                             const InitListExpr *expr) {
+  const RecordType *recordType = expr->getType()->getAs<RecordType>();
+  if (!recordType || !recordType->getDecl()) {
+    LOG_WARNING << "Cannot get RecordType or RecordDecl for InitListExpr" << std::endl;
+    return;
+  }
+
+  const RecordDecl *recordDecl = recordType->getDecl();
+  unsigned numInits = expr->getNumInits();
+
+  // 获取记录名称
+  std::string recordName = recordDecl->getNameAsString();
+
+  int fieldIndex = 0;
+  for (auto *field : recordDecl->fields()) {
+    if (fieldIndex >= static_cast<int>(numInits))
+      break;
+
+    const Expr *init = expr->getInit(fieldIndex);
+    if (!init) {
+      fieldIndex++;
+      continue;
+    }
+
+    // 使用缓存查找字段 ID (@membervariable ref)
+    std::string fieldName = field->getNameAsString();
+    std::string fieldKey = "membervariable:" + recordName + "." + fieldName;
+    int fieldId = SEARCH_VARIABLE_CACHE(fieldKey).value_or(-1);
+
+    if (fieldId == -1) {
+      LOG_WARNING << "MemberVar '" << fieldName << "' in '" << recordName
+                  << "' not found in cache" << std::endl;
+    }
+
+    // 获取初始化表达式 ID
+    KeyType initKey = KeyGen::Expr_::makeKey(init, ast_context_);
+    int initExprId = SEARCH_EXPR_CACHE(initKey).value_or(-1);
+
+    DbModel::AggregateFieldInit initModel = {
+      initListExprId,  // aggregate (@aggregateliteral ref)
+      initExprId,      // initializer (@expr ref)
+      fieldId,         // field (@membervariable ref)
+      fieldIndex       // position (int ref)
+    };
+    STG.insertClassObj(initModel);
+
+    fieldIndex++;
+  }
+}
+
+void ExprProcessor::processUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr) {
+  UnaryExprOrTypeTrait kind = expr->getKind();
+
+  if (kind != UETT_SizeOf && kind != UETT_AlignOf) {
+    LOG_DEBUG << "Unsupported UnaryExprOrTypeTrait kind" << std::endl;
+    return;
+  }
+
+  ExprKind exprKind = (kind == UETT_SizeOf) ? ExprKind::RUNTIME_SIZEOF : ExprKind::RUNTIME_ALIGNOF;
+
+  int exprId = processBaseExpr(const_cast<UnaryExprOrTypeTraitExpr *>(expr), exprKind);
+  recordSizeOfBind(exprId, expr);
+}
+
+void ExprProcessor::recordSizeOfBind(int exprId, const UnaryExprOrTypeTraitExpr *expr) {
+  if (expr->isArgumentType()) {
+    // sizeof(type) or alignof(type)
+    QualType typeQual = expr->getArgumentType();
+    const Type *type = typeQual.getTypePtr();
+
+    int typeId = -1;
+    if (type_processor_) {
+      typeId = type_processor_->processType(type);
+    } else {
+      LOG_WARNING << "TypeProcessor not available for sizeof/alignof type" << std::endl;
+    }
+
+    DbModel::SizeOfBind bindModel = {exprId, typeId};
+    STG.insertClassObj(bindModel);
+  } else {
+    // sizeof expr or alignof expr
+    // 需要从表达式中提取类型信息
+    const Expr *argExpr = expr->getArgumentExpr();
+    if (!argExpr) {
+      LOG_WARNING << "UnaryExprOrTypeTraitExpr has null argument expression" << std::endl;
+      return;
+    }
+
+    // 获取表达式的类型
+    QualType typeQual = argExpr->getType();
+    const Type *type = typeQual.getTypePtr();
+
+    int typeId = -1;
+    if (type_processor_) {
+      typeId = type_processor_->processType(type);
+    } else {
+      LOG_WARNING << "TypeProcessor not available for sizeof/alignof expr type" << std::endl;
+    }
+
+    DbModel::SizeOfBind bindModel = {exprId, typeId};
+    STG.insertClassObj(bindModel);
+  }
+}

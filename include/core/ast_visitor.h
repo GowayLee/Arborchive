@@ -78,6 +78,9 @@ public:
   bool VisitBinaryOperator(const clang::BinaryOperator *op);
   bool VisitConditionalOperator(const clang::ConditionalOperator *op);
   bool VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE);
+  bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
+  bool VisitInitListExpr(clang::InitListExpr *expr);
+  bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr);
 
   // Literal Family
   bool VisitStringLiteral(const clang::StringLiteral *literal);

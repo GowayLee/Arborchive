@@ -11,6 +11,8 @@
 
 using namespace clang;
 
+class TypeProcessor;
+
 class ExprProcessor : public BaseProcessor {
 public:
   void processDeclRef(DeclRefExpr *expr);
@@ -34,8 +36,12 @@ public:
 
   void processImplicitCastExpr(const ImplicitCastExpr *ICE);
 
-  ExprProcessor(ASTContext *ast_context, const PrintingPolicy pp)
-      : BaseProcessor(ast_context, pp) {};
+  void processArraySubscriptExpr(const ArraySubscriptExpr *expr);
+  void processInitListExpr(const InitListExpr *expr);
+  void processUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr);
+
+  ExprProcessor(ASTContext *ast_context, const PrintingPolicy pp, TypeProcessor *tp = nullptr)
+      : BaseProcessor(ast_context, pp), type_processor_(tp) {};
   ~ExprProcessor() = default;
 
 private:
@@ -50,6 +56,12 @@ private:
   int processLiteralValue(const std::string &value, const std::string &text,
                           int exprId);
   void recordValueBindExpr(int valueId, int exprId);
+
+  void recordAggregateArrayInit(int initListExprId, const InitListExpr *expr);
+  void recordAggregateFieldInit(int initListExprId, const InitListExpr *expr);
+  void recordSizeOfBind(int exprId, const UnaryExprOrTypeTraitExpr *expr);
+
+  TypeProcessor *type_processor_ = nullptr;
 };
 
 #endif // _EXPR_PROCESSOR_H_

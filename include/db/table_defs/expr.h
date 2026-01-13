@@ -59,6 +59,31 @@ inline auto valuebind() {
       make_column("expr", &DbModel::ValueBind::expr));
 }
 
+inline auto aggregatearrayinit() {
+  return make_table(
+      "aggregate_array_init",
+      make_column("aggregate", &DbModel::AggregateArrayInit::aggregate),
+      make_column("initializer", &DbModel::AggregateArrayInit::initializer),
+      make_column("element_index", &DbModel::AggregateArrayInit::element_index),
+      make_column("position", &DbModel::AggregateArrayInit::position));
+}
+
+inline auto aggregatefieldinit() {
+  return make_table(
+      "aggregate_field_init",
+      make_column("aggregate", &DbModel::AggregateFieldInit::aggregate),
+      make_column("initializer", &DbModel::AggregateFieldInit::initializer),
+      make_column("field", &DbModel::AggregateFieldInit::field),
+      make_column("position", &DbModel::AggregateFieldInit::position));
+}
+
+inline auto sizeofbind() {
+  return make_table(
+      "sizeof_bind",
+      make_column("expr", &DbModel::SizeOfBind::expr, primary_key()),
+      make_column("type_id", &DbModel::SizeOfBind::type_id));
+}
+
 // clang-format on
 
 } // namespace ExprTableFn
