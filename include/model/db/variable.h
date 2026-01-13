@@ -53,6 +53,7 @@ struct MemberVar {
   int id;
   int type_id;
   std::string name;
+  using KeyType = std::string;
 };
 
 struct VarDecl {

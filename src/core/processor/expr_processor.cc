@@ -504,9 +504,6 @@ void ExprProcessor::recordAggregateFieldInit(int initListExprId,
   const RecordDecl *recordDecl = recordType->getDecl();
   unsigned numInits = expr->getNumInits();
 
-  // 获取记录名称
-  std::string recordName = recordDecl->getNameAsString();
-
   int fieldIndex = 0;
   for (auto *field : recordDecl->fields()) {
     if (fieldIndex >= static_cast<int>(numInits))
@@ -518,27 +515,51 @@ void ExprProcessor::recordAggregateFieldInit(int initListExprId,
       continue;
     }
 
-    // 使用缓存查找字段 ID (@membervariable ref)
-    std::string fieldName = field->getNameAsString();
-    std::string fieldKey = "membervariable:" + recordName + "." + fieldName;
-    int fieldId = SEARCH_VARIABLE_CACHE(fieldKey).value_or(-1);
-
-    if (fieldId == -1) {
-      LOG_WARNING << "MemberVar '" << fieldName << "' in '" << recordName
-                  << "' not found in cache" << std::endl;
-    }
-
     // 获取初始化表达式 ID
     KeyType initKey = KeyGen::Expr_::makeKey(init, ast_context_);
     int initExprId = SEARCH_EXPR_CACHE(initKey).value_or(-1);
 
-    DbModel::AggregateFieldInit initModel = {
-      initListExprId,  // aggregate (@aggregateliteral ref)
-      initExprId,      // initializer (@expr ref)
-      fieldId,         // field (@membervariable ref)
-      fieldIndex       // position (int ref)
-    };
-    STG.insertClassObj(initModel);
+    // 使用标准的键生成器查找字段 ID (@membervariable ref)
+    KeyType fieldKey = KeyGen::Var::makeKey(field, ast_context_);
+    int fieldId = SEARCH_MEMBERVAR_CACHE(fieldKey).value_or(-1);
+
+    if (fieldId == -1) {
+      // Create placeholder with field = -1
+      DbModel::AggregateFieldInit initModel = {
+        initListExprId,  // aggregate (@aggregateliteral ref)
+        initExprId,      // initializer (@expr ref)
+        -1,              // field placeholder
+        fieldIndex       // position (int ref)
+      };
+      STG.insertClassObj(initModel);
+
+      // Add dependency to be resolved later
+      PendingUpdate update{
+        fieldKey, CacheType::MEMBERVERY, [initListExprId, initExprId, fieldIndex](int resolvedFieldId) {
+          DbModel::AggregateFieldInit updatedModel = {
+            initListExprId,  // aggregate (@aggregateliteral ref)
+            initExprId,      // initializer (@expr ref)
+            resolvedFieldId, // resolved field ID
+            fieldIndex       // position (int ref)
+          };
+          STG.insertClassObj(updatedModel);
+        }};
+      DependencyManager::instance().addDependency(update);
+
+      std::string fieldName = field->getNameAsString();
+      std::string recordName = recordDecl->getNameAsString();
+      LOG_DEBUG << "Added dependency for MemberVar '" << fieldName
+                << "' in '" << recordName << "'" << std::endl;
+    } else {
+      // Field found in cache, create record normally
+      DbModel::AggregateFieldInit initModel = {
+        initListExprId,  // aggregate (@aggregateliteral ref)
+        initExprId,      // initializer (@expr ref)
+        fieldId,         // field (@membervariable ref)
+        fieldIndex       // position (int ref)
+      };
+      STG.insertClassObj(initModel);
+    }
 
     fieldIndex++;
   }

@@ -60,6 +60,11 @@ void DependencyManager::resolveDependencies() {
               .getRepository<CacheRepository<DbModel::ParameterizedElement>>()
               .find(update.dependencyKey);
       break;
+    case CacheType::MEMBERVERY:
+      resolvedId = CacheManager::instance()
+                       .getRepository<CacheRepository<DbModel::MemberVar>>()
+                       .find(update.dependencyKey);
+      break;
     }
 
     if (resolvedId) {

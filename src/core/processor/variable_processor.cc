@@ -2,8 +2,6 @@
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"
 #include "db/storage_facade.h"
-#include "model/db/class.h"
-#include "model/db/declaration.h"
 #include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/element.h"
@@ -253,15 +251,6 @@ int VariableProcessor::processFieldDecl(const FieldDecl *FD) {
   // Process member variable to get varId
   int varId = processMemberVar(FD);
 
-  // Cache the MemberVar ID for use in ExprProcessor
-  // Use a composite key: "recordName.fieldName"
-  const RecordDecl *record = FD->getParent();
-  std::string recordName = record ? record->getNameAsString() : "";
-  std::string fieldKey = "membervariable:" + recordName + "." + _name;
-  INSERT_VARIABLE_CACHE(fieldKey, varId);
-  LOG_DEBUG << "Cached MemberVar '" << _name << "' in '" << recordName
-            << "' with key: " << fieldKey << " -> ID: " << varId << std::endl;
-
   DbModel::VarDecl varDecl = {_varDeclId, varId, _typeId, _name,
                               locIdPair->spec_id};
   STG.insertClassObj(varDecl);
@@ -272,7 +261,23 @@ int VariableProcessor::processMemberVar(const FieldDecl *FD) {
   // For fields, _typeId should be set by the caller before calling this method
   _name = FD->getNameAsString();
 
+  // 使用缓存机制：先检查是否已存在
+  KeyType fieldKey = KeyGen::Var::makeKey(FD, ast_context_);
+
+  if (auto cachedId = SEARCH_MEMBERVAR_CACHE(fieldKey)) {
+    LOG_DEBUG << "MemberVar '" << _name << "' found in cache with ID: "
+              << *cachedId << std::endl;
+    return *cachedId;
+  }
+
+  // 缓存未命中，创建新记录
   DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
   STG.insertClassObj(memberVar);
+
+  // 插入缓存
+  INSERT_MEMBERVAR_CACHE(fieldKey, memberVar.id);
+  LOG_DEBUG << "Created and cached MemberVar '" << _name
+            << "' with key: " << fieldKey << " -> ID: " << memberVar.id << std::endl;
+
   return memberVar.id;
 }

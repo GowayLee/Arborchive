@@ -15,6 +15,7 @@ enum class CacheType {
   STMT,
   EXPR,
   VARIABLE,
+  MEMBERVERY,
   ELEMENT
 };
 

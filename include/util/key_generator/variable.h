@@ -16,6 +16,16 @@
       .getRepository<CacheRepository<DbModel::Variable>>()                     \
       .insert(key, id)
 
+#define SEARCH_MEMBERVAR_CACHE(type)                                            \
+  CacheManager::instance()                                                     \
+      .getRepository<CacheRepository<DbModel::MemberVar>>()                     \
+      .find(type)
+
+#define INSERT_MEMBERVAR_CACHE(key, id)                                         \
+  CacheManager::instance()                                                     \
+      .getRepository<CacheRepository<DbModel::MemberVar>>()                     \
+      .insert(key, id)
+
 using KeyType = std::string;
 using namespace clang;
 
@@ -24,6 +34,8 @@ namespace KeyGen {
 namespace Var {
 // For clang::VarDecl
 KeyType makeKey(const VarDecl *VD, ASTContext *ctx);
+// For clang::FieldDecl (MemberVar)
+KeyType makeKey(const FieldDecl *FD, ASTContext *ctx);
 } // namespace Var
 
 } // namespace KeyGen
