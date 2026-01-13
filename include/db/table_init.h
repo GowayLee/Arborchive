@@ -10,6 +10,7 @@
 #include "table_defs/expr.h"
 #include "table_defs/function.h"
 #include "table_defs/location.h"
+#include "table_defs/preprocessor.h"
 #include "table_defs/specifiers.h"
 #include "table_defs/stmt.h"
 #include "table_defs/type.h"
@@ -129,7 +130,14 @@ inline auto initStorage(const std::string &path) {
       SpecifierTableFn::specifiers(),
       SpecifierTableFn::typespecifiers(),
       SpecifierTableFn::funspecifiers(),
-      SpecifierTableFn::varspecifiers()
+      SpecifierTableFn::varspecifiers(),
+      // Preprocessor Tables
+      PreprocessorTableFn::preprocdirects(),
+      PreprocessorTableFn::preprocpair(),
+      PreprocessorTableFn::preproctrue(),
+      PreprocessorTableFn::preprocfalse(),
+      PreprocessorTableFn::preproctext(),
+      PreprocessorTableFn::includes()
     );
   // clang-format on
 }

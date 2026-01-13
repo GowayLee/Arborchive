@@ -1,4 +1,5 @@
 #include "core/clang_ast_manager.h"
+#include "core/processor/preprocessor_processor.h"
 #include "util/logger/macros.h"
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/CompilationDatabase.h>
@@ -29,6 +30,13 @@ public:
   std::unique_ptr<clang::ASTConsumer>
   CreateASTConsumer(clang::CompilerInstance &CI,
                     llvm::StringRef InFile) override {
+    // Install PPCallbacks for preprocessor directive tracking
+    auto &PP = CI.getPreprocessor();
+    PP.addPPCallbacks(std::make_unique<PreprocessorProcessor>(
+        &CI.getASTContext(),
+        CI.getASTContext().getPrintingPolicy(),
+        &PP));
+
     return std::make_unique<CustomASTConsumer>(callback, CI.getASTContext());
   }
 

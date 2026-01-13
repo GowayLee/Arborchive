@@ -47,6 +47,7 @@ template void StorageFacade::insertClassObj<DbModel::GlobalVar&>(DbModel::Global
 template void StorageFacade::insertClassObj<DbModel::IfElse&>(DbModel::IfElse&);
 template void StorageFacade::insertClassObj<DbModel::IfInit&>(DbModel::IfInit&);
 template void StorageFacade::insertClassObj<DbModel::IfThen&>(DbModel::IfThen&);
+template void StorageFacade::insertClassObj<DbModel::Includes&>(DbModel::Includes&);
 template void StorageFacade::insertClassObj<DbModel::IsCall&>(DbModel::IsCall&);
 template void StorageFacade::insertClassObj<DbModel::IsComplete&>(DbModel::IsComplete&);
 template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
@@ -65,6 +66,11 @@ template void StorageFacade::insertClassObj<DbModel::NamespaceMember&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::Parameter&>(DbModel::Parameter&);
 template void StorageFacade::insertClassObj<DbModel::ParameterizedElement&>(DbModel::ParameterizedElement&);
 template void StorageFacade::insertClassObj<DbModel::PointerishSize&>(DbModel::PointerishSize&);
+template void StorageFacade::insertClassObj<DbModel::Preprocdirect&>(DbModel::Preprocdirect&);
+template void StorageFacade::insertClassObj<DbModel::Preprocfalse&>(DbModel::Preprocfalse&);
+template void StorageFacade::insertClassObj<DbModel::Preprocpair&>(DbModel::Preprocpair&);
+template void StorageFacade::insertClassObj<DbModel::Preproctext&>(DbModel::Preproctext&);
+template void StorageFacade::insertClassObj<DbModel::Preproctrue&>(DbModel::Preproctrue&);
 template void StorageFacade::insertClassObj<DbModel::PtrToMember&>(DbModel::PtrToMember&);
 template void StorageFacade::insertClassObj<DbModel::PureFuncs&>(DbModel::PureFuncs&);
 template void StorageFacade::insertClassObj<DbModel::RoutineType&>(DbModel::RoutineType&);

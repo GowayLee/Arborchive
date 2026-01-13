@@ -76,12 +76,12 @@ DONE    75. globalvariables
 DONE    76. localvariables
    77. autoderivation
    78. orphaned_variables
-   79. enumconstants
+DONE    79. enumconstants
 DONE    80. builtintypes
 DONE    81. derivedtypes
-   82. pointerishsize
-   83. arraysizes
-   84. typedefbase
+DONE    82. pointerishsize
+DONE    83. arraysizes
+DONE    84. typedefbase
 DONE    85. decltypes
 DONE    86. usertypes
    87. usertypesize
