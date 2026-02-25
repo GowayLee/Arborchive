@@ -3,8 +3,8 @@
 
 #include "core/processor/base_processor.h"
 #include "core/srcloc_recorder.h"
-#include "model/db/preprocessor.h"
 #include "model/db/container.h"
+#include "model/db/preprocessor.h"
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Lex/PPCallbacks.h>
 #include <clang/Lex/Preprocessor.h>
@@ -16,7 +16,7 @@ using namespace clang;
 class PreprocessorProcessor : public BaseProcessor, public PPCallbacks {
 public:
   PreprocessorProcessor(ASTContext *ast_context, const PrintingPolicy pp,
-                       class Preprocessor *preprocessor);
+                        class Preprocessor *preprocessor);
   ~PreprocessorProcessor() = default;
 
   ////// PPCallbacks Interface - Conditional Compilation //////
@@ -35,24 +35,26 @@ public:
   ////// PPCallbacks Interface - Include Directives //////
 
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
-                         StringRef FileName, bool IsAngled,
-                         CharSourceRange FilenameRange,
-                         OptionalFileEntryRef File,
-                         StringRef SearchPath, StringRef RelativePath,
-                         const Module *SuggestedModule, bool ModuleImported,
-                         SrcMgr::CharacteristicKind FileType) override;
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange,
+                          OptionalFileEntryRef File, StringRef SearchPath,
+                          StringRef RelativePath, const Module *SuggestedModule,
+                          bool ModuleImported,
+                          SrcMgr::CharacteristicKind FileType) override;
 
   ////// PPCallbacks Interface - Macro Definitions //////
 
-  void MacroDefined(const Token &MacroNameTok, const MacroDirective *MD) override;
+  void MacroDefined(const Token &MacroNameTok,
+                    const MacroDirective *MD) override;
   void MacroUndefined(const Token &MacroNameTok, const MacroDefinition &MD,
                       const MacroDirective *Undef) override;
 
   ////// PPCallbacks Interface - Other Directives //////
 
-  void PragmaDirective(SourceLocation Loc, PragmaIntroducerKind Introducer) override;
-  void PragmaMessage(SourceLocation Loc, StringRef Namespace, PragmaMessageKind Kind,
-                     StringRef Str) override;
+  void PragmaDirective(SourceLocation Loc,
+                       PragmaIntroducerKind Introducer) override;
+  void PragmaMessage(SourceLocation Loc, StringRef Namespace,
+                     PragmaMessageKind Kind, StringRef Str) override;
   void PragmaDebug(SourceLocation Loc, StringRef DebugType) override;
 
 private:
@@ -72,10 +74,12 @@ private:
   ////// Helper Methods //////
 
   // Process a preprocessor directive and return its ID
-  int processDirective(SourceLocation Loc, PreprocDirectKind kind);
+  int processDirective(SourceLocation Loc, PreprocDirectKind kind,
+                       const std::string &key_suffix = "");
 
   // Extract and store directive text (head and body)
-  void extractDirectiveText(SourceLocation Loc, int directive_id, PreprocDirectKind kind);
+  void extractDirectiveText(SourceLocation Loc, int directive_id,
+                            PreprocDirectKind kind);
 
   // Record branch pairing (begin -> elif/else/endif)
   void recordBranchPair(int begin_id, int end_id);

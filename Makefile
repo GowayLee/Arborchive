@@ -54,6 +54,11 @@ $(OBJ_DIR)/core/%.o: $(SRC_DIR)/core/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -MMD -MP -c $< -o $@
 
+# 使用LLVM标志编译key_generator文件
+$(OBJ_DIR)/util/key_generator/%.o: $(SRC_DIR)/util/key_generator/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -MMD -MP -c $< -o $@
+
 # ==============================================
 # Code Generation
 # ==============================================
