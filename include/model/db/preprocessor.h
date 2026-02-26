@@ -57,11 +57,11 @@ struct Includes {
   int included;
 };
 
-struct MacroDef {
+struct MacroInvocation {
   int id;
-  std::string name;
-  std::string body;
+  int macro_id;
   int location;
+  int kind;
 };
 
 } // namespace DbModel

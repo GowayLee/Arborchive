@@ -44,9 +44,13 @@ public:
 
   ////// PPCallbacks Interface - Macro Definitions //////
 
+  void MacroExpands(const Token &MacroNameTok, const MacroDefinition &MD,
+                    SourceRange Range, const MacroArgs *Args) override;
   void MacroDefined(const Token &MacroNameTok, const MacroDirective *MD) override;
   void MacroUndefined(const Token &MacroNameTok, const MacroDefinition &MD,
                       const MacroDirective *Undef) override;
+  void Defined(const Token &MacroNameTok, const MacroDefinition &MD,
+               SourceRange Range) override;
 
   ////// PPCallbacks Interface - Other Directives //////
 
@@ -68,6 +72,10 @@ private:
 
   // Track which branches evaluated to true/false
   std::unordered_map<int, bool> branch_evaluation_;
+  std::unordered_map<std::string, int> macro_define_id_by_name_;
+
+  static constexpr int kMacroExpansionKind = 1;
+  static constexpr int kOtherMacroReferenceKind = 2;
 
   ////// Helper Methods //////
 
@@ -89,6 +97,9 @@ private:
 
   // Get full source text for a source range
   std::string getSourceText(CharSourceRange range);
+
+  // Record macro invocation/reference row if matching define id is known.
+  void recordMacroInvocation(const Token &MacroNameTok, SourceLocation Loc, int kind);
 };
 
 #endif // _PREPROCESSOR_PROCESSOR_H_

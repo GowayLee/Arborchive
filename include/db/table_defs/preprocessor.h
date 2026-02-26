@@ -53,13 +53,13 @@ inline auto includes() {
       make_column("included", &DbModel::Includes::included));
 }
 
-inline auto macro_defs() {
+inline auto macroinvocations() {
   return make_table(
-      "macro_defs",
-      make_column("id", &DbModel::MacroDef::id, primary_key()),
-      make_column("name", &DbModel::MacroDef::name),
-      make_column("body", &DbModel::MacroDef::body),
-      make_column("location", &DbModel::MacroDef::location));
+      "macroinvocations",
+      make_column("id", &DbModel::MacroInvocation::id, primary_key()),
+      make_column("macro_id", &DbModel::MacroInvocation::macro_id),
+      make_column("location", &DbModel::MacroInvocation::location),
+      make_column("kind", &DbModel::MacroInvocation::kind));
 }
 
 // clang-format on

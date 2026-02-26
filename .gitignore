@@ -39,6 +39,7 @@ build/*
 compile_commands.json
 .clangd
 .aider*
+.cache/
 
 # Project related
 *.db

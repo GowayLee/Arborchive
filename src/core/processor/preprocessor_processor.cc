@@ -24,6 +24,8 @@ PreprocessorProcessor::PreprocessorProcessor(ASTContext *ast_context,
 void PreprocessorProcessor::Ifndef(SourceLocation Loc,
                                    const Token &MacroNameTok,
                                    const MacroDefinition &MD) {
+  recordMacroInvocation(MacroNameTok, Loc, kOtherMacroReferenceKind);
+
   int dir_id = processDirective(Loc, PreprocDirectKind::IFNDEF);
   branch_stack_.push({dir_id, PreprocDirectKind::IFNDEF, Loc});
 
@@ -36,6 +38,8 @@ void PreprocessorProcessor::Ifndef(SourceLocation Loc,
 
 void PreprocessorProcessor::Ifdef(SourceLocation Loc, const Token &MacroNameTok,
                                   const MacroDefinition &MD) {
+  recordMacroInvocation(MacroNameTok, Loc, kOtherMacroReferenceKind);
+
   int dir_id = processDirective(Loc, PreprocDirectKind::IFDEF);
   branch_stack_.push({dir_id, PreprocDirectKind::IFDEF, Loc});
 
@@ -153,6 +157,15 @@ void PreprocessorProcessor::InclusionDirective(
 // Macro Definition Callbacks
 //////////////////////////////////////////////////////////////////////////////
 
+void PreprocessorProcessor::MacroExpands(const Token &MacroNameTok,
+                                         const MacroDefinition &MD,
+                                         SourceRange Range,
+                                         const MacroArgs *Args) {
+  (void)MD;
+  (void)Args;
+  recordMacroInvocation(MacroNameTok, Range.getBegin(), kMacroExpansionKind);
+}
+
 void PreprocessorProcessor::MacroDefined(const Token &MacroNameTok,
                                          const MacroDirective *MD) {
   const auto *identifier = MacroNameTok.getIdentifierInfo();
@@ -169,6 +182,7 @@ void PreprocessorProcessor::MacroDefined(const Token &MacroNameTok,
 
   const std::string macro_name = identifier->getName().str();
   int dir_id = processDirective(Loc, PreprocDirectKind::DEFINE, macro_name);
+  macro_define_id_by_name_[macro_name] = dir_id;
 
   // Build macro body directly from MacroInfo replacement tokens.
   std::string macro_body;
@@ -191,20 +205,32 @@ void PreprocessorProcessor::MacroDefined(const Token &MacroNameTok,
 
   Preproctext text = {dir_id, macro_name, macro_body};
   STG.insertClassObj(text);
-
-  // Write a dedicated, cleaner macro definition record for user macros.
-  LocIdPair *loc_pair = PROC_DEFT(Loc, Loc, ast_context_);
-  MacroDef macro_def = {dir_id, macro_name, macro_body, loc_pair->spec_id};
-  STG.insertClassObj(macro_def);
 }
 
 void PreprocessorProcessor::MacroUndefined(const Token &MacroNameTok,
                                            const MacroDefinition &MD,
                                            const MacroDirective *Undef) {
+  (void)MD;
+  (void)Undef;
+
+  recordMacroInvocation(MacroNameTok, MacroNameTok.getLocation(),
+                        kOtherMacroReferenceKind);
+
+  if (const auto *identifier = MacroNameTok.getIdentifierInfo()) {
+    macro_define_id_by_name_.erase(identifier->getName().str());
+  }
+
   // Keep UNDEF behavior unchanged: record directive and raw text only.
   SourceLocation Loc = MacroNameTok.getLocation();
   int dir_id = processDirective(Loc, PreprocDirectKind::UNDEF);
   extractDirectiveText(Loc, dir_id, PreprocDirectKind::UNDEF);
+}
+
+void PreprocessorProcessor::Defined(const Token &MacroNameTok,
+                                    const MacroDefinition &MD,
+                                    SourceRange Range) {
+  (void)MD;
+  recordMacroInvocation(MacroNameTok, Range.getBegin(), kOtherMacroReferenceKind);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -370,4 +396,28 @@ int PreprocessorProcessor::resolveIncludeFile(const std::string &filename) {
 std::string PreprocessorProcessor::getSourceText(CharSourceRange range) {
   const SourceManager &SM = ast_context_->getSourceManager();
   return Lexer::getSourceText(range, SM, LangOptions()).str();
+}
+
+void PreprocessorProcessor::recordMacroInvocation(const Token &MacroNameTok,
+                                                  SourceLocation Loc, int kind) {
+  const auto *identifier = MacroNameTok.getIdentifierInfo();
+  if (!identifier) {
+    return;
+  }
+
+  auto it = macro_define_id_by_name_.find(identifier->getName().str());
+  if (it == macro_define_id_by_name_.end()) {
+    return;
+  }
+
+  const SourceManager &SM = ast_context_->getSourceManager();
+  SourceLocation file_loc = SM.getFileLoc(SM.getSpellingLoc(Loc));
+  if (!SM.isWrittenInMainFile(file_loc)) {
+    return;
+  }
+
+  LocIdPair *loc_pair = PROC_DEFT(file_loc, file_loc, ast_context_);
+  int invocation_id = GENID(MacroInvocation);
+  MacroInvocation invocation = {invocation_id, it->second, loc_pair->spec_id, kind};
+  STG.insertClassObj(invocation);
 }

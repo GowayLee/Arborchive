@@ -25,7 +25,7 @@ DONE    23. folders
    25. fileannotations
    26. inmacroexpansion
    27. affectedbymacroexpansion
-   28. macroinvocations
+DONE    28. macroinvocations
    29. macroparent
    30. macrolocationbind
    31. macro_argument_unexpanded

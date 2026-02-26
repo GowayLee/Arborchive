@@ -138,7 +138,7 @@ inline auto initStorage(const std::string &path) {
       PreprocessorTableFn::preprocfalse(),
       PreprocessorTableFn::preproctext(),
       PreprocessorTableFn::includes(),
-      PreprocessorTableFn::macro_defs()
+      PreprocessorTableFn::macroinvocations()
     );
   // clang-format on
 }
