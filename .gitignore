@@ -34,11 +34,14 @@
 # Editor related
 .vscode/*
 .zed/*
+/build/
 build/*
+compile_commands.json
 .clangd
 .aider*
 
 # Project related
+*.db
 ast.db*
 *-db/
 
@@ -50,3 +53,4 @@ ast.db*
 
 # test
 tests/*.local/
+/arbor_notes/

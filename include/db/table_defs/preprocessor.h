@@ -53,6 +53,15 @@ inline auto includes() {
       make_column("included", &DbModel::Includes::included));
 }
 
+inline auto macro_defs() {
+  return make_table(
+      "macro_defs",
+      make_column("id", &DbModel::MacroDef::id, primary_key()),
+      make_column("name", &DbModel::MacroDef::name),
+      make_column("body", &DbModel::MacroDef::body),
+      make_column("location", &DbModel::MacroDef::location));
+}
+
 // clang-format on
 
 } // namespace PreprocessorTableFn

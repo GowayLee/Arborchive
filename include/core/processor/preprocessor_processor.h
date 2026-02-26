@@ -72,7 +72,8 @@ private:
   ////// Helper Methods //////
 
   // Process a preprocessor directive and return its ID
-  int processDirective(SourceLocation Loc, PreprocDirectKind kind);
+  int processDirective(SourceLocation Loc, PreprocDirectKind kind,
+                       const std::string &key_suffix = "");
 
   // Extract and store directive text (head and body)
   void extractDirectiveText(SourceLocation Loc, int directive_id, PreprocDirectKind kind);

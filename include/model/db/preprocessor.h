@@ -57,6 +57,13 @@ struct Includes {
   int included;
 };
 
+struct MacroDef {
+  int id;
+  std::string name;
+  std::string body;
+  int location;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_PREPROCESSOR_H_
