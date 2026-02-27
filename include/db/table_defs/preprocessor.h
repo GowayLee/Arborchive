@@ -62,6 +62,42 @@ inline auto macroinvocations() {
       make_column("kind", &DbModel::MacroInvocation::kind));
 }
 
+inline auto macroparent() {
+  return make_table(
+      "macroparent",
+      make_column("id", &DbModel::MacroParent::id, primary_key()),
+      make_column("parent_id", &DbModel::MacroParent::parent_id));
+}
+
+inline auto macrolocationbind() {
+  return make_table(
+      "macrolocationbind",
+      make_column("id", &DbModel::MacroLocationBind::id),
+      make_column("location", &DbModel::MacroLocationBind::location));
+}
+
+inline auto macro_argument_unexpanded() {
+  return make_table(
+      "macro_argument_unexpanded",
+      make_column("invocation", &DbModel::MacroArgumentUnexpanded::invocation),
+      make_column("argument_index",
+                  &DbModel::MacroArgumentUnexpanded::argument_index),
+      make_column("text", &DbModel::MacroArgumentUnexpanded::text),
+      primary_key(&DbModel::MacroArgumentUnexpanded::invocation,
+                  &DbModel::MacroArgumentUnexpanded::argument_index));
+}
+
+inline auto macro_argument_expanded() {
+  return make_table(
+      "macro_argument_expanded",
+      make_column("invocation", &DbModel::MacroArgumentExpanded::invocation),
+      make_column("argument_index",
+                  &DbModel::MacroArgumentExpanded::argument_index),
+      make_column("text", &DbModel::MacroArgumentExpanded::text),
+      primary_key(&DbModel::MacroArgumentExpanded::invocation,
+                  &DbModel::MacroArgumentExpanded::argument_index));
+}
+
 // clang-format on
 
 } // namespace PreprocessorTableFn

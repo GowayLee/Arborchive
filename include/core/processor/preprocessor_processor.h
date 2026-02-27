@@ -10,6 +10,8 @@
 #include <clang/Lex/Preprocessor.h>
 #include <stack>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 using namespace clang;
 
@@ -73,6 +75,10 @@ private:
   // Track which branches evaluated to true/false
   std::unordered_map<int, bool> branch_evaluation_;
   std::unordered_map<std::string, int> macro_define_id_by_name_;
+  std::unordered_set<std::string> macro_argument_dedup_cache_;
+  std::unordered_set<std::string> macrolocationbind_dedup_cache_;
+  std::unordered_set<int> macroparent_child_dedup_cache_;
+  std::unordered_map<unsigned, int> macro_invocation_by_loc_key_;
 
   static constexpr int kMacroExpansionKind = 1;
   static constexpr int kOtherMacroReferenceKind = 2;
@@ -99,7 +105,19 @@ private:
   std::string getSourceText(CharSourceRange range);
 
   // Record macro invocation/reference row if matching define id is known.
-  void recordMacroInvocation(const Token &MacroNameTok, SourceLocation Loc, int kind);
+  int recordMacroInvocation(const Token &MacroNameTok, SourceLocation Loc, int kind);
+
+  // Convert tokens to a stable space-joined text representation.
+  std::string tokensToText(const Token *tokens, unsigned token_count) const;
+  std::string tokensToText(const std::vector<Token> &tokens) const;
+
+  // Prevent duplicate insertions for the same (invocation, argument_index, table).
+  bool shouldInsertMacroArgumentRow(int invocation_id, int argument_index,
+                                    bool is_expanded);
+
+  bool shouldInsertMacroLocationBindRow(int invocation_id, int location_id);
+  bool shouldInsertMacroParentRow(int child_id);
+  unsigned makeMacroLocationKey(SourceLocation loc) const;
 };
 
 #endif // _PREPROCESSOR_PROCESSOR_H_

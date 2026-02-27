@@ -26,10 +26,10 @@ DONE    23. folders
    26. inmacroexpansion
    27. affectedbymacroexpansion
 DONE    28. macroinvocations
-   29. macroparent
-   30. macrolocationbind
-   31. macro_argument_unexpanded
-   32. macro_argument_expanded
+DONE    29. macroparent
+DONE    30. macrolocationbind
+DONE    31. macro_argument_unexpanded
+DONE    32. macro_argument_expanded
 DONE    33. functions
 DONE    34. function_entry_point
 DONE    35. function_return_type

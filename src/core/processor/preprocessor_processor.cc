@@ -4,8 +4,10 @@
 #include "util/id_generator.h"
 #include "util/key_generator/preprocessor.h"
 #include "util/logger/macros.h"
+#include <cctype>
 #include <clang/Basic/SourceManager.h>
 #include <clang/Lex/Lexer.h>
+#include <clang/Lex/MacroArgs.h>
 #include <filesystem>
 
 using namespace DbModel;
@@ -162,8 +164,63 @@ void PreprocessorProcessor::MacroExpands(const Token &MacroNameTok,
                                          SourceRange Range,
                                          const MacroArgs *Args) {
   (void)MD;
-  (void)Args;
-  recordMacroInvocation(MacroNameTok, Range.getBegin(), kMacroExpansionKind);
+
+  SourceLocation child_loc = Range.getBegin();
+  int invocation_id =
+      recordMacroInvocation(MacroNameTok, child_loc, kMacroExpansionKind);
+  if (invocation_id < 0) {
+    return;
+  }
+
+  if (child_loc.isValid()) {
+    const SourceManager &SM = ast_context_->getSourceManager();
+    unsigned child_key = makeMacroLocationKey(child_loc);
+    macro_invocation_by_loc_key_[child_key] = invocation_id;
+
+    SourceLocation parent_loc = SM.getImmediateMacroCallerLoc(child_loc);
+    if (parent_loc.isValid()) {
+      unsigned parent_key = makeMacroLocationKey(parent_loc);
+      auto parent_it = macro_invocation_by_loc_key_.find(parent_key);
+      if (parent_it != macro_invocation_by_loc_key_.end()) {
+        int parent_id = parent_it->second;
+        if (parent_id != invocation_id &&
+            shouldInsertMacroParentRow(invocation_id)) {
+          MacroParent parent_row = {invocation_id, parent_id};
+          STG.insertClassObj(parent_row);
+        }
+      }
+    }
+  }
+
+  if (Args == nullptr) {
+    return;
+  }
+
+  unsigned num_args = Args->getNumMacroArguments();
+  for (unsigned i = 0; i < num_args; ++i) {
+    const Token *unexpanded_tokens = Args->getUnexpArgument(i);
+    unsigned unexpanded_count = 0;
+    if (unexpanded_tokens) {
+      unexpanded_count = MacroArgs::getArgLength(unexpanded_tokens);
+    }
+
+    std::string unexpanded_text = tokensToText(unexpanded_tokens, unexpanded_count);
+    const std::vector<Token> &expanded_tokens =
+        const_cast<MacroArgs *>(Args)->getPreExpArgument(i, *preprocessor_);
+    std::string expanded_text = tokensToText(expanded_tokens);
+
+    if (shouldInsertMacroArgumentRow(invocation_id, static_cast<int>(i), false)) {
+      MacroArgumentUnexpanded unexpanded_row = {
+          invocation_id, static_cast<int>(i), unexpanded_text};
+      STG.insertClassObj(unexpanded_row);
+    }
+
+    if (shouldInsertMacroArgumentRow(invocation_id, static_cast<int>(i), true)) {
+      MacroArgumentExpanded expanded_row = {
+          invocation_id, static_cast<int>(i), expanded_text};
+      STG.insertClassObj(expanded_row);
+    }
+  }
 }
 
 void PreprocessorProcessor::MacroDefined(const Token &MacroNameTok,
@@ -398,26 +455,113 @@ std::string PreprocessorProcessor::getSourceText(CharSourceRange range) {
   return Lexer::getSourceText(range, SM, LangOptions()).str();
 }
 
-void PreprocessorProcessor::recordMacroInvocation(const Token &MacroNameTok,
-                                                  SourceLocation Loc, int kind) {
+std::string PreprocessorProcessor::tokensToText(const Token *tokens,
+                                                unsigned token_count) const {
+  if (!tokens || token_count == 0) {
+    return "";
+  }
+
+  std::string text;
+  for (unsigned idx = 0; idx < token_count; ++idx) {
+    const Token &tok = tokens[idx];
+    if (tok.is(tok::eof)) {
+      continue;
+    }
+
+    bool invalid = false;
+    std::string spelling = preprocessor_->getSpelling(tok, &invalid);
+    if (invalid || spelling.empty()) {
+      continue;
+    }
+
+    if (!text.empty()) {
+      text += " ";
+    }
+    text += spelling;
+  }
+  return text;
+}
+
+std::string
+PreprocessorProcessor::tokensToText(const std::vector<Token> &tokens) const {
+  if (tokens.empty()) {
+    return "";
+  }
+
+  std::string text;
+  for (const Token &tok : tokens) {
+    if (tok.is(tok::eof)) {
+      continue;
+    }
+
+    bool invalid = false;
+    std::string spelling = preprocessor_->getSpelling(tok, &invalid);
+    if (invalid || spelling.empty()) {
+      continue;
+    }
+
+    if (!text.empty()) {
+      text += " ";
+    }
+    text += spelling;
+  }
+  return text;
+}
+
+bool PreprocessorProcessor::shouldInsertMacroArgumentRow(int invocation_id,
+                                                         int argument_index,
+                                                         bool is_expanded) {
+  const std::string key =
+      std::to_string(invocation_id) + ":" + std::to_string(argument_index) +
+      ":" + (is_expanded ? "E" : "U");
+  return macro_argument_dedup_cache_.insert(key).second;
+}
+
+bool PreprocessorProcessor::shouldInsertMacroLocationBindRow(int invocation_id,
+                                                             int location_id) {
+  const std::string key =
+      std::to_string(invocation_id) + ":" + std::to_string(location_id);
+  return macrolocationbind_dedup_cache_.insert(key).second;
+}
+
+bool PreprocessorProcessor::shouldInsertMacroParentRow(int child_id) {
+  return macroparent_child_dedup_cache_.insert(child_id).second;
+}
+
+unsigned PreprocessorProcessor::makeMacroLocationKey(SourceLocation loc) const {
+  if (loc.isInvalid()) {
+    return 0;
+  }
+  return loc.getRawEncoding();
+}
+
+int PreprocessorProcessor::recordMacroInvocation(const Token &MacroNameTok,
+                                                 SourceLocation Loc, int kind) {
   const auto *identifier = MacroNameTok.getIdentifierInfo();
   if (!identifier) {
-    return;
+    return -1;
   }
 
   auto it = macro_define_id_by_name_.find(identifier->getName().str());
   if (it == macro_define_id_by_name_.end()) {
-    return;
+    return -1;
   }
 
   const SourceManager &SM = ast_context_->getSourceManager();
   SourceLocation file_loc = SM.getFileLoc(SM.getSpellingLoc(Loc));
   if (!SM.isWrittenInMainFile(file_loc)) {
-    return;
+    return -1;
   }
 
   LocIdPair *loc_pair = PROC_DEFT(file_loc, file_loc, ast_context_);
   int invocation_id = GENID(MacroInvocation);
   MacroInvocation invocation = {invocation_id, it->second, loc_pair->spec_id, kind};
   STG.insertClassObj(invocation);
+
+  if (loc_pair &&
+      shouldInsertMacroLocationBindRow(invocation_id, loc_pair->location_id)) {
+    MacroLocationBind location_bind = {invocation_id, loc_pair->location_id};
+    STG.insertClassObj(location_bind);
+  }
+  return invocation_id;
 }
