@@ -57,6 +57,35 @@ struct Includes {
   int included;
 };
 
+struct MacroInvocation {
+  int id;
+  int macro_id;
+  int location;
+  int kind;
+};
+
+struct MacroParent {
+  int id;
+  int parent_id;
+};
+
+struct MacroLocationBind {
+  int id;
+  int location;
+};
+
+struct MacroArgumentUnexpanded {
+  int invocation;
+  int argument_index;
+  std::string text;
+};
+
+struct MacroArgumentExpanded {
+  int invocation;
+  int argument_index;
+  std::string text;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_PREPROCESSOR_H_

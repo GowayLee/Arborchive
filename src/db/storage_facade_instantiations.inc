@@ -58,6 +58,11 @@ template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Locatio
 template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::LocationDefault&);
 template void StorageFacade::insertClassObj<DbModel::LocationExpr&>(DbModel::LocationExpr&);
 template void StorageFacade::insertClassObj<DbModel::LocationStmt&>(DbModel::LocationStmt&);
+template void StorageFacade::insertClassObj<DbModel::MacroArgumentExpanded&>(DbModel::MacroArgumentExpanded&);
+template void StorageFacade::insertClassObj<DbModel::MacroArgumentUnexpanded&>(DbModel::MacroArgumentUnexpanded&);
+template void StorageFacade::insertClassObj<DbModel::MacroInvocation&>(DbModel::MacroInvocation&);
+template void StorageFacade::insertClassObj<DbModel::MacroLocationBind&>(DbModel::MacroLocationBind&);
+template void StorageFacade::insertClassObj<DbModel::MacroParent&>(DbModel::MacroParent&);
 template void StorageFacade::insertClassObj<DbModel::Member&>(DbModel::Member&);
 template void StorageFacade::insertClassObj<DbModel::MemberVar&>(DbModel::MemberVar&);
 template void StorageFacade::insertClassObj<DbModel::Namespace&>(DbModel::Namespace&);

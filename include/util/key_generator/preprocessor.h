@@ -3,8 +3,6 @@
 
 #include "db/cache_repository.h"
 #include "model/db/preprocessor.h"
-#include <clang/Basic/SourceLocation.h>
-#include <clang/Lex/Preprocessor.h>
 #include <string>
 
 #define SEARCH_PREPROC_CACHE(key)                                             \
@@ -24,7 +22,8 @@ namespace KeyGen {
 namespace Preprocessor {
 
 // Generate unique key for preprocessor directive based on source location
-KeyType makeKey(clang::SourceLocation Loc, clang::Preprocessor &PP);
+KeyType makeKey(const std::string &filename, unsigned line, unsigned column,
+                int directive_kind, const std::string &extra_tag = "");
 
 } // namespace Preprocessor
 
