@@ -87,7 +87,7 @@ void VariableProcessor::recordStructuredBinding(const VarDecl *VD) {
 
 void VariableProcessor::recordRequire(const VarDecl *VD) {
   // 获取约束表达式
-  const clang::Expr *CE = VD->getTrailingRequiresClause().ConstraintExpr;
+  const clang::Expr *CE = VD->getTrailingRequiresClause();
   if (!CE)
     return;
   KeyType exprKey = KeyGen::Expr_::makeKey(CE, ast_context_);
@@ -265,8 +265,8 @@ int VariableProcessor::processMemberVar(const FieldDecl *FD) {
   KeyType fieldKey = KeyGen::Var::makeKey(FD, ast_context_);
 
   if (auto cachedId = SEARCH_MEMBERVAR_CACHE(fieldKey)) {
-    LOG_DEBUG << "MemberVar '" << _name << "' found in cache with ID: "
-              << *cachedId << std::endl;
+    LOG_DEBUG << "MemberVar '" << _name
+              << "' found in cache with ID: " << *cachedId << std::endl;
     return *cachedId;
   }
 
@@ -277,7 +277,8 @@ int VariableProcessor::processMemberVar(const FieldDecl *FD) {
   // 插入缓存
   INSERT_MEMBERVAR_CACHE(fieldKey, memberVar.id);
   LOG_DEBUG << "Created and cached MemberVar '" << _name
-            << "' with key: " << fieldKey << " -> ID: " << memberVar.id << std::endl;
+            << "' with key: " << fieldKey << " -> ID: " << memberVar.id
+            << std::endl;
 
   return memberVar.id;
 }

@@ -124,8 +124,7 @@ QualType getCoroutineTraitsType(const FunctionDecl *FD,
   // 创建特化类型
   return ast_context.getTemplateSpecializationType(
       TemplateName(const_cast<ClassTemplateDecl *>(CTD)),
-      TemplateArgs,  // SpecifiedArgs
-      TemplateArgs); // CanonicalArgs (coroutine_traits通常两者相同)
+      TemplateArgs);
 }
 
 FunctionDecl *getCoroutineNewFunction(const FunctionDecl *FD) {
