@@ -42,6 +42,7 @@ inline auto initStorage(const std::string &path) {
       ContainerTableFn::namespacembrs(),
       // Declaration Tables
       DeclTableFn::declarations(),
+      DeclTableFn::frienddecls(),
       // Function Tables
       FuncTableFn::functions(),
       FuncTableFn::fun_decls(),

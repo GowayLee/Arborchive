@@ -21,6 +21,11 @@ void record_is_pod_class(const Type *TP, int usertype_id) {
     LOG_WARNING << "Type is not a C++ record" << std::endl;
     return;
   }
+  if (!recordDecl->hasDefinition()) {
+    LOG_DEBUG << "Type " << recordDecl->getNameAsString()
+              << " has no definition; skip POD check" << std::endl;
+    return;
+  }
 
   // 检查是否为POD类型
   bool isPOD = recordDecl->isPOD();
@@ -44,6 +49,12 @@ void record_is_standard_layout_class(const Type *TP, int userTypeId) {
   const CXXRecordDecl *recordDecl = TP->getAsCXXRecordDecl();
   if (!recordDecl) {
     LOG_WARNING << "Type is not a C++ record" << std::endl;
+    return;
+  }
+  if (!recordDecl->hasDefinition()) {
+    LOG_DEBUG << "Type " << recordDecl->getNameAsString()
+              << " has no definition; skip standard layout check"
+              << std::endl;
     return;
   }
   // 检查标准布局属性

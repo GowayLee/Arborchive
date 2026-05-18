@@ -141,7 +141,7 @@ DONE   138. member
   141. derspecifiers
   142. direct_base_offsets
   143. virtual_base_offsets
-  144. frienddecls
+DONE  144. frienddecls
   145. comments
   146. commentbinding
   147. exprconv

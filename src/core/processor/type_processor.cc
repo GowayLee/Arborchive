@@ -154,8 +154,12 @@ void TypeProcessor::processRecordType(const RecordType *RT) {
   LOG_DEBUG << "RecordType UserType Key: " << userTypeKey << std::endl;
 
   // Check cache first
-  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey))
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    record_is_pod_class(RT, *cachedId);
+    record_is_standard_layout_class(RT, *cachedId);
+    record_is_complete(RT, *cachedId);
     return;
+  }
 
   INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);

@@ -17,6 +17,15 @@ inline auto declarations() {
       make_column("type", &DbModel::Declaration::type));
 }
 
+inline auto frienddecls() {
+  return make_table(
+      "frienddecls",
+      make_column("id", &DbModel::FriendDecl::id, primary_key()),
+      make_column("type_id", &DbModel::FriendDecl::type_id),
+      make_column("decl_id", &DbModel::FriendDecl::decl_id),
+      make_column("location", &DbModel::FriendDecl::location));
+}
+
 // clang-format on
 
 } // namespace DeclTableFn

@@ -1,5 +1,15 @@
 #include "core/ast_visitor.h"
+#include "core/srcloc_recorder.h"
+#include "db/dependency_manager.h"
+#include "db/storage_facade.h"
+#include "model/db/declaration.h"
+#include "util/id_generator.h"
+#include "util/key_generator/function.h"
+#include "util/key_generator/type.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclCXX.h>
+#include <clang/AST/DeclFriend.h>
+#include <clang/AST/Type.h>
 #include <memory>
 
 ASTVisitor::ASTVisitor(clang::ASTContext *context)
@@ -202,7 +212,73 @@ bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *compoundStmt) {
   return true;
 }
 
-bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) { return true; }
+bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) {
+  if (!decl)
+    return true;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(decl, context_);
+  const int friendDeclId = GENID(FriendDecl);
+  int typeId = -1;
+  int declId = -1;
+
+  auto resolveRecordType = [&](const clang::RecordType *recordType) -> int {
+    if (!recordType || !recordType->getDecl())
+      return -1;
+
+    type_processor_->processRecordType(recordType);
+    KeyType typeKey = KeyGen::Type::makeKey(recordType->getDecl(), context_);
+    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+      return *cachedId;
+
+    return -1;
+  };
+
+  auto resolveFriendType = [&](clang::QualType friendType) -> int {
+    if (friendType.isNull())
+      return -1;
+
+    if (const auto *recordType = friendType->getAs<clang::RecordType>())
+      return resolveRecordType(recordType);
+
+    return type_processor_->processType(friendType.getTypePtr());
+  };
+
+  if (clang::TypeSourceInfo *friendTypeInfo = decl->getFriendType()) {
+    typeId = resolveFriendType(friendTypeInfo->getType());
+  } else if (clang::NamedDecl *friendNamedDecl = decl->getFriendDecl()) {
+    if (const auto *functionDecl =
+            llvm::dyn_cast<clang::FunctionDecl>(friendNamedDecl)) {
+      KeyType functionKey = KeyGen::Function::makeKey(functionDecl, context_);
+      if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey)) {
+        declId = *cachedId;
+      } else {
+        PendingUpdate update{
+            functionKey, CacheType::FUNCTION,
+            [friendDeclId, typeId, location = locIdPair->spec_id](
+                int resolvedId) {
+              DbModel::FriendDecl updatedRecord = {friendDeclId, typeId,
+                                                   resolvedId, location};
+              STG.insertClassObj(updatedRecord);
+            }};
+        DependencyManager::instance().addDependency(update);
+      }
+    } else if (const auto *typeDecl =
+                   llvm::dyn_cast<clang::TypeDecl>(friendNamedDecl)) {
+      if (const auto *recordDecl =
+              llvm::dyn_cast<clang::RecordDecl>(typeDecl)) {
+        if (const auto *recordType =
+                llvm::dyn_cast_or_null<clang::RecordType>(
+                    recordDecl->getTypeForDecl()))
+          typeId = resolveRecordType(recordType);
+      }
+    }
+  }
+
+  DbModel::FriendDecl friendDeclModel = {friendDeclId, typeId, declId,
+                                         locIdPair->spec_id};
+  STG.insertClassObj(friendDeclModel);
+  return true;
+}
 
 bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *decl) { return true; }
 

@@ -11,6 +11,16 @@ int add(int a, int b);
 void printInt(int value);
 void printPoint(const Point *p);
 
+class FriendSecret;
+
+class FriendBox {
+  friend void inspectFriendBox(FriendBox &);
+  friend class FriendSecret;
+  int value;
+};
+
+void inspectFriendBox(FriendBox &) {}
+
 void implicit_casts() {
   int i = 1;
   double d = i;

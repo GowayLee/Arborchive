@@ -26,6 +26,7 @@ template void StorageFacade::insertClassObj<DbModel::ForBody&>(DbModel::ForBody&
 template void StorageFacade::insertClassObj<DbModel::ForCond&>(DbModel::ForCond&);
 template void StorageFacade::insertClassObj<DbModel::ForInit&>(DbModel::ForInit&);
 template void StorageFacade::insertClassObj<DbModel::ForUpdate&>(DbModel::ForUpdate&);
+template void StorageFacade::insertClassObj<DbModel::FriendDecl&>(DbModel::FriendDecl&);
 template void StorageFacade::insertClassObj<DbModel::FunBind&>(DbModel::FunBind&);
 template void StorageFacade::insertClassObj<DbModel::FunDecl&>(DbModel::FunDecl&);
 template void StorageFacade::insertClassObj<DbModel::FunDeclEmptyNoexcept&>(DbModel::FunDeclEmptyNoexcept&);
