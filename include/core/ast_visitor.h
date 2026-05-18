@@ -59,6 +59,8 @@ public:
   bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
+  bool VisitClassTemplateDecl(clang::ClassTemplateDecl *decl);
+  bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl);
 
   // Stmt Family
   bool VisitIfStmt(clang::IfStmt *ifStmt);

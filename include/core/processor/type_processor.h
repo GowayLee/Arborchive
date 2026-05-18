@@ -18,6 +18,7 @@ public:
   void processTypedefDecl(const TypedefDecl *TND);
   void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
   void processTypeDecl(const TypeDecl *TD);
+  int processRecordDeclType(const RecordDecl *RD);
   void processRecordType(const RecordType *RT);
   int processBuiltinType(const BuiltinType *BT, ASTContext *ast_context);
 

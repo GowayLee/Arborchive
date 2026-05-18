@@ -193,6 +193,10 @@ struct IsComplete {
   int id;
 };
 
+struct IsClassTemplate {
+  int id;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

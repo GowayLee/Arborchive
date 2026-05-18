@@ -21,6 +21,16 @@ class FriendBox {
 
 void inspectFriendBox(FriendBox &) {}
 
+template <typename T> T identity(T value) { return value; }
+
+template <typename T> struct Holder {
+  T value;
+};
+
+void use_templates() {
+  Holder<int> h{identity(1)};
+}
+
 void implicit_casts() {
   int i = 1;
   double d = i;

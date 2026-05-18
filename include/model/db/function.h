@@ -64,6 +64,10 @@ struct FunImplicit {
   int id;
 };
 
+struct IsFunctionTemplate {
+  int id;
+};
+
 struct FuncEntryPt {
   int id;
   int entry_point;

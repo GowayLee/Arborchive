@@ -76,6 +76,12 @@ inline auto fun_implicit() {
       make_column("id", &DbModel::FunImplicit::id));
 }
 
+inline auto is_function_template() {
+  return make_table(
+      "is_function_template",
+      make_column("id", &DbModel::IsFunctionTemplate::id, primary_key()));
+}
+
 inline auto function_entry_point() {
   return make_table(
       "function_entry_point",

@@ -110,11 +110,9 @@ void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
   STG.insertClassObj(typeDecl);
 }
 
-void TypeProcessor::processRecordType(const RecordType *RT) {
-  // Extract the RecordDecl from the RecordType
-  const RecordDecl *RD = RT->getDecl();
+int TypeProcessor::processRecordDeclType(const RecordDecl *RD) {
   if (!RD)
-    return;
+    return -1;
 
   // Get typename
   std::string typeName = RD->getNameAsString();
@@ -155,19 +153,30 @@ void TypeProcessor::processRecordType(const RecordType *RT) {
 
   // Check cache first
   if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
-    record_is_pod_class(RT, *cachedId);
-    record_is_standard_layout_class(RT, *cachedId);
-    record_is_complete(RT, *cachedId);
-    return;
+    _typeId = *cachedId;
+    return *cachedId;
   }
 
   INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
+  _typeId = userTypeModel.id;
+  return userTypeModel.id;
+}
+
+void TypeProcessor::processRecordType(const RecordType *RT) {
+  if (!RT)
+    return;
+
+  // Extract the RecordDecl from the RecordType
+  const RecordDecl *RD = RT->getDecl();
+  int typeId = processRecordDeclType(RD);
+  if (typeId == -1)
+    return;
 
   // Process additional type details (similar to processUserType)
-  record_is_pod_class(RT, userTypeModel.id);
-  record_is_standard_layout_class(RT, userTypeModel.id);
-  record_is_complete(RT, userTypeModel.id);
+  record_is_pod_class(RT, typeId);
+  record_is_standard_layout_class(RT, typeId);
+  record_is_complete(RT, typeId);
 }
 
 void TypeProcessor::recordTypeDef(const TypeDecl *TD) {

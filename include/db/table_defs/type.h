@@ -117,6 +117,12 @@ inline auto is_complete() {
       make_column("id", &DbModel::IsComplete::id, primary_key()));
 }
 
+inline auto is_class_template() {
+  return make_table(
+      "is_class_template",
+      make_column("id", &DbModel::IsClassTemplate::id, primary_key()));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

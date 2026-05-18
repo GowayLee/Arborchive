@@ -3,12 +3,15 @@
 #include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/declaration.h"
+#include "model/db/function.h"
+#include "model/db/type.h"
 #include "util/id_generator.h"
 #include "util/key_generator/function.h"
 #include "util/key_generator/type.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclFriend.h>
+#include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Type.h>
 #include <memory>
 
@@ -280,7 +283,58 @@ bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) {
   return true;
 }
 
-bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *decl) { return true; }
+bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *) { return true; }
+
+bool ASTVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl *decl) {
+  if (!decl)
+    return true;
+
+  const clang::CXXRecordDecl *templatedDecl = decl->getTemplatedDecl();
+  if (!templatedDecl)
+    return true;
+
+  KeyType typeKey = KeyGen::Type::makeKey(templatedDecl, context_);
+  if (!SEARCH_TYPE_CACHE(typeKey))
+    type_processor_->processRecordDeclType(templatedDecl);
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey)) {
+    DbModel::IsClassTemplate isClassTemplate = {*cachedId};
+    STG.insertClassObj(isClassTemplate);
+  } else {
+    PendingUpdate update{
+        typeKey, CacheType::TYPE, [](int resolvedId) {
+          DbModel::IsClassTemplate isClassTemplate = {resolvedId};
+          STG.insertClassObj(isClassTemplate);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  return true;
+}
+
+bool ASTVisitor::VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl) {
+  if (!decl)
+    return true;
+
+  const clang::FunctionDecl *templatedDecl = decl->getTemplatedDecl();
+  if (!templatedDecl)
+    return true;
+
+  KeyType functionKey = KeyGen::Function::makeKey(templatedDecl, context_);
+  if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey)) {
+    DbModel::IsFunctionTemplate isFunctionTemplate = {*cachedId};
+    STG.insertClassObj(isFunctionTemplate);
+  } else {
+    PendingUpdate update{
+        functionKey, CacheType::FUNCTION, [](int resolvedId) {
+          DbModel::IsFunctionTemplate isFunctionTemplate = {resolvedId};
+          STG.insertClassObj(isFunctionTemplate);
+        }};
+    DependencyManager::instance().addDependency(update);
+  }
+
+  return true;
+}
 
 bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
   expr_processor_->processDeclRef(expr);
