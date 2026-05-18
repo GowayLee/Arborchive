@@ -1,4 +1,4 @@
-# AGENT_GUIDE.md
+# AGENTS_GUIDE.md
 
 Guide for agents working with the Arborchive codebase - a C++ static analysis tool that parses C/C++ source code using Clang's AST and stores structural information in SQLite.
 

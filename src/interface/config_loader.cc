@@ -63,6 +63,9 @@ void ConfigLoader::mergeFromCli(const CLArgs &args) {
   config.general.output_path = args.output_path;
   LOG_DEBUG << "merged output_path: " << config.general.output_path
             << std::endl;
+  config.database.path = args.output_path;
+  LOG_DEBUG << "merged database.path: " << config.database.path
+            << std::endl;
   config.logger.is_to_console = !args.quiet;
   LOG_DEBUG << "merged is_to_console: " << config.logger.is_to_console
             << std::endl;
