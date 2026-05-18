@@ -139,17 +139,20 @@ bool ASTVisitor::VisitBuiltinType(clang::BuiltinType *BT) {
   return true;
 }
 
-// TODO: Implement processing ImplicitCastExpr, record DerivedTypes of it
 bool ASTVisitor::VisitImplicitCastExpr(clang::ImplicitCastExpr *ICE) {
-  const clang::Type *sourceType = ICE->getSubExpr()->getType().getTypePtr();
-  const clang::Type *targetType = ICE->getType().getTypePtr();
+  if (!ICE || !ICE->getSubExpr())
+    return true;
 
-  int source_type_id = type_processor_->processType(sourceType);
-  specifier_processor_->processTypeQualifiers(source_type_id,
-                                              ICE->getSubExpr()->getType());
+  expr_processor_->processImplicitCastExpr(ICE);
 
-  int target_type_id = type_processor_->processType(targetType);
-  specifier_processor_->processTypeQualifiers(target_type_id, ICE->getType());
+  const clang::QualType sourceType = ICE->getSubExpr()->getType();
+  const clang::QualType targetType = ICE->getType();
+
+  int source_type_id = type_processor_->processType(sourceType.getTypePtr());
+  specifier_processor_->processTypeQualifiers(source_type_id, sourceType);
+
+  int target_type_id = type_processor_->processType(targetType.getTypePtr());
+  specifier_processor_->processTypeQualifiers(target_type_id, targetType);
   return true;
 }
 

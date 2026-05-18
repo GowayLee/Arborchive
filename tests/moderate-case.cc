@@ -11,6 +11,14 @@ int add(int a, int b);
 void printInt(int value);
 void printPoint(const Point *p);
 
+void implicit_casts() {
+  int i = 1;
+  double d = i;
+  int *pi = &i;
+  const int *p = pi;
+  const void *vp = p;
+}
+
 void Point::print() const {
   // 打印结构体成员
   printInt(x);

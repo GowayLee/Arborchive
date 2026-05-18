@@ -442,9 +442,14 @@ void ExprProcessor::processCallExpr(const CallExpr *expr) {
 }
 
 void ExprProcessor::processImplicitCastExpr(const ImplicitCastExpr *ICE) {
-  CastKind CK = ICE->getCastKind();
-  QualType SrcType = ICE->getSubExpr()->getType();
-  QualType DstType = ICE->getType();
+  if (!ICE)
+    return;
+
+  ExprKind exprKind = ExprKind::NOOPEXPR;
+  if (ICE->getCastKind() == CK_ArrayToPointerDecay)
+    exprKind = ExprKind::ARRAY_TO_POINTER;
+
+  processBaseExpr(const_cast<ImplicitCastExpr *>(ICE), exprKind);
 }
 
 void ExprProcessor::processArraySubscriptExpr(const ArraySubscriptExpr *expr) {
