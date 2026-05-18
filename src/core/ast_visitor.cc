@@ -6,6 +6,7 @@
 #include "model/db/function.h"
 #include "model/db/type.h"
 #include "util/id_generator.h"
+#include "util/key_generator/expr.h"
 #include "util/key_generator/function.h"
 #include "util/key_generator/type.h"
 #include <clang/AST/Decl.h>
@@ -13,6 +14,7 @@
 #include <clang/AST/DeclFriend.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Type.h>
+#include <clang/AST/TypeLoc.h>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -21,8 +23,10 @@ namespace {
 
 std::unordered_set<std::string> classInstantiationDedup;
 std::unordered_set<std::string> classTemplateArgumentDedup;
+std::unordered_set<std::string> classTemplateArgumentValueDedup;
 std::unordered_set<std::string> functionInstantiationDedup;
 std::unordered_set<std::string> functionTemplateArgumentDedup;
+std::unordered_set<std::string> functionTemplateArgumentValueDedup;
 
 std::string makePairKey(int first, int second) {
   return std::to_string(first) + ":" + std::to_string(second);
@@ -43,6 +47,13 @@ bool shouldInsertClassTemplateArgument(int typeId, int index, int argType) {
       .second;
 }
 
+bool shouldInsertClassTemplateArgumentValue(int typeId, int index,
+                                            int argValue) {
+  return classTemplateArgumentValueDedup
+      .insert(makeTripleKey(typeId, index, argValue))
+      .second;
+}
+
 bool shouldInsertFunctionInstantiation(int to, int from) {
   return functionInstantiationDedup.insert(makePairKey(to, from)).second;
 }
@@ -51,6 +62,13 @@ bool shouldInsertFunctionTemplateArgument(int functionId, int index,
                                           int argType) {
   return functionTemplateArgumentDedup
       .insert(makeTripleKey(functionId, index, argType))
+      .second;
+}
+
+bool shouldInsertFunctionTemplateArgumentValue(int functionId, int index,
+                                               int argValue) {
+  return functionTemplateArgumentValueDedup
+      .insert(makeTripleKey(functionId, index, argValue))
       .second;
 }
 
@@ -83,6 +101,53 @@ int resolveTemplateArgumentTypeId(clang::QualType argType,
   return -1;
 }
 
+const clang::Expr *
+getTemplateArgumentSourceExpr(const clang::TemplateArgumentLoc &argLoc) {
+  const clang::TemplateArgument &arg = argLoc.getArgument();
+
+  switch (arg.getKind()) {
+  case clang::TemplateArgument::Expression:
+    return argLoc.getSourceExpression();
+  case clang::TemplateArgument::Integral:
+    return argLoc.getSourceIntegralExpression();
+  default:
+    return nullptr;
+  }
+}
+
+int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr,
+                                  ExprProcessor *exprProcessor,
+                                  clang::ASTContext *context) {
+  if (!sourceExpr || !exprProcessor || !context)
+    return -1;
+
+  const clang::Expr *expr = sourceExpr->IgnoreParenImpCasts();
+  KeyType exprKey = KeyGen::Expr_::makeKey(expr, context);
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  if (const auto *integerLiteral =
+          llvm::dyn_cast<clang::IntegerLiteral>(expr)) {
+    exprProcessor->processIntegerLiteral(integerLiteral);
+  } else if (const auto *floatingLiteral =
+                 llvm::dyn_cast<clang::FloatingLiteral>(expr)) {
+    exprProcessor->processFloatingLiteral(floatingLiteral);
+  } else if (const auto *characterLiteral =
+                 llvm::dyn_cast<clang::CharacterLiteral>(expr)) {
+    exprProcessor->processCharacterLiteral(characterLiteral);
+  } else if (const auto *boolLiteral =
+                 llvm::dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
+    exprProcessor->processBoolLiteral(boolLiteral);
+  } else {
+    return -1;
+  }
+
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  return -1;
+}
+
 void recordClassTemplateTypeArguments(
     int typeId, const clang::TemplateArgumentList &templateArgs,
     TypeProcessor *typeProcessor, clang::ASTContext *context) {
@@ -109,6 +174,57 @@ void recordClassTemplateTypeArguments(
   }
 }
 
+void recordClassTemplateArgumentValues(
+    int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs,
+    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+  if (typeId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertClassTemplateArgumentValue(typeId,
+                                                static_cast<int>(index),
+                                                exprId))
+      continue;
+
+    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
+        typeId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void recordClassTemplateArgumentValues(
+    int typeId, clang::TemplateSpecializationTypeLoc templateArgs,
+    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+  if (typeId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.getNumArgs(); ++index) {
+    const clang::TemplateArgumentLoc &argLoc = templateArgs.getArgLoc(index);
+    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertClassTemplateArgumentValue(typeId,
+                                                static_cast<int>(index),
+                                                exprId))
+      continue;
+
+    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
+        typeId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
 void recordFunctionTemplateTypeArguments(
     int functionId, const clang::TemplateArgumentList *templateArgs,
     TypeProcessor *typeProcessor, clang::ASTContext *context) {
@@ -132,6 +248,58 @@ void recordFunctionTemplateTypeArguments(
     DbModel::FunctionTemplateArgument templateArgument = {
         functionId, static_cast<int>(index), argTypeId};
     STG.insertClassObj(templateArgument);
+  }
+}
+
+void recordFunctionTemplateArgumentValues(
+    int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs,
+    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertFunctionTemplateArgumentValue(functionId,
+                                                   static_cast<int>(index),
+                                                   exprId))
+      continue;
+
+    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
+        functionId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void recordFunctionTemplateArgumentValues(
+    int functionId, const clang::TemplateArgumentLoc *templateArgs,
+    unsigned numTemplateArgs, ExprProcessor *exprProcessor,
+    clang::ASTContext *context) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < numTemplateArgs; ++index) {
+    const clang::TemplateArgumentLoc &argLoc = templateArgs[index];
+    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertFunctionTemplateArgumentValue(functionId,
+                                                   static_cast<int>(index),
+                                                   exprId))
+      continue;
+
+    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
+        functionId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
   }
 }
 
@@ -216,6 +384,9 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
     recordFunctionTemplateTypeArguments(
         specializationId, decl->getTemplateSpecializationArgs(),
         type_processor_.get(), context_);
+    recordFunctionTemplateArgumentValues(
+        specializationId, decl->getTemplateSpecializationArgsAsWritten(),
+        expr_processor_.get(), context_);
   }
 
   return true;
@@ -249,6 +420,13 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
   // Process type with qualifiers
   int type_id = type_processor_->processType(decl->getType().getTypePtr());
   specifier_processor_->processTypeQualifiers(type_id, decl->getType());
+
+  if (clang::TypeSourceInfo *typeInfo = decl->getTypeSourceInfo()) {
+    auto templateTypeLoc = typeInfo->getTypeLoc()
+                               .getAsAdjusted<clang::TemplateSpecializationTypeLoc>();
+    recordClassTemplateArgumentValues(type_id, templateTypeLoc,
+                                      expr_processor_.get(), context_);
+  }
   return true;
 }
 
@@ -481,12 +659,12 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
   if (!decl)
     return true;
 
+  const clang::ClassTemplateDecl *classTemplateDecl = nullptr;
   auto instantiatedFrom = decl->getInstantiatedFrom();
-  if (instantiatedFrom.isNull())
-    return true;
-
-  const auto *classTemplateDecl =
-      instantiatedFrom.dyn_cast<clang::ClassTemplateDecl *>();
+  if (!instantiatedFrom.isNull())
+    classTemplateDecl = instantiatedFrom.dyn_cast<clang::ClassTemplateDecl *>();
+  if (!classTemplateDecl)
+    classTemplateDecl = decl->getSpecializedTemplate();
   if (!classTemplateDecl)
     return true;
 
@@ -522,6 +700,9 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
   recordClassTemplateTypeArguments(
       specializationId, decl->getTemplateInstantiationArgs(),
       type_processor_.get(), context_);
+  recordClassTemplateArgumentValues(
+      specializationId, decl->getTemplateArgsAsWritten(), expr_processor_.get(),
+      context_);
 
   return true;
 }
@@ -551,7 +732,22 @@ bool ASTVisitor::VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl) {
 }
 
 bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
+  if (!expr)
+    return true;
+
   expr_processor_->processDeclRef(expr);
+
+  if (expr->hasExplicitTemplateArgs()) {
+    if (const auto *functionDecl =
+            llvm::dyn_cast<clang::FunctionDecl>(expr->getDecl())) {
+      KeyType functionKey = KeyGen::Function::makeKey(functionDecl, context_);
+      int functionId = SEARCH_FUNCTION_CACHE(functionKey).value_or(-1);
+      recordFunctionTemplateArgumentValues(
+          functionId, expr->getTemplateArgs(), expr->getNumTemplateArgs(),
+          expr_processor_.get(), context_);
+    }
+  }
+
   return true;
 }
 

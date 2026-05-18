@@ -6,6 +6,7 @@ template void StorageFacade::insertClassObj<DbModel::ArraySizes&>(DbModel::Array
 template void StorageFacade::insertClassObj<DbModel::BuiltinType_&>(DbModel::BuiltinType_&);
 template void StorageFacade::insertClassObj<DbModel::ClassInstantiation&>(DbModel::ClassInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::ClassTemplateArgument&>(DbModel::ClassTemplateArgument&);
+template void StorageFacade::insertClassObj<DbModel::ClassTemplateArgumentValue&>(DbModel::ClassTemplateArgumentValue&);
 template void StorageFacade::insertClassObj<DbModel::Compilation&>(DbModel::Compilation&);
 template void StorageFacade::insertClassObj<DbModel::CompilationArg&>(DbModel::CompilationArg&);
 template void StorageFacade::insertClassObj<DbModel::CompilationBuildMode&>(DbModel::CompilationBuildMode&);
@@ -48,6 +49,7 @@ template void StorageFacade::insertClassObj<DbModel::FuncRetType&>(DbModel::Func
 template void StorageFacade::insertClassObj<DbModel::Function&>(DbModel::Function&);
 template void StorageFacade::insertClassObj<DbModel::FunctionInstantiation&>(DbModel::FunctionInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::FunctionTemplateArgument&>(DbModel::FunctionTemplateArgument&);
+template void StorageFacade::insertClassObj<DbModel::FunctionTemplateArgumentValue&>(DbModel::FunctionTemplateArgumentValue&);
 template void StorageFacade::insertClassObj<DbModel::GlobalVar&>(DbModel::GlobalVar&);
 template void StorageFacade::insertClassObj<DbModel::IfElse&>(DbModel::IfElse&);
 template void StorageFacade::insertClassObj<DbModel::IfInit&>(DbModel::IfInit&);

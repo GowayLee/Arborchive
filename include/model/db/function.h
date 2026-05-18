@@ -79,6 +79,12 @@ struct FunctionTemplateArgument {
   int arg_type;
 };
 
+struct FunctionTemplateArgumentValue {
+  int function_id;
+  int index;
+  int arg_value;
+};
+
 struct FuncEntryPt {
   int id;
   int entry_point;

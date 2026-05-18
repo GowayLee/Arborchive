@@ -97,6 +97,14 @@ inline auto function_template_argument() {
       make_column("arg_type", &DbModel::FunctionTemplateArgument::arg_type));
 }
 
+inline auto function_template_argument_value() {
+  return make_table(
+      "function_template_argument_value",
+      make_column("function_id", &DbModel::FunctionTemplateArgumentValue::function_id),
+      make_column("index", &DbModel::FunctionTemplateArgumentValue::index),
+      make_column("arg_value", &DbModel::FunctionTemplateArgumentValue::arg_value));
+}
+
 inline auto function_entry_point() {
   return make_table(
       "function_entry_point",
