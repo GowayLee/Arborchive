@@ -60,6 +60,8 @@ public:
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
   bool VisitClassTemplateDecl(clang::ClassTemplateDecl *decl);
+  bool VisitClassTemplateSpecializationDecl(
+      clang::ClassTemplateSpecializationDecl *decl);
   bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl);
 
   // Stmt Family

@@ -123,6 +123,21 @@ inline auto is_class_template() {
       make_column("id", &DbModel::IsClassTemplate::id, primary_key()));
 }
 
+inline auto class_instantiation() {
+  return make_table(
+      "class_instantiation",
+      make_column("to", &DbModel::ClassInstantiation::to),
+      make_column("from", &DbModel::ClassInstantiation::from));
+}
+
+inline auto class_template_argument() {
+  return make_table(
+      "class_template_argument",
+      make_column("type_id", &DbModel::ClassTemplateArgument::type_id),
+      make_column("index", &DbModel::ClassTemplateArgument::index),
+      make_column("arg_type", &DbModel::ClassTemplateArgument::arg_type));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

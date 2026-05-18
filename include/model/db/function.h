@@ -68,6 +68,17 @@ struct IsFunctionTemplate {
   int id;
 };
 
+struct FunctionInstantiation {
+  int to;
+  int from;
+};
+
+struct FunctionTemplateArgument {
+  int function_id;
+  int index;
+  int arg_type;
+};
+
 struct FuncEntryPt {
   int id;
   int entry_point;

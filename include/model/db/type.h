@@ -197,6 +197,17 @@ struct IsClassTemplate {
   int id;
 };
 
+struct ClassInstantiation {
+  int to;
+  int from;
+};
+
+struct ClassTemplateArgument {
+  int type_id;
+  int index;
+  int arg_type;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

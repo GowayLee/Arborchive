@@ -29,6 +29,7 @@ template <typename T> struct Holder {
 
 void use_templates() {
   Holder<int> h{identity(1)};
+  Holder<double> hd{identity(2.0)};
 }
 
 void implicit_casts() {

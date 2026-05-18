@@ -82,6 +82,21 @@ inline auto is_function_template() {
       make_column("id", &DbModel::IsFunctionTemplate::id, primary_key()));
 }
 
+inline auto function_instantiation() {
+  return make_table(
+      "function_instantiation",
+      make_column("to", &DbModel::FunctionInstantiation::to, primary_key()),
+      make_column("from", &DbModel::FunctionInstantiation::from));
+}
+
+inline auto function_template_argument() {
+  return make_table(
+      "function_template_argument",
+      make_column("function_id", &DbModel::FunctionTemplateArgument::function_id),
+      make_column("index", &DbModel::FunctionTemplateArgument::index),
+      make_column("arg_type", &DbModel::FunctionTemplateArgument::arg_type));
+}
+
 inline auto function_entry_point() {
   return make_table(
       "function_entry_point",

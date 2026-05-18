@@ -10,6 +10,7 @@
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Specifiers.h>
 #include <iostream>
@@ -116,6 +117,10 @@ int TypeProcessor::processRecordDeclType(const RecordDecl *RD) {
 
   // Get typename
   std::string typeName = RD->getNameAsString();
+  if (const auto *specDecl =
+          dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+    typeName = KeyGen::Type::makeKey(specDecl, ast_context_);
+  }
   if (typeName.empty()) {
     // Handle anonymous types
     typeName = "<anonymous>";

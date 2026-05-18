@@ -14,6 +14,128 @@
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Type.h>
 #include <memory>
+#include <string>
+#include <unordered_set>
+
+namespace {
+
+std::unordered_set<std::string> classInstantiationDedup;
+std::unordered_set<std::string> classTemplateArgumentDedup;
+std::unordered_set<std::string> functionInstantiationDedup;
+std::unordered_set<std::string> functionTemplateArgumentDedup;
+
+std::string makePairKey(int first, int second) {
+  return std::to_string(first) + ":" + std::to_string(second);
+}
+
+std::string makeTripleKey(int first, int second, int third) {
+  return std::to_string(first) + ":" + std::to_string(second) + ":" +
+         std::to_string(third);
+}
+
+bool shouldInsertClassInstantiation(int to, int from) {
+  return classInstantiationDedup.insert(makePairKey(to, from)).second;
+}
+
+bool shouldInsertClassTemplateArgument(int typeId, int index, int argType) {
+  return classTemplateArgumentDedup
+      .insert(makeTripleKey(typeId, index, argType))
+      .second;
+}
+
+bool shouldInsertFunctionInstantiation(int to, int from) {
+  return functionInstantiationDedup.insert(makePairKey(to, from)).second;
+}
+
+bool shouldInsertFunctionTemplateArgument(int functionId, int index,
+                                          int argType) {
+  return functionTemplateArgumentDedup
+      .insert(makeTripleKey(functionId, index, argType))
+      .second;
+}
+
+int resolveTemplateArgumentTypeId(clang::QualType argType,
+                                  TypeProcessor *typeProcessor,
+                                  clang::ASTContext *context) {
+  if (argType.isNull() || !typeProcessor || !context)
+    return -1;
+
+  KeyType typeKey = KeyGen::Type::makeKey(argType, context);
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  if (const auto *builtinType = argType->getAs<clang::BuiltinType>())
+    return typeProcessor->processBuiltinType(builtinType, context);
+
+  if (const auto *recordType = argType->getAs<clang::RecordType>()) {
+    typeProcessor->processRecordType(recordType);
+    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+      return *cachedId;
+  }
+
+  int typeId = typeProcessor->processType(argType.getTypePtr());
+  if (typeId != -1)
+    return typeId;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  return -1;
+}
+
+void recordClassTemplateTypeArguments(
+    int typeId, const clang::TemplateArgumentList &templateArgs,
+    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+  if (typeId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+    if (argTypeId == -1)
+      continue;
+
+    if (!shouldInsertClassTemplateArgument(typeId, static_cast<int>(index),
+                                           argTypeId))
+      continue;
+
+    DbModel::ClassTemplateArgument templateArgument = {
+        typeId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void recordFunctionTemplateTypeArguments(
+    int functionId, const clang::TemplateArgumentList *templateArgs,
+    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs->get(index);
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+    if (argTypeId == -1)
+      continue;
+
+    if (!shouldInsertFunctionTemplateArgument(
+            functionId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::FunctionTemplateArgument templateArgument = {
+        functionId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+} // namespace
 
 ASTVisitor::ASTVisitor(clang::ASTContext *context)
     : context_(context), pp_(context->getPrintingPolicy()) {
@@ -54,6 +176,48 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
     specifier_processor_->processTypeQualifiers(param_type_id,
                                                 param->getType());
   }
+
+  if (decl && decl->isFunctionTemplateSpecialization()) {
+    KeyType functionKey = KeyGen::Function::makeKey(decl, context_);
+    int specializationId = func_id;
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey))
+      specializationId = *cachedId;
+    if (specializationId == -1)
+      return true;
+
+    if (const clang::FunctionTemplateDecl *primaryTemplate =
+            decl->getPrimaryTemplate()) {
+      const clang::FunctionDecl *templatedDecl =
+          primaryTemplate->getTemplatedDecl();
+      KeyType templateKey = KeyGen::Function::makeKey(templatedDecl, context_);
+
+      if (auto cachedId = SEARCH_FUNCTION_CACHE(templateKey)) {
+        if (shouldInsertFunctionInstantiation(specializationId, *cachedId)) {
+          DbModel::FunctionInstantiation instantiation = {
+              specializationId, *cachedId};
+          STG.insertClassObj(instantiation);
+        }
+      } else {
+        PendingUpdate update{
+            templateKey, CacheType::FUNCTION,
+            [specializationId](int resolvedId) {
+              if (!shouldInsertFunctionInstantiation(specializationId,
+                                                     resolvedId))
+                return;
+
+              DbModel::FunctionInstantiation instantiation = {
+                  specializationId, resolvedId};
+              STG.insertClassObj(instantiation);
+            }};
+        DependencyManager::instance().addDependency(update);
+      }
+    }
+
+    recordFunctionTemplateTypeArguments(
+        specializationId, decl->getTemplateSpecializationArgs(),
+        type_processor_.get(), context_);
+  }
+
   return true;
 }
 bool ASTVisitor::VisitCXXConstructorDecl(clang::CXXConstructorDecl *decl) {
@@ -308,6 +472,56 @@ bool ASTVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl *decl) {
         }};
     DependencyManager::instance().addDependency(update);
   }
+
+  return true;
+}
+
+bool ASTVisitor::VisitClassTemplateSpecializationDecl(
+    clang::ClassTemplateSpecializationDecl *decl) {
+  if (!decl)
+    return true;
+
+  auto instantiatedFrom = decl->getInstantiatedFrom();
+  if (instantiatedFrom.isNull())
+    return true;
+
+  const auto *classTemplateDecl =
+      instantiatedFrom.dyn_cast<clang::ClassTemplateDecl *>();
+  if (!classTemplateDecl)
+    return true;
+
+  const clang::CXXRecordDecl *templatedDecl =
+      classTemplateDecl->getTemplatedDecl();
+  if (!templatedDecl)
+    return true;
+
+  KeyType specializationKey = KeyGen::Type::makeKey(decl, context_);
+  if (!SEARCH_TYPE_CACHE(specializationKey))
+    type_processor_->processRecordDeclType(decl);
+
+  KeyType templateKey = KeyGen::Type::makeKey(templatedDecl, context_);
+  if (!SEARCH_TYPE_CACHE(templateKey))
+    type_processor_->processRecordDeclType(templatedDecl);
+
+  int specializationId = -1;
+  int templateId = -1;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(specializationKey))
+    specializationId = *cachedId;
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateKey))
+    templateId = *cachedId;
+
+  if (specializationId != -1 && templateId != -1) {
+    if (shouldInsertClassInstantiation(specializationId, templateId)) {
+      DbModel::ClassInstantiation instantiation = {specializationId,
+                                                   templateId};
+      STG.insertClassObj(instantiation);
+    }
+  }
+
+  recordClassTemplateTypeArguments(
+      specializationId, decl->getTemplateInstantiationArgs(),
+      type_processor_.get(), context_);
 
   return true;
 }

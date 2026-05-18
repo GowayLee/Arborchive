@@ -94,14 +94,14 @@ DONE    93. is_pod_class
 DONE    94. is_standard_layout_class
 DONE    95. is_complete
 DONE    96. is_class_template
-   97. class_instantiation
-   98. class_template_argument
+DONE    97. class_instantiation
+DONE    98. class_template_argument
    99. class_template_argument_value
   100. is_proxy_class_for
   101. type_mentions
 DONE   102. is_function_template
-  103. function_instantiation
-  104. function_template_argument
+DONE   103. function_instantiation
+DONE   104. function_template_argument
   105. function_template_argument_value
   106. is_variable_template
   107. variable_instantiation
