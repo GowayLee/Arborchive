@@ -74,6 +74,39 @@ struct ConceptBox {
 
 ConceptBox<int> concept_box;
 
+template <typename T>
+concept AlwaysTrue = true;
+
+template <typename T>
+concept HasPlusOne = requires(T v) {
+  v + 1;
+};
+
+template <AlwaysTrue T>
+struct ConstrainedParamBox {
+  T value;
+};
+
+template <typename T>
+requires HasPlusOne<T>
+struct RequiresClauseBox {
+  T value;
+};
+
+template <int N>
+concept Positive = (N > 0);
+
+template <int N>
+requires Positive<N>
+struct PositiveBox {
+  int value[N];
+};
+
+static_assert(AlwaysTrue<int>);
+ConstrainedParamBox<int> constrained_param_box;
+RequiresClauseBox<int> requires_clause_box;
+PositiveBox<2> positive_box;
+
 void use_templates() {
   Holder<int> h{identity(1)};
   Holder<double> hd{identity(2.0)};
