@@ -27,15 +27,24 @@ template <typename T> struct Holder {
   T value;
 };
 
-template <typename T, int N> struct FixedBuffer {
+template <typename T> struct Box {
   T value;
+};
+
+template <typename T, int N> struct FixedBuffer {
+  T data[N];
 };
 
 template <> struct FixedBuffer<int, 4> {
   int value;
 };
 
+Box<int> box_int;
+FixedBuffer<char, 16> fb_char_16;
+
 template <int N> int add_n(int value) { return value + N; }
+
+template <int N> int get_number() { return N; }
 
 void use_templates() {
   Holder<int> h{identity(1)};
@@ -45,8 +54,12 @@ void use_templates() {
 void use_nontype_template_args() {
   FixedBuffer<int, 4> buffer{};
   int v = add_n<3>(10);
+  int x = identity<int>(1);
+  int y = get_number<42>();
   (void)buffer;
   (void)v;
+  (void)x;
+  (void)y;
 }
 
 void implicit_casts() {

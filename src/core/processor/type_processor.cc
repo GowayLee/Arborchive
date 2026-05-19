@@ -393,17 +393,16 @@ void TypeProcessor::processTypedefBase(const TypedefNameDecl *TND, int typedefId
 void TypeProcessor::processArraySizes(const ArrayType *AT, int derivedTypeId) {
   // Get number of elements (0 for incomplete arrays)
   int num_elements = 0;
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
-    num_elements = CAT->getZExtSize();
-  }
-
-  // Calculate byte size and alignment
   int bytesize = 0;
   int alignment = 0;
 
-  if (ast_context_) {
-    bytesize = ast_context_->getTypeSize(AT) / ast_context_->getCharWidth();
-    alignment = ast_context_->getTypeAlign(AT) / ast_context_->getCharWidth();
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+    num_elements = CAT->getZExtSize();
+    if (ast_context_) {
+      bytesize = ast_context_->getTypeSize(CAT) / ast_context_->getCharWidth();
+      alignment =
+          ast_context_->getTypeAlign(CAT) / ast_context_->getCharWidth();
+    }
   }
 
   // Create array sizes record
