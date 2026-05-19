@@ -103,10 +103,10 @@ DONE   102. is_function_template
 DONE   103. function_instantiation
 DONE   104. function_template_argument
 DONE   105. function_template_argument_value
-  106. is_variable_template
-  107. variable_instantiation
-  108. variable_template_argument
-  109. variable_template_argument_value
+DONE   106. is_variable_template
+DONE   107. variable_instantiation
+DONE   108. variable_template_argument
+DONE   109. variable_template_argument_value
   110. template_template_instantiation
   111. template_template_argument
   112. template_template_argument_value

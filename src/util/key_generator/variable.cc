@@ -1,8 +1,10 @@
 #include "util/key_generator/variable.h"
 #include <clang/AST/ASTContext.h>
-#include <clang/AST/Expr.h>
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclTemplate.h>
+#include <clang/AST/Expr.h>
 #include <clang/Basic/SourceManager.h>
+#include <llvm/Support/raw_ostream.h>
 #include <sstream>
 #include <string>
 
@@ -24,6 +26,15 @@ KeyType makeKey(const VarDecl *VD, ASTContext *ctx) {
   // 第二部分：构建基础ID（行:列:名称）
   std::string uid = std::to_string(line) + ":" + std::to_string(col) + ":" +
                     VD->getNameAsString();
+
+  if (const auto *specialization =
+          dyn_cast<VarTemplateSpecializationDecl>(VD)) {
+    std::string specializedName;
+    llvm::raw_string_ostream stream(specializedName);
+    specialization->getNameForDiagnostic(stream, ctx->getPrintingPolicy(),
+                                         true);
+    uid += ":" + stream.str();
+  }
 
   // 第三部分：添加声明上下文层次信息
   const DeclContext *hctx = VD->getDeclContext();

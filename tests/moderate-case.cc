@@ -46,6 +46,10 @@ template <int N> int add_n(int value) { return value + N; }
 
 template <int N> int get_number() { return N; }
 
+template <typename T> constexpr T zero_v = T{};
+
+template <typename T, int N> constexpr T value_v = T(N);
+
 void use_templates() {
   Holder<int> h{identity(1)};
   Holder<double> hd{identity(2.0)};
@@ -60,6 +64,13 @@ void use_nontype_template_args() {
   (void)v;
   (void)x;
   (void)y;
+}
+
+void use_variable_templates() {
+  int a = zero_v<int>;
+  int b = value_v<int, 7>;
+  (void)a;
+  (void)b;
 }
 
 void implicit_casts() {

@@ -5,10 +5,12 @@
 #include "model/db/declaration.h"
 #include "model/db/function.h"
 #include "model/db/type.h"
+#include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/function.h"
 #include "util/key_generator/type.h"
+#include "util/key_generator/variable.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclFriend.h>
@@ -27,6 +29,10 @@ std::unordered_set<std::string> classTemplateArgumentValueDedup;
 std::unordered_set<std::string> functionInstantiationDedup;
 std::unordered_set<std::string> functionTemplateArgumentDedup;
 std::unordered_set<std::string> functionTemplateArgumentValueDedup;
+std::unordered_set<std::string> variableTemplateDedup;
+std::unordered_set<std::string> variableInstantiationDedup;
+std::unordered_set<std::string> variableTemplateArgumentDedup;
+std::unordered_set<std::string> variableTemplateArgumentValueDedup;
 
 std::string makePairKey(int first, int second) {
   return std::to_string(first) + ":" + std::to_string(second);
@@ -70,6 +76,47 @@ bool shouldInsertFunctionTemplateArgumentValue(int functionId, int index,
   return functionTemplateArgumentValueDedup
       .insert(makeTripleKey(functionId, index, argValue))
       .second;
+}
+
+bool shouldInsertVariableTemplate(int variableId) {
+  return variableTemplateDedup.insert(std::to_string(variableId)).second;
+}
+
+bool shouldInsertVariableInstantiation(int variableId, int templateId) {
+  return variableInstantiationDedup
+      .insert(makePairKey(variableId, templateId))
+      .second;
+}
+
+bool shouldInsertVariableTemplateArgument(int variableId, int index,
+                                          int argType) {
+  return variableTemplateArgumentDedup
+      .insert(makeTripleKey(variableId, index, argType))
+      .second;
+}
+
+bool shouldInsertVariableTemplateArgumentValue(int variableId, int index,
+                                               int argValue) {
+  return variableTemplateArgumentValueDedup
+      .insert(makeTripleKey(variableId, index, argValue))
+      .second;
+}
+
+int resolveVariableEntityId(const clang::VarDecl *decl,
+                            VariableProcessor *variableProcessor,
+                            clang::ASTContext *context) {
+  if (!decl || !variableProcessor || !context)
+    return -1;
+
+  KeyType variableKey = KeyGen::Var::makeKey(decl, context);
+  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
+    return *cachedId;
+
+  variableProcessor->processVarDecl(decl);
+  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
+    return *cachedId;
+
+  return -1;
 }
 
 int resolveTemplateArgumentTypeId(clang::QualType argType,
@@ -303,6 +350,57 @@ void recordFunctionTemplateArgumentValues(
   }
 }
 
+void recordVariableTemplateTypeArguments(
+    int variableId, const clang::TemplateArgumentList &templateArgs,
+    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+  if (variableId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+    if (argTypeId == -1)
+      continue;
+
+    if (!shouldInsertVariableTemplateArgument(
+            variableId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::VariableTemplateArgument templateArgument = {
+        variableId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void recordVariableTemplateArgumentValues(
+    int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs,
+    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+  if (variableId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertVariableTemplateArgumentValue(
+            variableId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::VariableTemplateArgumentValue templateArgumentValue = {
+        variableId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
 } // namespace
 
 ASTVisitor::ASTVisitor(clang::ASTContext *context)
@@ -426,6 +524,36 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
                                .getAsAdjusted<clang::TemplateSpecializationTypeLoc>();
     recordClassTemplateArgumentValues(type_id, templateTypeLoc,
                                       expr_processor_.get(), context_);
+  }
+
+  if (const auto *specialization =
+          llvm::dyn_cast_or_null<clang::VarTemplateSpecializationDecl>(decl)) {
+    int variableId =
+        resolveVariableEntityId(specialization, variable_processor_.get(),
+                                context_);
+    if (variableId == -1)
+      return true;
+
+    const clang::VarTemplateDecl *primaryTemplate =
+        specialization->getSpecializedTemplate();
+    if (primaryTemplate && primaryTemplate->getTemplatedDecl()) {
+      int templateId = resolveVariableEntityId(
+          primaryTemplate->getTemplatedDecl(), variable_processor_.get(),
+          context_);
+      if (templateId != -1 &&
+          shouldInsertVariableInstantiation(variableId, templateId)) {
+        DbModel::VariableInstantiation instantiation = {variableId,
+                                                        templateId};
+        STG.insertClassObj(instantiation);
+      }
+    }
+
+    recordVariableTemplateTypeArguments(
+        variableId, specialization->getTemplateInstantiationArgs(),
+        type_processor_.get(), context_);
+    recordVariableTemplateArgumentValues(
+        variableId, specialization->getTemplateArgsAsWritten(),
+        expr_processor_.get(), context_);
   }
   return true;
 }
@@ -728,6 +856,25 @@ bool ASTVisitor::VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl) {
     DependencyManager::instance().addDependency(update);
   }
 
+  return true;
+}
+
+bool ASTVisitor::VisitVarTemplateDecl(clang::VarTemplateDecl *decl) {
+  if (!decl)
+    return true;
+
+  clang::VarDecl *templatedDecl = decl->getTemplatedDecl();
+  if (!templatedDecl)
+    return true;
+
+  int variableId =
+      resolveVariableEntityId(templatedDecl, variable_processor_.get(),
+                              context_);
+  if (variableId == -1 || !shouldInsertVariableTemplate(variableId))
+    return true;
+
+  DbModel::IsVariableTemplate isVariableTemplate = {variableId};
+  STG.insertClassObj(isVariableTemplate);
   return true;
 }
 

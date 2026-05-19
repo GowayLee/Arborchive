@@ -72,6 +72,27 @@ struct VarSpecialized {
   int id;
 };
 
+struct IsVariableTemplate {
+  int id;
+};
+
+struct VariableInstantiation {
+  int variable_id;
+  int template_id;
+};
+
+struct VariableTemplateArgument {
+  int variable_id;
+  int index;
+  int arg_type;
+};
+
+struct VariableTemplateArgumentValue {
+  int variable_id;
+  int index;
+  int arg_value;
+};
+
 struct VarDeclSpec {
   int id;
   std::string name;

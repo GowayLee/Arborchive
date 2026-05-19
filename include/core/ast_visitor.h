@@ -63,6 +63,7 @@ public:
   bool VisitClassTemplateSpecializationDecl(
       clang::ClassTemplateSpecializationDecl *decl);
   bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl);
+  bool VisitVarTemplateDecl(clang::VarTemplateDecl *decl);
 
   // Stmt Family
   bool VisitIfStmt(clang::IfStmt *ifStmt);

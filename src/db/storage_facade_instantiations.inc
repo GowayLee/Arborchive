@@ -62,6 +62,7 @@ template void StorageFacade::insertClassObj<DbModel::IsFunctionTemplate&>(DbMode
 template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbModel::IsStandartLayoutClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
+template void StorageFacade::insertClassObj<DbModel::IsVariableTemplate&>(DbModel::IsVariableTemplate&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
 template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::LocationDefault&);
@@ -113,4 +114,7 @@ template void StorageFacade::insertClassObj<DbModel::VarRequire&>(DbModel::VarRe
 template void StorageFacade::insertClassObj<DbModel::VarSpecialized&>(DbModel::VarSpecialized&);
 template void StorageFacade::insertClassObj<DbModel::VarSpecifiers&>(DbModel::VarSpecifiers&);
 template void StorageFacade::insertClassObj<DbModel::Variable&>(DbModel::Variable&);
+template void StorageFacade::insertClassObj<DbModel::VariableInstantiation&>(DbModel::VariableInstantiation&);
+template void StorageFacade::insertClassObj<DbModel::VariableTemplateArgument&>(DbModel::VariableTemplateArgument&);
+template void StorageFacade::insertClassObj<DbModel::VariableTemplateArgumentValue&>(DbModel::VariableTemplateArgumentValue&);
 template void StorageFacade::insertClassObj<DbModel::WhileBody&>(DbModel::WhileBody&);
