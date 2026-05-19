@@ -46,6 +46,8 @@ std::unordered_set<std::string> conceptInstantiationDedup;
 std::unordered_set<std::string> conceptTemplateArgumentDedup;
 std::unordered_set<std::string> typeTemplateTypeConstraintDedup;
 std::unordered_set<int> isTypeConstraintDedup;
+std::unordered_set<int> nontypeTemplateParameterDedup;
+std::unordered_set<std::string> conceptTemplateArgumentValueDedup;
 std::unordered_map<std::string, int> conceptTemplateIds;
 std::unordered_map<std::string, int> conceptSpecializationIds;
 
@@ -152,6 +154,17 @@ bool shouldInsertTypeTemplateTypeConstraint(int typeId, int constraintId) {
 
 bool shouldInsertIsTypeConstraint(int conceptId) {
   return isTypeConstraintDedup.insert(conceptId).second;
+}
+
+bool shouldInsertNontypeTemplateParameter(int id) {
+  return nontypeTemplateParameterDedup.insert(id).second;
+}
+
+bool shouldInsertConceptTemplateArgumentValue(int conceptId, int index,
+                                              int argValue) {
+  return conceptTemplateArgumentValueDedup
+      .insert(makeTripleKey(conceptId, index, argValue))
+      .second;
 }
 
 int resolveVariableEntityId(const clang::VarDecl *decl,
@@ -385,6 +398,9 @@ int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr,
   } else if (const auto *boolLiteral =
                  llvm::dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
     exprProcessor->processBoolLiteral(boolLiteral);
+  } else if (const auto *declRefExpr =
+                 llvm::dyn_cast<clang::DeclRefExpr>(expr)) {
+    exprProcessor->processDeclRef(const_cast<clang::DeclRefExpr *>(declRefExpr));
   } else {
     return -1;
   }
@@ -696,6 +712,59 @@ void recordConceptTemplateTypeArguments(
   }
 }
 
+void recordConceptTemplateArgumentValues(
+    int conceptId, const clang::ConceptSpecializationExpr *expr,
+    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+  if (conceptId == -1 || !expr || !exprProcessor || !context)
+    return;
+
+  llvm::ArrayRef<clang::TemplateArgument> templateArgs =
+      expr->getTemplateArguments();
+
+  const clang::ASTTemplateArgumentListInfo *argsAsWritten =
+      expr->getTemplateArgsAsWritten();
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    const clang::Expr *sourceExpr = nullptr;
+
+    // Prefer source expression from args-as-written (with location info)
+    if (argsAsWritten && index < argsAsWritten->getNumTemplateArgs()) {
+      const clang::TemplateArgumentLoc &argLoc = (*argsAsWritten)[index];
+      sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    }
+
+    // Fall back: Expression kind directly stores the source expr
+    if (!sourceExpr && arg.getKind() == clang::TemplateArgument::Expression) {
+      sourceExpr = arg.getAsExpr();
+    }
+
+    // Defer: no source expression available (e.g., Integral without source loc,
+    // SubstNonTypeTemplateParmExpr, dependent, pack, null, etc.)
+    if (!sourceExpr)
+      continue;
+
+    // Check for SubstNonTypeTemplateParmExpr — defer
+    if (llvm::isa<clang::SubstNonTypeTemplateParmExpr>(sourceExpr))
+      continue;
+
+    int exprId =
+        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+    if (exprId == -1)
+      continue;
+
+    if (!shouldInsertConceptTemplateArgumentValue(conceptId,
+                                                  static_cast<int>(index),
+                                                  exprId))
+      continue;
+
+    DbModel::ConceptTemplateArgumentValue row = {conceptId,
+                                                  static_cast<int>(index),
+                                                  exprId};
+    STG.insertClassObj(row);
+  }
+}
+
 void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
                                   ExprProcessor *exprProcessor,
                                   clang::ASTContext *context) {
@@ -954,6 +1023,23 @@ bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
 bool ASTVisitor::VisitTemplateTemplateParmDecl(
     clang::TemplateTemplateParmDecl *decl) {
   type_processor_->processTemplateTemplateParmDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitNonTypeTemplateParmDecl(
+    clang::NonTypeTemplateParmDecl *decl) {
+  if (!decl)
+    return true;
+
+  int exprId = expr_processor_->processNonTypeTemplateParmDecl(decl);
+  if (exprId == -1)
+    return true;
+
+  if (shouldInsertNontypeTemplateParameter(exprId)) {
+    DbModel::NonTypeTemplateParameter row = {exprId};
+    STG.insertClassObj(row);
+  }
+
   return true;
 }
 
@@ -1344,5 +1430,7 @@ bool ASTVisitor::VisitConceptSpecializationExpr(
 
   recordConceptTemplateTypeArguments(conceptId, expr->getTemplateArguments(),
                                      type_processor_.get(), context_);
+  recordConceptTemplateArgumentValues(conceptId, expr, expr_processor_.get(),
+                                      context_);
   return true;
 }

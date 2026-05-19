@@ -15,6 +15,7 @@
 namespace clang {
 class ConceptDecl;
 class ConceptSpecializationExpr;
+class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
 } // namespace clang
 
@@ -63,6 +64,7 @@ public:
   bool VisitTypedefDecl(clang::TypedefDecl *decl);
   bool VisitBuiltinType(clang::BuiltinType *BT);
   bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl);
+  bool VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateParmDecl *decl);
   bool VisitTemplateTemplateParmDecl(clang::TemplateTemplateParmDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
   bool VisitConceptDecl(clang::ConceptDecl *decl);

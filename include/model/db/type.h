@@ -230,6 +230,10 @@ struct TypeTemplateTypeConstraint {
   int constraint;
 };
 
+struct NonTypeTemplateParameter {
+  int id;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

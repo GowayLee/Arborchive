@@ -4,6 +4,7 @@
 #include "db/cache_repository.h"
 #include "model/db/expr.h"
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Expr.h>
 #include <string>
 
@@ -25,6 +26,10 @@ namespace KeyGen {
 namespace Expr_ {
 // For clang::Expr
 KeyType makeKey(const Expr *expr, ASTContext *ctx);
+
+// For NonTypeTemplateParmDecl materialized as @expr
+KeyType makeKeyForNonTypeTemplateParm(const NonTypeTemplateParmDecl *decl,
+                                      ASTContext *ctx);
 
 } // namespace Expr_
 

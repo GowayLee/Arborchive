@@ -169,6 +169,12 @@ inline auto type_template_type_constraint() {
                   &DbModel::TypeTemplateTypeConstraint::constraint));
 }
 
+inline auto nontype_template_parameters() {
+  return make_table(
+      "nontype_template_parameters",
+      make_column("id", &DbModel::NonTypeTemplateParameter::id));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

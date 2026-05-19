@@ -109,11 +109,13 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::template_template_instantiation(),
       TypeTableFn::template_template_argument(),
       TypeTableFn::type_template_type_constraint(),
+      TypeTableFn::nontype_template_parameters(),
       // Concept Tables
       ConceptTableFn::concept_templates(),
       ConceptTableFn::concept_instantiation(),
       ConceptTableFn::is_type_constraint(),
       ConceptTableFn::concept_template_argument(),
+      ConceptTableFn::concept_template_argument_value(),
       TypeTableFn::enumconstants(),
       TypeTableFn::typedefbase(),
       TypeTableFn::arraysizes(),

@@ -184,6 +184,49 @@ KeyType makeKey(const Expr *expr, ASTContext *ctx) {
   return locStr;
 }
 
+KeyType makeKeyForNonTypeTemplateParm(const NonTypeTemplateParmDecl *decl,
+                                        ASTContext *ctx) {
+  if (!decl || !ctx)
+    return "";
+
+  const SourceManager &SM = ctx->getSourceManager();
+
+  // Source location
+  SourceLocation loc = SM.getSpellingLoc(decl->getLocation());
+  std::string locStr;
+  if (loc.isValid()) {
+    locStr = loc.printToString(SM);
+  } else {
+    locStr = "addr-" + std::to_string(reinterpret_cast<std::uintptr_t>(decl));
+  }
+
+  // Decl context (parent template or enclosing decl)
+  std::string contextStr;
+  if (const auto *dc = decl->getDeclContext()) {
+    if (const auto *named = llvm::dyn_cast<NamedDecl>(dc)) {
+      contextStr = named->getQualifiedNameAsString();
+    } else {
+      contextStr = std::to_string(reinterpret_cast<std::uintptr_t>(dc));
+    }
+  }
+
+  // Depth and index
+  unsigned depth = decl->getDepth();
+  unsigned index = decl->getIndex();
+
+  // Parameter name
+  std::string name = decl->getNameAsString();
+
+  // Parameter type
+  std::string typeStr = decl->getType().getAsString();
+
+  return "nttp-" + locStr + "-ctx-" + contextStr +
+         "-depth-" + std::to_string(depth) +
+         "-idx-" + std::to_string(index) +
+         "-name-" + name +
+         "-type-" + typeStr;
+}
+
 } // namespace Expr_
 
 } // namespace KeyGen

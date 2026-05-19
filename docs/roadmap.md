@@ -41,10 +41,10 @@ instantiation semantics、non-type/value template argument expr support。
 
 | Phase | 目标 | Deferred | 边界 |
 | --- | --- | --- | --- |
-| P3a concept/constraint expr extraction | 调查并支持 concept / requires / type constraint 相关表达式能否安全落到 `@expr`。 | 91, 115, 117 | investigation complete；详见 `docs/p3a_constraint_expr_investigation.md`。 |
-| P3b type constraint binding | 明确 template type parameter 与 concept/type constraint 的绑定关系。 | 91, 115 | partial safe subset implemented；`template <Concept T>` 可写 91/115，其他 constraint/value 场景继续 deferred。 |
-| P3c template-template instantiation semantics | 明确 `template_template_instantiation` 的 from/to 语义，以及 TemplateTemplateParmDecl -> `@usertype(kind=8)` 建模链路。 | 110, 112 | safe subset implemented；详见 `docs/p3c_template_template_semantics.md`，112 继续 deferred。 |
-| P3d non-type/value template argument expr support | 扩大 non-type/value template argument 中真实 source `Expr*` 的安全支持范围。 | 90, 112, 117 | 继续遵守 P2 限制：`*_template_argument_value` 只在有真实 source `Expr*` 且能安全落到 `@expr` 时写入。 |
+| P3a concept/constraint expr extraction | 调查并支持 concept / requires / type constraint 相关表达式能否安全落到 `@expr`。 | 91, 115, 117 | done；详见 `docs/p3a_constraint_expr_investigation.md`。 |
+| P3b type constraint binding | 明确 template type parameter 与 concept/type constraint 的绑定关系。 | 91, 115 | safe subset complete；`template <Concept T>` 可写 91/115，其他 constraint/value 场景继续 deferred。 |
+| P3c template-template instantiation semantics | 明确 `template_template_instantiation` 的 from/to 语义，以及 TemplateTemplateParmDecl -> `@usertype(kind=8)` 建模链路。 | 110, 112 | safe subset complete；详见 `docs/p3c_template_template_semantics.md`，112 继续 deferred。 |
+| P3d non-type/value template argument expr support | 扩大 non-type/value template argument 中真实 source `Expr*` 的安全支持范围。 | 90, 112, 117 | safe subset complete；90 和 117 已实现，112 继续 deferred；详见 `docs/p3d_value_template_argument_support.md`。 |
 
 ## 验证入口
 

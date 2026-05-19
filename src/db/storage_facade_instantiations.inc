@@ -15,6 +15,7 @@ template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::ConceptInstantiation&>(DbModel::ConceptInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::ConceptTemplate&>(DbModel::ConceptTemplate&);
 template void StorageFacade::insertClassObj<DbModel::ConceptTemplateArgument&>(DbModel::ConceptTemplateArgument&);
+template void StorageFacade::insertClassObj<DbModel::ConceptTemplateArgumentValue&>(DbModel::ConceptTemplateArgumentValue&);
 template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
 template void StorageFacade::insertClassObj<DbModel::Coroutine&>(DbModel::Coroutine&);
 template void StorageFacade::insertClassObj<DbModel::CoroutineDelete&>(DbModel::CoroutineDelete&);
@@ -82,6 +83,7 @@ template void StorageFacade::insertClassObj<DbModel::MemberVar&>(DbModel::Member
 template void StorageFacade::insertClassObj<DbModel::Namespace&>(DbModel::Namespace&);
 template void StorageFacade::insertClassObj<DbModel::NamespaceInline&>(DbModel::NamespaceInline&);
 template void StorageFacade::insertClassObj<DbModel::NamespaceMember&>(DbModel::NamespaceMember&);
+template void StorageFacade::insertClassObj<DbModel::NonTypeTemplateParameter&>(DbModel::NonTypeTemplateParameter&);
 template void StorageFacade::insertClassObj<DbModel::Parameter&>(DbModel::Parameter&);
 template void StorageFacade::insertClassObj<DbModel::ParameterizedElement&>(DbModel::ParameterizedElement&);
 template void StorageFacade::insertClassObj<DbModel::PointerishSize&>(DbModel::PointerishSize&);

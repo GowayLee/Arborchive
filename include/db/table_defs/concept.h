@@ -38,6 +38,16 @@ inline auto is_type_constraint() {
       make_column("concept_id", &DbModel::IsTypeConstraint::concept_id,
                   primary_key()));
 }
+
+inline auto concept_template_argument_value() {
+  return make_table(
+      "concept_template_argument_value",
+      make_column("concept_id",
+                  &DbModel::ConceptTemplateArgumentValue::concept_id),
+      make_column("index", &DbModel::ConceptTemplateArgumentValue::index),
+      make_column("arg_value",
+                  &DbModel::ConceptTemplateArgumentValue::arg_value));
+}
 // clang-format on
 
 } // namespace ConceptTableFn

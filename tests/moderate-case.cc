@@ -113,6 +113,24 @@ ConstrainedParamBox<int> constrained_param_box;
 RequiresClauseBox<int> requires_clause_box;
 PositiveBox<2> positive_box;
 
+// P3d fixtures: non-type value template arguments
+template <int N>
+struct ValueBox {
+  int value;
+};
+
+template <int N>
+concept PositiveValue = (N > 0);
+
+template <int N>
+requires PositiveValue<N>
+struct PositiveValueBox {
+  ValueBox<N> value;
+};
+
+ValueBox<1> valueBoxOne;
+PositiveValueBox<1> positiveValueBoxOne;
+
 void use_templates() {
   Holder<int> h{identity(1)};
   Holder<double> hd{identity(2.0)};

@@ -42,6 +42,7 @@ public:
   void processUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr);
   int processConceptSpecializationExpr(
       const ConceptSpecializationExpr *expr, int conceptId);
+  int processNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *decl);
 
   ExprProcessor(ASTContext *ast_context, const PrintingPolicy pp, TypeProcessor *tp = nullptr)
       : BaseProcessor(ast_context, pp), type_processor_(tp) {};
@@ -54,7 +55,6 @@ private:
   std::string _name;
 
   int processBaseExpr(Expr *expr, ExprKind exprKind);
-  void recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr);
 
   int processLiteralValue(const std::string &value, const std::string &text,
                           int exprId);
