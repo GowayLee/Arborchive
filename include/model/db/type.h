@@ -214,6 +214,12 @@ struct ClassTemplateArgumentValue {
   int arg_value;
 };
 
+struct TemplateTemplateArgument {
+  int type_id;
+  int index;
+  int arg_type;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

@@ -33,6 +33,7 @@ std::unordered_set<std::string> variableTemplateDedup;
 std::unordered_set<std::string> variableInstantiationDedup;
 std::unordered_set<std::string> variableTemplateArgumentDedup;
 std::unordered_set<std::string> variableTemplateArgumentValueDedup;
+std::unordered_set<std::string> templateTemplateArgumentDedup;
 
 std::string makePairKey(int first, int second) {
   return std::to_string(first) + ":" + std::to_string(second);
@@ -102,6 +103,12 @@ bool shouldInsertVariableTemplateArgumentValue(int variableId, int index,
       .second;
 }
 
+bool shouldInsertTemplateTemplateArgument(int typeId, int index, int argType) {
+  return templateTemplateArgumentDedup
+      .insert(makeTripleKey(typeId, index, argType))
+      .second;
+}
+
 int resolveVariableEntityId(const clang::VarDecl *decl,
                             VariableProcessor *variableProcessor,
                             clang::ASTContext *context) {
@@ -143,6 +150,36 @@ int resolveTemplateArgumentTypeId(clang::QualType argType,
     return typeId;
 
   if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  return -1;
+}
+
+int resolveTemplateTemplateArgumentTypeId(const clang::TemplateArgument &arg,
+                                          TypeProcessor *typeProcessor,
+                                          clang::ASTContext *context) {
+  if (arg.getKind() != clang::TemplateArgument::Template || !typeProcessor ||
+      !context)
+    return -1;
+
+  const clang::TemplateDecl *templateDecl =
+      arg.getAsTemplate().getAsTemplateDecl();
+  const auto *classTemplateDecl =
+      llvm::dyn_cast_or_null<clang::ClassTemplateDecl>(templateDecl);
+  if (!classTemplateDecl || !classTemplateDecl->getTemplatedDecl())
+    return -1;
+
+  const clang::CXXRecordDecl *templatedDecl =
+      classTemplateDecl->getTemplatedDecl();
+  KeyType templateTypeKey = KeyGen::Type::makeKey(templatedDecl, context);
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
+    return *cachedId;
+
+  int templateTypeId = typeProcessor->processRecordDeclType(templatedDecl);
+  if (templateTypeId != -1)
+    return templateTypeId;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
     return *cachedId;
 
   return -1;
@@ -269,6 +306,29 @@ void recordClassTemplateArgumentValues(
     DbModel::ClassTemplateArgumentValue templateArgumentValue = {
         typeId, static_cast<int>(index), exprId};
     STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void recordTemplateTemplateArguments(
+    int typeId, const clang::TemplateArgumentList &templateArgs,
+    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+  if (typeId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    int argTypeId =
+        resolveTemplateTemplateArgumentTypeId(arg, typeProcessor, context);
+    if (argTypeId == -1)
+      continue;
+
+    if (!shouldInsertTemplateTemplateArgument(
+            typeId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::TemplateTemplateArgument templateArgument = {
+        typeId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
   }
 }
 
@@ -826,6 +886,9 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
   }
 
   recordClassTemplateTypeArguments(
+      specializationId, decl->getTemplateInstantiationArgs(),
+      type_processor_.get(), context_);
+  recordTemplateTemplateArguments(
       specializationId, decl->getTemplateInstantiationArgs(),
       type_processor_.get(), context_);
   recordClassTemplateArgumentValues(

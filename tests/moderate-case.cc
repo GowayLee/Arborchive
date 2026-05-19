@@ -31,6 +31,15 @@ template <typename T> struct Box {
   T value;
 };
 
+template <typename T> struct TTBox {
+  T value;
+};
+
+template <template <typename> class C, typename T>
+struct UsesTemplateTemplate {
+  C<T> value;
+};
+
 template <typename T, int N> struct FixedBuffer {
   T data[N];
 };
@@ -41,6 +50,7 @@ template <> struct FixedBuffer<int, 4> {
 
 Box<int> box_int;
 FixedBuffer<char, 16> fb_char_16;
+UsesTemplateTemplate<TTBox, int> uses_tt;
 
 template <int N> int add_n(int value) { return value + N; }
 

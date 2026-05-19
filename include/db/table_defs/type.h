@@ -146,6 +146,14 @@ inline auto class_template_argument_value() {
       make_column("arg_value", &DbModel::ClassTemplateArgumentValue::arg_value));
 }
 
+inline auto template_template_argument() {
+  return make_table(
+      "template_template_argument",
+      make_column("type_id", &DbModel::TemplateTemplateArgument::type_id),
+      make_column("index", &DbModel::TemplateTemplateArgument::index),
+      make_column("arg_type", &DbModel::TemplateTemplateArgument::arg_type));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(
