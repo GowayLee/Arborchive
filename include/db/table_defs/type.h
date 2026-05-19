@@ -146,6 +146,13 @@ inline auto class_template_argument_value() {
       make_column("arg_value", &DbModel::ClassTemplateArgumentValue::arg_value));
 }
 
+inline auto template_template_instantiation() {
+  return make_table(
+      "template_template_instantiation",
+      make_column("to", &DbModel::TemplateTemplateInstantiation::to),
+      make_column("from", &DbModel::TemplateTemplateInstantiation::from));
+}
+
 inline auto template_template_argument() {
   return make_table(
       "template_template_argument",

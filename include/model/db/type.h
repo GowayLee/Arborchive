@@ -214,6 +214,11 @@ struct ClassTemplateArgumentValue {
   int arg_value;
 };
 
+struct TemplateTemplateInstantiation {
+  int to;
+  int from;
+};
+
 struct TemplateTemplateArgument {
   int type_id;
   int index;

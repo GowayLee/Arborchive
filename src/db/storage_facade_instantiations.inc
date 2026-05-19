@@ -101,6 +101,7 @@ template void StorageFacade::insertClassObj<DbModel::SwitchBody&>(DbModel::Switc
 template void StorageFacade::insertClassObj<DbModel::SwitchCase&>(DbModel::SwitchCase&);
 template void StorageFacade::insertClassObj<DbModel::SwitchInit&>(DbModel::SwitchInit&);
 template void StorageFacade::insertClassObj<DbModel::TemplateTemplateArgument&>(DbModel::TemplateTemplateArgument&);
+template void StorageFacade::insertClassObj<DbModel::TemplateTemplateInstantiation&>(DbModel::TemplateTemplateInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::Type&>(DbModel::Type&);
 template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDecl&);
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);

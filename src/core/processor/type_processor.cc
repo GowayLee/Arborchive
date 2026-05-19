@@ -108,6 +108,30 @@ void TypeProcessor::processTemplateTypeParmDecl(
   processTypeDecl(TTPD);
 }
 
+int TypeProcessor::processTemplateTemplateParmDecl(
+    const TemplateTemplateParmDecl *TTPD) {
+  if (!TTPD)
+    return -1;
+
+  KeyType userTypeKey = KeyGen::Type::makeKey(TTPD, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+    return *cachedId;
+  }
+
+  std::string name = TTPD->getNameAsString();
+  if (name.empty())
+    name = "(anonymous)";
+
+  DbModel::UserType userTypeModel = {
+      GENID(UserType), name,
+      static_cast<int>(UserTypeKind::TEMPLATE_TEMPLATE_PARAMETER)};
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+  _typeId = userTypeModel.id;
+  return userTypeModel.id;
+}
+
 void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
   LocIdPair *locIdPair = SrcLocRecorder::processDefault(TD, ast_context_);
 
