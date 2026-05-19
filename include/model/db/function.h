@@ -64,6 +64,27 @@ struct FunImplicit {
   int id;
 };
 
+struct IsFunctionTemplate {
+  int id;
+};
+
+struct FunctionInstantiation {
+  int to;
+  int from;
+};
+
+struct FunctionTemplateArgument {
+  int function_id;
+  int index;
+  int arg_type;
+};
+
+struct FunctionTemplateArgumentValue {
+  int function_id;
+  int index;
+  int arg_value;
+};
+
 struct FuncEntryPt {
   int id;
   int entry_point;

@@ -85,6 +85,34 @@ std::string getScopePath(const NamedDecl *decl) {
 }
 
 std::string getDeclName(const NamedDecl *decl) {
+  if (const auto *templateTemplateParam =
+          llvm::dyn_cast<TemplateTemplateParmDecl>(decl)) {
+    std::string name = templateTemplateParam->getNameAsString();
+    if (name.empty())
+      name = "(anonymous)";
+
+    SourceLocation loc = templateTemplateParam->getLocation();
+    std::string locStr = loc.printToString(
+        templateTemplateParam->getASTContext().getSourceManager());
+    return name + "@template-template-param:" +
+           std::to_string(templateTemplateParam->getDepth()) + ":" +
+           std::to_string(templateTemplateParam->getIndex()) + ":" + locStr;
+  }
+
+  if (const auto *templateParam =
+          llvm::dyn_cast<TemplateTypeParmDecl>(decl)) {
+    std::string name = templateParam->getNameAsString();
+    if (name.empty())
+      name = "(anonymous)";
+
+    SourceLocation loc = templateParam->getLocation();
+    std::string locStr =
+        loc.printToString(templateParam->getASTContext().getSourceManager());
+    return name + "@template-type-param:" +
+           std::to_string(templateParam->getDepth()) + ":" +
+           std::to_string(templateParam->getIndex()) + ":" + locStr;
+  }
+
   if (decl->getDeclName().isEmpty()) {
     // 匿名声明：使用源码位置作为唯一标识
     SourceLocation loc = decl->getLocation();

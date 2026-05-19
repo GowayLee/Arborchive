@@ -11,6 +11,157 @@ int add(int a, int b);
 void printInt(int value);
 void printPoint(const Point *p);
 
+class FriendSecret;
+
+class FriendBox {
+  friend void inspectFriendBox(FriendBox &);
+  friend class FriendSecret;
+  int value;
+};
+
+void inspectFriendBox(FriendBox &) {}
+
+template <typename T> T identity(T value) { return value; }
+
+template <typename T> struct Holder {
+  T value;
+};
+
+template <typename T> struct Box {
+  T value;
+};
+
+template <typename T> struct TTBox {
+  T value;
+};
+
+template <template <typename> class TT>
+struct UsesTemplate {
+  TT<int> value;
+};
+
+template <template <typename> class C, typename T>
+struct UsesTemplateTemplate {
+  C<T> value;
+};
+
+template <typename T, int N> struct FixedBuffer {
+  T data[N];
+};
+
+template <> struct FixedBuffer<int, 4> {
+  int value;
+};
+
+Box<int> box_int;
+FixedBuffer<char, 16> fb_char_16;
+UsesTemplateTemplate<TTBox, int> uses_tt;
+template struct UsesTemplate<Holder>;
+
+template <int N> int add_n(int value) { return value + N; }
+
+template <int N> int get_number() { return N; }
+
+template <typename T> constexpr T zero_v = T{};
+
+template <typename T, int N> constexpr T value_v = T(N);
+
+template <typename T>
+concept Addable = requires(T v) {
+  v + 1;
+};
+
+static_assert(Addable<int>);
+
+template <Addable T>
+struct ConceptBox {
+  T value;
+};
+
+ConceptBox<int> concept_box;
+
+template <typename T>
+concept AlwaysTrue = true;
+
+template <typename T>
+concept HasPlusOne = requires(T v) {
+  v + 1;
+};
+
+template <AlwaysTrue T>
+struct ConstrainedParamBox {
+  T value;
+};
+
+template <typename T>
+requires HasPlusOne<T>
+struct RequiresClauseBox {
+  T value;
+};
+
+template <int N>
+concept Positive = (N > 0);
+
+template <int N>
+requires Positive<N>
+struct PositiveBox {
+  int value[N];
+};
+
+static_assert(AlwaysTrue<int>);
+ConstrainedParamBox<int> constrained_param_box;
+RequiresClauseBox<int> requires_clause_box;
+PositiveBox<2> positive_box;
+
+// P3d fixtures: non-type value template arguments
+template <int N>
+struct ValueBox {
+  int value;
+};
+
+template <int N>
+concept PositiveValue = (N > 0);
+
+template <int N>
+requires PositiveValue<N>
+struct PositiveValueBox {
+  ValueBox<N> value;
+};
+
+ValueBox<1> valueBoxOne;
+PositiveValueBox<1> positiveValueBoxOne;
+
+void use_templates() {
+  Holder<int> h{identity(1)};
+  Holder<double> hd{identity(2.0)};
+}
+
+void use_nontype_template_args() {
+  FixedBuffer<int, 4> buffer{};
+  int v = add_n<3>(10);
+  int x = identity<int>(1);
+  int y = get_number<42>();
+  (void)buffer;
+  (void)v;
+  (void)x;
+  (void)y;
+}
+
+void use_variable_templates() {
+  int a = zero_v<int>;
+  int b = value_v<int, 7>;
+  (void)a;
+  (void)b;
+}
+
+void implicit_casts() {
+  int i = 1;
+  double d = i;
+  int *pi = &i;
+  const int *p = pi;
+  const void *vp = p;
+}
+
 void Point::print() const {
   // 打印结构体成员
   printInt(x);

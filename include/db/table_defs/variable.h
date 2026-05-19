@@ -82,6 +82,37 @@ inline auto var_specialized() {
       make_column("id", &DbModel::VarSpecialized::id));
 }
 
+inline auto is_variable_template() {
+  return make_table(
+      "is_variable_template",
+      make_column("id", &DbModel::IsVariableTemplate::id, primary_key()));
+}
+
+inline auto variable_instantiation() {
+  return make_table(
+      "variable_instantiation",
+      make_column("to", &DbModel::VariableInstantiation::to),
+      make_column("from", &DbModel::VariableInstantiation::from));
+}
+
+inline auto variable_template_argument() {
+  return make_table(
+      "variable_template_argument",
+      make_column("variable_id", &DbModel::VariableTemplateArgument::variable_id),
+      make_column("index", &DbModel::VariableTemplateArgument::index),
+      make_column("arg_type", &DbModel::VariableTemplateArgument::arg_type));
+}
+
+inline auto variable_template_argument_value() {
+  return make_table(
+      "variable_template_argument_value",
+      make_column("variable_id",
+                  &DbModel::VariableTemplateArgumentValue::variable_id),
+      make_column("index", &DbModel::VariableTemplateArgumentValue::index),
+      make_column("arg_value",
+                  &DbModel::VariableTemplateArgumentValue::arg_value));
+}
+
 inline auto var_decl_specifiers() {
   return make_table(
       "var_decl_specifiers",

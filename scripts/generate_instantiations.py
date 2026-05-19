@@ -56,6 +56,7 @@ def main():
             DO NOT MODIFY\n\n"
         )
         f.write(instantiations_code)
+        f.write("\n")
 
     print(
         f"Successfully generated {len(dbmodel_structs)} instantiations in {output_file}"

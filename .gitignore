@@ -55,3 +55,7 @@ ast.db*
 # test
 tests/*.local/
 /arbor_notes/
+
+# Local working notes
+/my-docs/*
+!/my-docs/.gitkeep

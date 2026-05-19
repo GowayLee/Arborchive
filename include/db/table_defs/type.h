@@ -117,6 +117,64 @@ inline auto is_complete() {
       make_column("id", &DbModel::IsComplete::id, primary_key()));
 }
 
+inline auto is_class_template() {
+  return make_table(
+      "is_class_template",
+      make_column("id", &DbModel::IsClassTemplate::id, primary_key()));
+}
+
+inline auto class_instantiation() {
+  return make_table(
+      "class_instantiation",
+      make_column("to", &DbModel::ClassInstantiation::to),
+      make_column("from", &DbModel::ClassInstantiation::from));
+}
+
+inline auto class_template_argument() {
+  return make_table(
+      "class_template_argument",
+      make_column("type_id", &DbModel::ClassTemplateArgument::type_id),
+      make_column("index", &DbModel::ClassTemplateArgument::index),
+      make_column("arg_type", &DbModel::ClassTemplateArgument::arg_type));
+}
+
+inline auto class_template_argument_value() {
+  return make_table(
+      "class_template_argument_value",
+      make_column("type_id", &DbModel::ClassTemplateArgumentValue::type_id),
+      make_column("index", &DbModel::ClassTemplateArgumentValue::index),
+      make_column("arg_value", &DbModel::ClassTemplateArgumentValue::arg_value));
+}
+
+inline auto template_template_instantiation() {
+  return make_table(
+      "template_template_instantiation",
+      make_column("to", &DbModel::TemplateTemplateInstantiation::to),
+      make_column("from", &DbModel::TemplateTemplateInstantiation::from));
+}
+
+inline auto template_template_argument() {
+  return make_table(
+      "template_template_argument",
+      make_column("type_id", &DbModel::TemplateTemplateArgument::type_id),
+      make_column("index", &DbModel::TemplateTemplateArgument::index),
+      make_column("arg_type", &DbModel::TemplateTemplateArgument::arg_type));
+}
+
+inline auto type_template_type_constraint() {
+  return make_table(
+      "type_template_type_constraint",
+      make_column("id", &DbModel::TypeTemplateTypeConstraint::id),
+      make_column("constraint",
+                  &DbModel::TypeTemplateTypeConstraint::constraint));
+}
+
+inline auto nontype_template_parameters() {
+  return make_table(
+      "nontype_template_parameters",
+      make_column("id", &DbModel::NonTypeTemplateParameter::id));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

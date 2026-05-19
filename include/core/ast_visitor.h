@@ -12,6 +12,13 @@
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <memory>
 
+namespace clang {
+class ConceptDecl;
+class ConceptSpecializationExpr;
+class NonTypeTemplateParmDecl;
+class TemplateTemplateParmDecl;
+} // namespace clang
+
 class ASTVisitor : public clang::RecursiveASTVisitor<ASTVisitor> {
 private:
   clang::ASTContext *context_;
@@ -57,8 +64,16 @@ public:
   bool VisitTypedefDecl(clang::TypedefDecl *decl);
   bool VisitBuiltinType(clang::BuiltinType *BT);
   bool VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl);
+  bool VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateParmDecl *decl);
+  bool VisitTemplateTemplateParmDecl(clang::TemplateTemplateParmDecl *decl);
   bool VisitFriendDecl(clang::FriendDecl *decl);
+  bool VisitConceptDecl(clang::ConceptDecl *decl);
   bool VisitTemplateDecl(clang::TemplateDecl *decl);
+  bool VisitClassTemplateDecl(clang::ClassTemplateDecl *decl);
+  bool VisitClassTemplateSpecializationDecl(
+      clang::ClassTemplateSpecializationDecl *decl);
+  bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl *decl);
+  bool VisitVarTemplateDecl(clang::VarTemplateDecl *decl);
 
   // Stmt Family
   bool VisitIfStmt(clang::IfStmt *ifStmt);
@@ -81,6 +96,7 @@ public:
   bool VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr);
   bool VisitInitListExpr(clang::InitListExpr *expr);
   bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr);
+  bool VisitConceptSpecializationExpr(clang::ConceptSpecializationExpr *expr);
 
   // Literal Family
   bool VisitStringLiteral(const clang::StringLiteral *literal);

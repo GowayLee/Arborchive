@@ -20,6 +20,13 @@ struct Declaration {
   int type;
 };
 
+struct FriendDecl {
+  int id;
+  int type_id;
+  int decl_id;
+  int location;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_DECLRATION_H_

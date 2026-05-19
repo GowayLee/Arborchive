@@ -17,6 +17,10 @@ int VariableProcessor::processVarDecl(const VarDecl *VD) {
   if (!VD || VD->isImplicit())
     return -1;
 
+  KeyType VDKey = KeyGen::Var::makeKey(VD, ast_context_);
+  if (SEARCH_VARIABLE_CACHE(VDKey))
+    return -1;
+
   int varId;
 
   // Classify VarDecl first to get the specific variable ID
@@ -56,7 +60,6 @@ int VariableProcessor::processVarDecl(const VarDecl *VD) {
                               locIdPair->spec_id};
 
   // Maintain cache
-  KeyType VDKey = KeyGen::Var::makeKey(VD, ast_context_);
   INSERT_VARIABLE_CACHE(VDKey, varId);
 
   if (VD->isThisDeclarationADefinition()) {

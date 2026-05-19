@@ -1,11 +1,13 @@
 #include "util/key_generator/expr.h"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprConcepts.h>
 #include <clang/AST/ExprCXX.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/Basic/Specifiers.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/SmallVector.h>
+#include <llvm/Support/raw_ostream.h>
 #include <string>
 
 namespace KeyGen {
@@ -144,6 +146,31 @@ KeyType makeKey(const Expr *expr, ASTContext *ctx) {
     locStr += "-opcode-" + std::to_string(binaryOp->getOpcode());
   } else if (auto unaryOp = llvm::dyn_cast<UnaryOperator>(expr)) {
     locStr += "-opcode-" + std::to_string(unaryOp->getOpcode());
+  } else if (auto conceptExpr =
+                 llvm::dyn_cast<ConceptSpecializationExpr>(expr)) {
+    std::string fileName = SM.getFilename(start).str();
+    if (!fileName.empty())
+      locStr += "-file-" + fileName;
+
+    if (const ConceptDecl *concept = conceptExpr->getNamedConcept()) {
+      const ConceptDecl *canonicalConcept = concept->getCanonicalDecl();
+      locStr += "-concept-" +
+                canonicalConcept->getQualifiedNameAsString();
+    }
+
+    // Keep this aligned with the concept specialization identity key: use the
+    // printed template argument content, not only the argument count.
+    std::string argKey;
+    llvm::raw_string_ostream argStream(argKey);
+    clang::PrintingPolicy policy(ctx->getLangOpts());
+    llvm::ArrayRef<clang::TemplateArgument> args =
+        conceptExpr->getTemplateArguments();
+    for (unsigned index = 0; index < args.size(); ++index) {
+      if (index != 0)
+        argStream << ",";
+      args[index].print(policy, argStream, true);
+    }
+    locStr += "-args-" + argStream.str();
   }
   // // 生成MD5哈希
   // llvm::MD5 hash;
@@ -155,6 +182,49 @@ KeyType makeKey(const Expr *expr, ASTContext *ctx) {
   // llvm::SmallString<32> hexStr;
   // llvm::MD5::stringifyResult(result, hexStr);
   return locStr;
+}
+
+KeyType makeKeyForNonTypeTemplateParm(const NonTypeTemplateParmDecl *decl,
+                                        ASTContext *ctx) {
+  if (!decl || !ctx)
+    return "";
+
+  const SourceManager &SM = ctx->getSourceManager();
+
+  // Source location
+  SourceLocation loc = SM.getSpellingLoc(decl->getLocation());
+  std::string locStr;
+  if (loc.isValid()) {
+    locStr = loc.printToString(SM);
+  } else {
+    locStr = "addr-" + std::to_string(reinterpret_cast<std::uintptr_t>(decl));
+  }
+
+  // Decl context (parent template or enclosing decl)
+  std::string contextStr;
+  if (const auto *dc = decl->getDeclContext()) {
+    if (const auto *named = llvm::dyn_cast<NamedDecl>(dc)) {
+      contextStr = named->getQualifiedNameAsString();
+    } else {
+      contextStr = std::to_string(reinterpret_cast<std::uintptr_t>(dc));
+    }
+  }
+
+  // Depth and index
+  unsigned depth = decl->getDepth();
+  unsigned index = decl->getIndex();
+
+  // Parameter name
+  std::string name = decl->getNameAsString();
+
+  // Parameter type
+  std::string typeStr = decl->getType().getAsString();
+
+  return "nttp-" + locStr + "-ctx-" + contextStr +
+         "-depth-" + std::to_string(depth) +
+         "-idx-" + std::to_string(index) +
+         "-name-" + name +
+         "-type-" + typeStr;
 }
 
 } // namespace Expr_

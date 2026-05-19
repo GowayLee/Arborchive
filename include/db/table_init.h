@@ -4,6 +4,7 @@
 #include "db/table_defs/class.h"
 #include "db/table_defs/variable.h"
 #include "table_defs/compilation.h"
+#include "table_defs/concept.h"
 #include "table_defs/container.h"
 #include "table_defs/declaration.h"
 #include "table_defs/element.h"
@@ -42,6 +43,7 @@ inline auto initStorage(const std::string &path) {
       ContainerTableFn::namespacembrs(),
       // Declaration Tables
       DeclTableFn::declarations(),
+      DeclTableFn::frienddecls(),
       // Function Tables
       FuncTableFn::functions(),
       FuncTableFn::fun_decls(),
@@ -53,6 +55,10 @@ inline auto initStorage(const std::string &path) {
       FuncTableFn::function_prototyped(),
       FuncTableFn::fun_specialized(),
       FuncTableFn::fun_implicit(),
+      FuncTableFn::is_function_template(),
+      FuncTableFn::function_instantiation(),
+      FuncTableFn::function_template_argument(),
+      FuncTableFn::function_template_argument_value(),
       FuncTableFn::function_entry_point(),
       FuncTableFn::deduction_guide_for_class(),
       FuncTableFn::fun_decl_throws(),
@@ -74,6 +80,10 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::var_decls(),
       VarTableFn::var_def(),
       VarTableFn::var_specialized(),
+      VarTableFn::is_variable_template(),
+      VarTableFn::variable_instantiation(),
+      VarTableFn::variable_template_argument(),
+      VarTableFn::variable_template_argument_value(),
       VarTableFn::var_decl_specifiers(),
       VarTableFn::is_structured_binding(),
       VarTableFn::var_requires(),
@@ -92,6 +102,20 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::is_pod_class(),
       TypeTableFn::is_standard_layout_class(),
       TypeTableFn::is_complete(),
+      TypeTableFn::is_class_template(),
+      TypeTableFn::class_instantiation(),
+      TypeTableFn::class_template_argument(),
+      TypeTableFn::class_template_argument_value(),
+      TypeTableFn::template_template_instantiation(),
+      TypeTableFn::template_template_argument(),
+      TypeTableFn::type_template_type_constraint(),
+      TypeTableFn::nontype_template_parameters(),
+      // Concept Tables
+      ConceptTableFn::concept_templates(),
+      ConceptTableFn::concept_instantiation(),
+      ConceptTableFn::is_type_constraint(),
+      ConceptTableFn::concept_template_argument(),
+      ConceptTableFn::concept_template_argument_value(),
       TypeTableFn::enumconstants(),
       TypeTableFn::typedefbase(),
       TypeTableFn::arraysizes(),

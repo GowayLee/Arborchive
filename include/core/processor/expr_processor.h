@@ -6,6 +6,7 @@
 #include "model/db/expr.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprConcepts.h>
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/Stmt.h>
 
@@ -39,6 +40,9 @@ public:
   void processArraySubscriptExpr(const ArraySubscriptExpr *expr);
   void processInitListExpr(const InitListExpr *expr);
   void processUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr);
+  int processConceptSpecializationExpr(
+      const ConceptSpecializationExpr *expr, int conceptId);
+  int processNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *decl);
 
   ExprProcessor(ASTContext *ast_context, const PrintingPolicy pp, TypeProcessor *tp = nullptr)
       : BaseProcessor(ast_context, pp), type_processor_(tp) {};
@@ -51,7 +55,6 @@ private:
   std::string _name;
 
   int processBaseExpr(Expr *expr, ExprKind exprKind);
-  void recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr);
 
   int processLiteralValue(const std::string &value, const std::string &text,
                           int exprId);

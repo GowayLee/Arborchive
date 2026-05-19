@@ -5,6 +5,7 @@
 #include "core/srcloc_recorder.h"
 #include "model/db/type.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclTemplate.h>
 
 using namespace clang;
 
@@ -17,7 +18,9 @@ public:
   void processEnumDecl(const EnumDecl *ED);
   void processTypedefDecl(const TypedefDecl *TND);
   void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
+  int processTemplateTemplateParmDecl(const TemplateTemplateParmDecl *TTPD);
   void processTypeDecl(const TypeDecl *TD);
+  int processRecordDeclType(const RecordDecl *RD);
   void processRecordType(const RecordType *RT);
   int processBuiltinType(const BuiltinType *BT, ASTContext *ast_context);
 

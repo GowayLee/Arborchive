@@ -193,6 +193,47 @@ struct IsComplete {
   int id;
 };
 
+struct IsClassTemplate {
+  int id;
+};
+
+struct ClassInstantiation {
+  int to;
+  int from;
+};
+
+struct ClassTemplateArgument {
+  int type_id;
+  int index;
+  int arg_type;
+};
+
+struct ClassTemplateArgumentValue {
+  int type_id;
+  int index;
+  int arg_value;
+};
+
+struct TemplateTemplateInstantiation {
+  int to;
+  int from;
+};
+
+struct TemplateTemplateArgument {
+  int type_id;
+  int index;
+  int arg_type;
+};
+
+struct TypeTemplateTypeConstraint {
+  int id;
+  int constraint;
+};
+
+struct NonTypeTemplateParameter {
+  int id;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

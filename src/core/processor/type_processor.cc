@@ -10,6 +10,7 @@
 #include "util/key_generator/type.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Specifiers.h>
 #include <iostream>
@@ -89,11 +90,46 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
 
 void TypeProcessor::processTemplateTypeParmDecl(
     const TemplateTypeParmDecl *TTPD) {
-  auto T = TTPD->getTypeForDecl();
-  if (T) {
-    _typeId = processType(T);
-    processTypeDecl(TTPD);
+  if (!TTPD)
+    return;
+
+  KeyType userTypeKey = KeyGen::Type::makeKey(TTPD, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+  } else {
+    DbModel::UserType userTypeModel = {
+        GENID(UserType), TTPD->getNameAsString(),
+        static_cast<int>(UserTypeKind::TEMPLATE_PARAMETER)};
+    INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+    STG.insertClassObj(userTypeModel);
+    _typeId = userTypeModel.id;
   }
+
+  processTypeDecl(TTPD);
+}
+
+int TypeProcessor::processTemplateTemplateParmDecl(
+    const TemplateTemplateParmDecl *TTPD) {
+  if (!TTPD)
+    return -1;
+
+  KeyType userTypeKey = KeyGen::Type::makeKey(TTPD, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+    return *cachedId;
+  }
+
+  std::string name = TTPD->getNameAsString();
+  if (name.empty())
+    name = "(anonymous)";
+
+  DbModel::UserType userTypeModel = {
+      GENID(UserType), name,
+      static_cast<int>(UserTypeKind::TEMPLATE_TEMPLATE_PARAMETER)};
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+  _typeId = userTypeModel.id;
+  return userTypeModel.id;
 }
 
 void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
@@ -110,14 +146,16 @@ void TypeProcessor::processTypeDecl(const TypeDecl *TD) {
   STG.insertClassObj(typeDecl);
 }
 
-void TypeProcessor::processRecordType(const RecordType *RT) {
-  // Extract the RecordDecl from the RecordType
-  const RecordDecl *RD = RT->getDecl();
+int TypeProcessor::processRecordDeclType(const RecordDecl *RD) {
   if (!RD)
-    return;
+    return -1;
 
   // Get typename
   std::string typeName = RD->getNameAsString();
+  if (const auto *specDecl =
+          dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+    typeName = KeyGen::Type::makeKey(specDecl, ast_context_);
+  }
   if (typeName.empty()) {
     // Handle anonymous types
     typeName = "<anonymous>";
@@ -154,16 +192,31 @@ void TypeProcessor::processRecordType(const RecordType *RT) {
   LOG_DEBUG << "RecordType UserType Key: " << userTypeKey << std::endl;
 
   // Check cache first
-  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey))
-    return;
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+    return *cachedId;
+  }
 
   INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
+  _typeId = userTypeModel.id;
+  return userTypeModel.id;
+}
+
+void TypeProcessor::processRecordType(const RecordType *RT) {
+  if (!RT)
+    return;
+
+  // Extract the RecordDecl from the RecordType
+  const RecordDecl *RD = RT->getDecl();
+  int typeId = processRecordDeclType(RD);
+  if (typeId == -1)
+    return;
 
   // Process additional type details (similar to processUserType)
-  record_is_pod_class(RT, userTypeModel.id);
-  record_is_standard_layout_class(RT, userTypeModel.id);
-  record_is_complete(RT, userTypeModel.id);
+  record_is_pod_class(RT, typeId);
+  record_is_standard_layout_class(RT, typeId);
+  record_is_complete(RT, typeId);
 }
 
 void TypeProcessor::recordTypeDef(const TypeDecl *TD) {
@@ -375,17 +428,16 @@ void TypeProcessor::processTypedefBase(const TypedefNameDecl *TND, int typedefId
 void TypeProcessor::processArraySizes(const ArrayType *AT, int derivedTypeId) {
   // Get number of elements (0 for incomplete arrays)
   int num_elements = 0;
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
-    num_elements = CAT->getZExtSize();
-  }
-
-  // Calculate byte size and alignment
   int bytesize = 0;
   int alignment = 0;
 
-  if (ast_context_) {
-    bytesize = ast_context_->getTypeSize(AT) / ast_context_->getCharWidth();
-    alignment = ast_context_->getTypeAlign(AT) / ast_context_->getCharWidth();
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+    num_elements = CAT->getZExtSize();
+    if (ast_context_) {
+      bytesize = ast_context_->getTypeSize(CAT) / ast_context_->getCharWidth();
+      alignment =
+          ast_context_->getTypeAlign(CAT) / ast_context_->getCharWidth();
+    }
   }
 
   // Create array sizes record

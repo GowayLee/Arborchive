@@ -10,7 +10,9 @@
 #include "util/key_generator/values.h"
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
+#include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprConcepts.h>
 #include <clang/AST/ExprCXX.h>
 
 int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
@@ -28,27 +30,27 @@ int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
 void ExprProcessor::processDeclRef(DeclRefExpr *expr) {
   ValueDecl *valueDecl = expr->getDecl();
 
-  if (auto *VarDecl = dyn_cast<clang::VarDecl>(valueDecl))
-    recordVarBindExpr(VarDecl, expr);
-}
+  if (auto *VD = dyn_cast<clang::VarDecl>(valueDecl)) {
+    // Original behavior: create VARACCESS expr + VarBind
+    int exprId = processBaseExpr(expr, ExprKind::VARACCESS);
 
-void ExprProcessor::recordVarBindExpr(VarDecl *VD, DeclRefExpr *expr) {
-  ExprKind exprKind = ExprKind::VARACCESS;
-  int exprId = processBaseExpr(expr, exprKind);
+    KeyType varKey = KeyGen::Var::makeKey(VD, ast_context_);
+    LOG_DEBUG << "Searching variable cache for " << varKey << std::endl;
+    int cachedVarId = -1;
+    if (auto cachedId = SEARCH_VARIABLE_CACHE(varKey))
+      cachedVarId = *cachedId;
+    LOG_DEBUG << "Found variable ID: " << cachedVarId << std::endl;
 
-  // Search VarID from Variable Cache
-  // Since Variable should be declared before ref, so ID in the cache is
-  // promising
-  KeyType varKey = KeyGen::Var::makeKey(VD, ast_context_);
-  LOG_DEBUG << "Searching variable cache for " << varKey << std::endl;
-  int cachedVarId = -1;
-  if (auto cachedId = SEARCH_VARIABLE_CACHE(varKey))
-    cachedVarId = *cachedId;
-  LOG_DEBUG << "Found variable ID: " << cachedVarId << std::endl;
-
-  DbModel::VarBind varBindModel = {exprId, cachedVarId};
-
-  STG.insertClassObj(varBindModel);
+    DbModel::VarBind varBindModel = {exprId, cachedVarId};
+    STG.insertClassObj(varBindModel);
+  } else if (llvm::isa<clang::NonTypeTemplateParmDecl>(valueDecl)) {
+    // P3d: create VARACCESS expr for NonTypeTemplateParmDecl refs so they
+    // have an @expr identity (needed for concept_template_argument_value).
+    processBaseExpr(expr, ExprKind::VARACCESS);
+  }
+  // All other decl types (FunctionDecl, EnumConstantDecl, ConceptDecl, etc.)
+  // are intentionally skipped — they are represented through their own paths
+  // (CallExpr + FunBind, enumconstants, etc.) and should not become VARACCESS.
 }
 
 void ExprProcessor::processUnaryOperator(const UnaryOperator *op) {
@@ -442,9 +444,14 @@ void ExprProcessor::processCallExpr(const CallExpr *expr) {
 }
 
 void ExprProcessor::processImplicitCastExpr(const ImplicitCastExpr *ICE) {
-  CastKind CK = ICE->getCastKind();
-  QualType SrcType = ICE->getSubExpr()->getType();
-  QualType DstType = ICE->getType();
+  if (!ICE)
+    return;
+
+  ExprKind exprKind = ExprKind::NOOPEXPR;
+  if (ICE->getCastKind() == CK_ArrayToPointerDecay)
+    exprKind = ExprKind::ARRAY_TO_POINTER;
+
+  processBaseExpr(const_cast<ImplicitCastExpr *>(ICE), exprKind);
 }
 
 void ExprProcessor::processArraySubscriptExpr(const ArraySubscriptExpr *expr) {
@@ -617,4 +624,47 @@ void ExprProcessor::recordSizeOfBind(int exprId, const UnaryExprOrTypeTraitExpr 
     DbModel::SizeOfBind bindModel = {exprId, typeId};
     STG.insertClassObj(bindModel);
   }
+}
+
+int ExprProcessor::processConceptSpecializationExpr(
+    const ConceptSpecializationExpr *expr, int conceptId) {
+  if (!expr || conceptId == -1)
+    return -1;
+
+  KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context_);
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processExpr(expr, ast_context_);
+  DbModel::Expr exprModel = {conceptId,
+                             static_cast<int>(ExprKind::CONCEPT_ID),
+                             locIdPair->spec_id};
+
+  INSERT_EXPR_CACHE(exprKey, exprModel.id);
+  STG.insertClassObj(exprModel);
+  return exprModel.id;
+}
+
+int ExprProcessor::processNonTypeTemplateParmDecl(
+    const NonTypeTemplateParmDecl *decl) {
+  if (!decl)
+    return -1;
+
+  KeyType exprKey =
+      KeyGen::Expr_::makeKeyForNonTypeTemplateParm(decl, ast_context_);
+  if (exprKey.empty())
+    return -1;
+
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  int exprId = IDGenerator::generateId<DbModel::Expr>();
+  LocIdPair *locIdPair = SrcLocRecorder::processExpr(decl, ast_context_);
+  DbModel::Expr exprModel = {exprId,
+                             static_cast<int>(ExprKind::NONTYPE_TEMPLATE_PARAMETER),
+                             locIdPair->spec_id};
+
+  INSERT_EXPR_CACHE(exprKey, exprModel.id);
+  STG.insertClassObj(exprModel);
+  return exprModel.id;
 }

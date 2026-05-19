@@ -250,6 +250,7 @@ enum class ExprKind {
   NESTED_REQUIREMENT = 391,
   COMPOUND_REQUIREMENT = 392,
   CONCEPT_ID = 393,
+  NONTYPE_TEMPLATE_PARAMETER = 394,
   // clang-format on
 };
 

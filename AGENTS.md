@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Arborchive 的 agent 总控入口。更完整的项目百科保存在 `docs/AGENTS_GUIDE.md`；具体工作流看 `docs/agent_workflow.md`；当前 TODO 路线图看 `docs/task_roadmap.md`。
+Arborchive 的 agent 总控入口。更完整的项目百科保存在 `docs/AGENTS_GUIDE.md`；具体工作流看 `docs/agent_workflow.md`；当前 TODO 路线图看 `docs/roadmap.md`。
 
 ## 默认规则
 
@@ -17,7 +17,7 @@ Arborchive 的 agent 总控入口。更完整的项目百科保存在 `docs/AGEN
 
 1. `AGENTS.md`
 2. `docs/agent_workflow.md`
-3. `docs/task_roadmap.md`
+3. `docs/roadmap.md`
 4. `src/core/ast_visitor.cc`
 5. 相关 Processor 的头文件和实现：
    - `include/core/processor/<name>_processor.h`
@@ -49,11 +49,13 @@ Arborchive 的 agent 总控入口。更完整的项目百科保存在 `docs/AGEN
 
 ## 当前 TODO
 
-当前只优先推进 `docs/task_roadmap.md` 中的任务：
+当前路线以 `docs/roadmap.md` 为准。已阶段性完成：
 
 - P0: `ImplicitCastExpr` DerivedType recording，主要落 `derivedtypes`(81)。
-- P1: Friend declarations，必须实现 `frienddecls`(144)。
-- P2: Template declarations，必须按 datatable-list 90-117 的模板表推进，第一轮至少覆盖 `is_class_template`(96) 和 `is_function_template`(102)。
+- P1: Friend declarations，主要落 `frienddecls`(144)。
+- P2: Template system phase，覆盖 class/function/variable templates、template-template safe subset、concept safe subset。
+
+下一阶段只推进 `docs/roadmap.md` 中的 P3 路线，不把 deferred 表扩展成无关重构。
 
 不要把这些任务扩展成无关重构。
 
@@ -128,4 +130,3 @@ make print-toolchain
 - Storage facade：`include/db/storage_facade.h`, `src/db/storage_facade.cc`
 - Key generators：`include/util/key_generator/`, `src/util/key_generator/`
 - 测试输入：`tests/slight-case.cc`, `tests/moderate-case.cc`, `tests/intense-case.cc`
-
