@@ -97,9 +97,9 @@ bool shouldInsertVariableTemplate(int variableId) {
   return variableTemplateDedup.insert(std::to_string(variableId)).second;
 }
 
-bool shouldInsertVariableInstantiation(int variableId, int templateId) {
+bool shouldInsertVariableInstantiation(int to, int from) {
   return variableInstantiationDedup
-      .insert(makePairKey(variableId, templateId))
+      .insert(makePairKey(to, from))
       .second;
 }
 
@@ -969,6 +969,8 @@ bool ASTVisitor::VisitConceptDecl(clang::ConceptDecl *decl) {
   return true;
 }
 
+// Template-specific work is handled in dedicated visitors:
+// VisitClassTemplateDecl, VisitFunctionTemplateDecl, VisitVarTemplateDecl.
 bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *) { return true; }
 
 bool ASTVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl *decl) {

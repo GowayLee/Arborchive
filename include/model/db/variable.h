@@ -77,8 +77,8 @@ struct IsVariableTemplate {
 };
 
 struct VariableInstantiation {
-  int variable_id;
-  int template_id;
+  int to;
+  int from;
 };
 
 struct VariableTemplateArgument {

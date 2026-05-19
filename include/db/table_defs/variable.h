@@ -85,14 +85,14 @@ inline auto var_specialized() {
 inline auto is_variable_template() {
   return make_table(
       "is_variable_template",
-      make_column("id", &DbModel::IsVariableTemplate::id));
+      make_column("id", &DbModel::IsVariableTemplate::id, primary_key()));
 }
 
 inline auto variable_instantiation() {
   return make_table(
       "variable_instantiation",
-      make_column("variable_id", &DbModel::VariableInstantiation::variable_id),
-      make_column("template_id", &DbModel::VariableInstantiation::template_id));
+      make_column("to", &DbModel::VariableInstantiation::to),
+      make_column("from", &DbModel::VariableInstantiation::from));
 }
 
 inline auto variable_template_argument() {
