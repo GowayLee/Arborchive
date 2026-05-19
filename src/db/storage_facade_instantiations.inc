@@ -12,6 +12,9 @@ template void StorageFacade::insertClassObj<DbModel::CompilationArg&>(DbModel::C
 template void StorageFacade::insertClassObj<DbModel::CompilationBuildMode&>(DbModel::CompilationBuildMode&);
 template void StorageFacade::insertClassObj<DbModel::CompilationFinished&>(DbModel::CompilationFinished&);
 template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::CompilationTime&);
+template void StorageFacade::insertClassObj<DbModel::ConceptInstantiation&>(DbModel::ConceptInstantiation&);
+template void StorageFacade::insertClassObj<DbModel::ConceptTemplate&>(DbModel::ConceptTemplate&);
+template void StorageFacade::insertClassObj<DbModel::ConceptTemplateArgument&>(DbModel::ConceptTemplateArgument&);
 template void StorageFacade::insertClassObj<DbModel::Container&>(DbModel::Container&);
 template void StorageFacade::insertClassObj<DbModel::Coroutine&>(DbModel::Coroutine&);
 template void StorageFacade::insertClassObj<DbModel::CoroutineDelete&>(DbModel::CoroutineDelete&);

@@ -110,10 +110,10 @@ DONE   109. variable_template_argument_value
   110. template_template_instantiation
 DONE   111. template_template_argument
   112. template_template_argument_value
-  113. concept_templates
-  114. concept_instantiation
+DONE   113. concept_templates
+DONE   114. concept_instantiation
   115. is_type_constraint
-  116. concept_template_argument
+DONE   116. concept_template_argument
   117. concept_template_argument_value
 DONE   118. routinetypes
 DONE   119. routinetypeargs

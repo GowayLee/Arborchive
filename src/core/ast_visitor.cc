@@ -2,6 +2,7 @@
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"
 #include "db/storage_facade.h"
+#include "model/db/concept.h"
 #include "model/db/declaration.h"
 #include "model/db/function.h"
 #include "model/db/type.h"
@@ -15,10 +16,15 @@
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclFriend.h>
 #include <clang/AST/DeclTemplate.h>
+#include <clang/AST/ExprConcepts.h>
+#include <clang/Basic/SourceManager.h>
 #include <clang/AST/Type.h>
 #include <clang/AST/TypeLoc.h>
+#include <llvm/Support/raw_ostream.h>
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace {
@@ -34,6 +40,14 @@ std::unordered_set<std::string> variableInstantiationDedup;
 std::unordered_set<std::string> variableTemplateArgumentDedup;
 std::unordered_set<std::string> variableTemplateArgumentValueDedup;
 std::unordered_set<std::string> templateTemplateArgumentDedup;
+std::unordered_set<std::string> conceptInstantiationDedup;
+std::unordered_set<std::string> conceptTemplateArgumentDedup;
+std::unordered_map<std::string, int> conceptTemplateIds;
+std::unordered_map<std::string, int> conceptSpecializationIds;
+
+struct ConceptSpecializationId {
+  int id;
+};
 
 std::string makePairKey(int first, int second) {
   return std::to_string(first) + ":" + std::to_string(second);
@@ -106,6 +120,18 @@ bool shouldInsertVariableTemplateArgumentValue(int variableId, int index,
 bool shouldInsertTemplateTemplateArgument(int typeId, int index, int argType) {
   return templateTemplateArgumentDedup
       .insert(makeTripleKey(typeId, index, argType))
+      .second;
+}
+
+bool shouldInsertConceptInstantiation(int conceptId, int templateId) {
+  return conceptInstantiationDedup.insert(makePairKey(conceptId, templateId))
+      .second;
+}
+
+bool shouldInsertConceptTemplateArgument(int conceptId, int index,
+                                         int argType) {
+  return conceptTemplateArgumentDedup
+      .insert(makeTripleKey(conceptId, index, argType))
       .second;
 }
 
@@ -183,6 +209,104 @@ int resolveTemplateTemplateArgumentTypeId(const clang::TemplateArgument &arg,
     return *cachedId;
 
   return -1;
+}
+
+std::string makeConceptTemplateKey(const clang::ConceptDecl *decl,
+                                   clang::ASTContext *context) {
+  if (!decl || !context)
+    return "";
+
+  const clang::ConceptDecl *canonicalDecl = decl->getCanonicalDecl();
+  return KeyGen::Type::makeKey(canonicalDecl, context);
+}
+
+int resolveConceptTemplateId(const clang::ConceptDecl *decl,
+                             clang::ASTContext *context) {
+  if (!decl || !context)
+    return -1;
+
+  const clang::ConceptDecl *canonicalDecl = decl->getCanonicalDecl();
+  std::string conceptKey = makeConceptTemplateKey(canonicalDecl, context);
+  if (conceptKey.empty())
+    return -1;
+
+  if (auto it = conceptTemplateIds.find(conceptKey);
+      it != conceptTemplateIds.end())
+    return it->second;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(canonicalDecl, context);
+  DbModel::ConceptTemplate conceptTemplate = {
+      GENID(ConceptTemplate), canonicalDecl->getNameAsString(),
+      locIdPair->spec_id};
+
+  conceptTemplateIds.emplace(conceptKey, conceptTemplate.id);
+  STG.insertClassObj(conceptTemplate);
+  return conceptTemplate.id;
+}
+
+std::string makeTemplateArgumentListKey(llvm::ArrayRef<clang::TemplateArgument> args,
+                                        clang::ASTContext *context) {
+  std::string key;
+  llvm::raw_string_ostream os(key);
+  clang::PrintingPolicy policy(context->getLangOpts());
+
+  for (unsigned index = 0; index < args.size(); ++index) {
+    if (index != 0)
+      os << ",";
+    args[index].print(policy, os, true);
+  }
+
+  return os.str();
+}
+
+std::string makeConceptSpecializationKey(
+    const clang::ConceptSpecializationExpr *expr,
+    clang::ASTContext *context) {
+  if (!expr || !context)
+    return "";
+
+  std::string conceptKey = makeConceptTemplateKey(expr->getNamedConcept(),
+                                                  context);
+  if (conceptKey.empty())
+    return "";
+
+  const clang::SourceManager &sourceManager = context->getSourceManager();
+  clang::SourceLocation beginLoc =
+      sourceManager.getSpellingLoc(expr->getBeginLoc());
+  clang::SourceLocation endLoc =
+      sourceManager.getSpellingLoc(expr->getEndLoc());
+
+  std::string locationKey;
+  if (beginLoc.isValid() && endLoc.isValid()) {
+    locationKey =
+        beginLoc.printToString(sourceManager) + "-" +
+        endLoc.printToString(sourceManager);
+  } else if (const auto *specializationDecl = expr->getSpecializationDecl()) {
+    locationKey = "implicit-decl-" + std::to_string(specializationDecl->getID());
+  } else {
+    locationKey =
+        "addr-" + std::to_string(reinterpret_cast<std::uintptr_t>(expr));
+  }
+
+  return conceptKey + "<" +
+         makeTemplateArgumentListKey(expr->getTemplateArguments(), context) +
+         ">@" + locationKey;
+}
+
+int resolveConceptSpecializationId(
+    const clang::ConceptSpecializationExpr *expr,
+    clang::ASTContext *context) {
+  std::string specializationKey = makeConceptSpecializationKey(expr, context);
+  if (specializationKey.empty())
+    return -1;
+
+  if (auto it = conceptSpecializationIds.find(specializationKey);
+      it != conceptSpecializationIds.end())
+    return it->second;
+
+  int conceptId = IDGenerator::generateId<ConceptSpecializationId>();
+  conceptSpecializationIds.emplace(specializationKey, conceptId);
+  return conceptId;
 }
 
 const clang::Expr *
@@ -458,6 +582,33 @@ void recordVariableTemplateArgumentValues(
     DbModel::VariableTemplateArgumentValue templateArgumentValue = {
         variableId, static_cast<int>(index), exprId};
     STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void recordConceptTemplateTypeArguments(
+    int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs,
+    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+  if (conceptId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+    if (argTypeId == -1)
+      continue;
+
+    if (!shouldInsertConceptTemplateArgument(conceptId,
+                                             static_cast<int>(index),
+                                             argTypeId))
+      continue;
+
+    DbModel::ConceptTemplateArgument templateArgument = {
+        conceptId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
   }
 }
 
@@ -813,6 +964,11 @@ bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) {
   return true;
 }
 
+bool ASTVisitor::VisitConceptDecl(clang::ConceptDecl *decl) {
+  resolveConceptTemplateId(decl, context_);
+  return true;
+}
+
 bool ASTVisitor::VisitTemplateDecl(clang::TemplateDecl *) { return true; }
 
 bool ASTVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl *decl) {
@@ -1023,5 +1179,28 @@ bool ASTVisitor::VisitInitListExpr(clang::InitListExpr *expr) {
 
 bool ASTVisitor::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr) {
   expr_processor_->processUnaryExprOrTypeTraitExpr(expr);
+  return true;
+}
+
+bool ASTVisitor::VisitConceptSpecializationExpr(
+    clang::ConceptSpecializationExpr *expr) {
+  if (!expr)
+    return true;
+
+  int templateId = resolveConceptTemplateId(expr->getNamedConcept(), context_);
+  if (templateId == -1)
+    return true;
+
+  int conceptId = resolveConceptSpecializationId(expr, context_);
+  if (conceptId == -1)
+    return true;
+
+  if (shouldInsertConceptInstantiation(conceptId, templateId)) {
+    DbModel::ConceptInstantiation instantiation = {conceptId, templateId};
+    STG.insertClassObj(instantiation);
+  }
+
+  recordConceptTemplateTypeArguments(conceptId, expr->getTemplateArguments(),
+                                     type_processor_.get(), context_);
   return true;
 }

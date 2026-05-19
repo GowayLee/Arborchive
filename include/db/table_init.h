@@ -4,6 +4,7 @@
 #include "db/table_defs/class.h"
 #include "db/table_defs/variable.h"
 #include "table_defs/compilation.h"
+#include "table_defs/concept.h"
 #include "table_defs/container.h"
 #include "table_defs/declaration.h"
 #include "table_defs/element.h"
@@ -106,6 +107,10 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::class_template_argument(),
       TypeTableFn::class_template_argument_value(),
       TypeTableFn::template_template_argument(),
+      // Concept Tables
+      ConceptTableFn::concept_templates(),
+      ConceptTableFn::concept_instantiation(),
+      ConceptTableFn::concept_template_argument(),
       TypeTableFn::enumconstants(),
       TypeTableFn::typedefbase(),
       TypeTableFn::arraysizes(),

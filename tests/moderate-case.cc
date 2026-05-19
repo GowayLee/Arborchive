@@ -60,6 +60,20 @@ template <typename T> constexpr T zero_v = T{};
 
 template <typename T, int N> constexpr T value_v = T(N);
 
+template <typename T>
+concept Addable = requires(T v) {
+  v + 1;
+};
+
+static_assert(Addable<int>);
+
+template <Addable T>
+struct ConceptBox {
+  T value;
+};
+
+ConceptBox<int> concept_box;
+
 void use_templates() {
   Holder<int> h{identity(1)};
   Holder<double> hd{identity(2.0)};
