@@ -90,11 +90,22 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
 
 void TypeProcessor::processTemplateTypeParmDecl(
     const TemplateTypeParmDecl *TTPD) {
-  auto T = TTPD->getTypeForDecl();
-  if (T) {
-    _typeId = processType(T);
-    processTypeDecl(TTPD);
+  if (!TTPD)
+    return;
+
+  KeyType userTypeKey = KeyGen::Type::makeKey(TTPD, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+  } else {
+    DbModel::UserType userTypeModel = {
+        GENID(UserType), TTPD->getNameAsString(),
+        static_cast<int>(UserTypeKind::TEMPLATE_PARAMETER)};
+    INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+    STG.insertClassObj(userTypeModel);
+    _typeId = userTypeModel.id;
   }
+
+  processTypeDecl(TTPD);
 }
 
 void TypeProcessor::processTypeDecl(const TypeDecl *TD) {

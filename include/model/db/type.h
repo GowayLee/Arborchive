@@ -220,6 +220,11 @@ struct TemplateTemplateArgument {
   int arg_type;
 };
 
+struct TypeTemplateTypeConstraint {
+  int id;
+  int constraint;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

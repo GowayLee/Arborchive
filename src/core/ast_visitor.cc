@@ -16,6 +16,7 @@
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclFriend.h>
 #include <clang/AST/DeclTemplate.h>
+#include <clang/AST/ASTConcept.h>
 #include <clang/AST/ExprConcepts.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/AST/Type.h>
@@ -42,6 +43,8 @@ std::unordered_set<std::string> variableTemplateArgumentValueDedup;
 std::unordered_set<std::string> templateTemplateArgumentDedup;
 std::unordered_set<std::string> conceptInstantiationDedup;
 std::unordered_set<std::string> conceptTemplateArgumentDedup;
+std::unordered_set<std::string> typeTemplateTypeConstraintDedup;
+std::unordered_set<int> isTypeConstraintDedup;
 std::unordered_map<std::string, int> conceptTemplateIds;
 std::unordered_map<std::string, int> conceptSpecializationIds;
 
@@ -133,6 +136,16 @@ bool shouldInsertConceptTemplateArgument(int conceptId, int index,
   return conceptTemplateArgumentDedup
       .insert(makeTripleKey(conceptId, index, argType))
       .second;
+}
+
+bool shouldInsertTypeTemplateTypeConstraint(int typeId, int constraintId) {
+  return typeTemplateTypeConstraintDedup
+      .insert(makePairKey(typeId, constraintId))
+      .second;
+}
+
+bool shouldInsertIsTypeConstraint(int conceptId) {
+  return isTypeConstraintDedup.insert(conceptId).second;
 }
 
 int resolveVariableEntityId(const clang::VarDecl *decl,
@@ -612,6 +625,50 @@ void recordConceptTemplateTypeArguments(
   }
 }
 
+void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
+                                  ExprProcessor *exprProcessor,
+                                  clang::ASTContext *context) {
+  if (!decl || !exprProcessor || !context)
+    return;
+
+  const clang::TypeConstraint *typeConstraint = decl->getTypeConstraint();
+  if (!typeConstraint)
+    return;
+
+  const clang::Expr *constraintExpr =
+      typeConstraint->getImmediatelyDeclaredConstraint();
+  const auto *conceptExpr =
+      llvm::dyn_cast_or_null<clang::ConceptSpecializationExpr>(constraintExpr);
+  if (!conceptExpr)
+    return;
+
+  KeyType templateParamKey = KeyGen::Type::makeKey(decl, context);
+  int templateParamId = SEARCH_TYPE_CACHE(templateParamKey).value_or(-1);
+  if (templateParamId == -1)
+    return;
+
+  int conceptId = resolveConceptSpecializationId(conceptExpr, context);
+  if (conceptId == -1)
+    return;
+
+  int constraintExprId =
+      exprProcessor->processConceptSpecializationExpr(conceptExpr, conceptId);
+  if (constraintExprId == -1)
+    return;
+
+  if (shouldInsertTypeTemplateTypeConstraint(templateParamId,
+                                             constraintExprId)) {
+    DbModel::TypeTemplateTypeConstraint row = {templateParamId,
+                                               constraintExprId};
+    STG.insertClassObj(row);
+  }
+
+  if (shouldInsertIsTypeConstraint(conceptId)) {
+    DbModel::IsTypeConstraint row = {conceptId};
+    STG.insertClassObj(row);
+  }
+}
+
 } // namespace
 
 ASTVisitor::ASTVisitor(clang::ASTContext *context)
@@ -819,6 +876,7 @@ bool ASTVisitor::VisitTypedefDecl(clang::TypedefDecl *decl) {
 
 bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
   type_processor_->processTemplateTypeParmDecl(decl);
+  recordTemplateTypeConstraint(decl, expr_processor_.get(), context_);
   return true;
 }
 
@@ -1196,6 +1254,8 @@ bool ASTVisitor::VisitConceptSpecializationExpr(
   int conceptId = resolveConceptSpecializationId(expr, context_);
   if (conceptId == -1)
     return true;
+
+  expr_processor_->processConceptSpecializationExpr(expr, conceptId);
 
   if (shouldInsertConceptInstantiation(conceptId, templateId)) {
     DbModel::ConceptInstantiation instantiation = {conceptId, templateId};

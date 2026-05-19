@@ -154,6 +154,14 @@ inline auto template_template_argument() {
       make_column("arg_type", &DbModel::TemplateTemplateArgument::arg_type));
 }
 
+inline auto type_template_type_constraint() {
+  return make_table(
+      "type_template_type_constraint",
+      make_column("id", &DbModel::TypeTemplateTypeConstraint::id),
+      make_column("constraint",
+                  &DbModel::TypeTemplateTypeConstraint::constraint));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

@@ -11,6 +11,7 @@
 #include "util/key_generator/variable.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Expr.h>
+#include <clang/AST/ExprConcepts.h>
 #include <clang/AST/ExprCXX.h>
 
 int ExprProcessor::processBaseExpr(Expr *expr, ExprKind exprKind) {
@@ -622,4 +623,23 @@ void ExprProcessor::recordSizeOfBind(int exprId, const UnaryExprOrTypeTraitExpr 
     DbModel::SizeOfBind bindModel = {exprId, typeId};
     STG.insertClassObj(bindModel);
   }
+}
+
+int ExprProcessor::processConceptSpecializationExpr(
+    const ConceptSpecializationExpr *expr, int conceptId) {
+  if (!expr || conceptId == -1)
+    return -1;
+
+  KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context_);
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processExpr(expr, ast_context_);
+  DbModel::Expr exprModel = {conceptId,
+                             static_cast<int>(ExprKind::CONCEPT_ID),
+                             locIdPair->spec_id};
+
+  INSERT_EXPR_CACHE(exprKey, exprModel.id);
+  STG.insertClassObj(exprModel);
+  return exprModel.id;
 }

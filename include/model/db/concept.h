@@ -23,6 +23,10 @@ struct ConceptTemplateArgument {
   int arg_type;
 };
 
+struct IsTypeConstraint {
+  int concept_id;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_CONCEPT_H_

@@ -31,6 +31,13 @@ inline auto concept_template_argument() {
       make_column("index", &DbModel::ConceptTemplateArgument::index),
       make_column("arg_type", &DbModel::ConceptTemplateArgument::arg_type));
 }
+
+inline auto is_type_constraint() {
+  return make_table(
+      "is_type_constraint",
+      make_column("concept_id", &DbModel::IsTypeConstraint::concept_id,
+                  primary_key()));
+}
 // clang-format on
 
 } // namespace ConceptTableFn

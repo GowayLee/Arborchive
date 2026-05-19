@@ -65,6 +65,7 @@ template void StorageFacade::insertClassObj<DbModel::IsFunctionTemplate&>(DbMode
 template void StorageFacade::insertClassObj<DbModel::IsPodClass&>(DbModel::IsPodClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbModel::IsStandartLayoutClass&);
 template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
+template void StorageFacade::insertClassObj<DbModel::IsTypeConstraint&>(DbModel::IsTypeConstraint&);
 template void StorageFacade::insertClassObj<DbModel::IsVariableTemplate&>(DbModel::IsVariableTemplate&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
@@ -105,6 +106,7 @@ template void StorageFacade::insertClassObj<DbModel::TypeDecl&>(DbModel::TypeDec
 template void StorageFacade::insertClassObj<DbModel::TypeDeclTop&>(DbModel::TypeDeclTop&);
 template void StorageFacade::insertClassObj<DbModel::TypeDef&>(DbModel::TypeDef&);
 template void StorageFacade::insertClassObj<DbModel::TypeSpecifiers&>(DbModel::TypeSpecifiers&);
+template void StorageFacade::insertClassObj<DbModel::TypeTemplateTypeConstraint&>(DbModel::TypeTemplateTypeConstraint&);
 template void StorageFacade::insertClassObj<DbModel::TypedefBase&>(DbModel::TypedefBase&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
 template void StorageFacade::insertClassObj<DbModel::ValueBind&>(DbModel::ValueBind&);
