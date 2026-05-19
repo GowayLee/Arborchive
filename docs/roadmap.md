@@ -20,31 +20,31 @@
 | P1 frienddecls | complete frienddecls 144 | `frienddecls`(144) | `5b07c13` | done / verified |
 | P2 template system phase | template declaration markers, instantiations, arguments, value extraction safe subset, variable templates, template-template arguments, concept templates | 96-99, 102-109, 111, 113, 114, 116 | `9f395d6`, `f655a10`, `2e02b8a`, `b93ffa6`, `9770870`, `eb7035f`, `9a2c2fc`, `d6323a2` | stage complete |
 
-## TODO3 / P2e Template System Closure
+## Template / Concept Closure
 
-状态：阶段性完成。P2e-4 只做收口验证和文档对齐，不继续补表或扩展抽取逻辑。
+状态：P2/P3 已完成 template/concept 目标表实现收口，当前只保留一个有设计依据的 deferred。
 
-DONE: 96-99, 102-109, 111, 113, 114, 116.
+DONE: 90, 91, 96-111 except 112, 113-117.
 
-Deferred by design: 90, 91, 110, 112, 115, 117. 这些表依赖更明确的
-constraint expr、真实 source `Expr*`、template-template instantiation 语义或
-TemplateTemplateParmDecl 建模链路，留到 P3。
+Deferred by design: 112 `template_template_argument_value`.
 
-当前限制：dependent array size 保守写 0；`*_template_argument_value` 只在有真实
-source `Expr*` 并能安全落到 `@expr` 时写入。
+`template_template_argument_value.arg_value` is `@expr`, but Clang exposes
+template-template arguments as `TemplateName` / `TemplateDecl`, not `Expr*`;
+Arborchive records the supported relation through `template_template_argument`
+and `template_template_instantiation`.
 
-## 下一阶段路线
+PR readiness: P2/P3 implemented 21 template/concept target tables; 112 remains
+documented deferred.
 
-P3 不是继续机械补表，而是处理 P2 deferred 背后的语义建模问题：
-constraint expr extraction、type constraint binding、template-template
-instantiation semantics、non-type/value template argument expr support。
+## P3 Status
 
-| Phase | 目标 | Deferred | 边界 |
-| --- | --- | --- | --- |
-| P3a concept/constraint expr extraction | 调查并支持 concept / requires / type constraint 相关表达式能否安全落到 `@expr`。 | 91, 115, 117 | done；详见 `docs/p3a_constraint_expr_investigation.md`。 |
-| P3b type constraint binding | 明确 template type parameter 与 concept/type constraint 的绑定关系。 | 91, 115 | safe subset complete；`template <Concept T>` 可写 91/115，其他 constraint/value 场景继续 deferred。 |
-| P3c template-template instantiation semantics | 明确 `template_template_instantiation` 的 from/to 语义，以及 TemplateTemplateParmDecl -> `@usertype(kind=8)` 建模链路。 | 110, 112 | safe subset complete；详见 `docs/p3c_template_template_semantics.md`，112 继续 deferred。 |
-| P3d non-type/value template argument expr support | 扩大 non-type/value template argument 中真实 source `Expr*` 的安全支持范围。 | 90, 112, 117 | safe subset complete；90 和 117 已实现，112 继续 deferred；详见 `docs/p3d_value_template_argument_support.md`。 |
+| Phase | Status | Notes |
+| --- | --- | --- |
+| P3a constraint expr extraction | done | Constraint expression support closed for the planned subset. |
+| P3b type constraint binding | safe subset complete | Type constraint binding support closed for the planned subset. |
+| P3c template-template instantiation semantics | safe subset complete | Process notes: `docs/my-docs/p3/p3c_template_template_semantics.md`. |
+| P3d non-type/value template argument expr support | safe subset complete | Process notes: `docs/my-docs/p3/p3d_value_template_argument_support.md`; handoff: `docs/my-docs/p3/p3d_value_template_argument_handoff.md`. |
+| P3e template-template argument value feasibility | feasibility complete | Process notes: `docs/my-docs/p3/p3e_template_template_argument_value_feasibility.md`; 112 stays deferred by design. |
 
 ## 验证入口
 
