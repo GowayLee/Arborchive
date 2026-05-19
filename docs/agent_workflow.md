@@ -12,7 +12,7 @@
 - 位于 `include/core/processor/` 和 `src/core/processor/` 下的相关处理器（processor）头文件和源文件
 - 位于 `include/model/db/` 和 `include/db/table_defs/` 下的相关模型（model）和表定义（table definition）
 - 位于 `include/util/key_generator/` 和 `src/util/key_generator/` 下的任何相关键生成器（key generators）
-- 在处理当前的待办事项时阅读 `docs/task_roadmap.md`
+- 在处理当前的待办事项时阅读 `docs/roadmap.md`
 
 对于持久化或模式（schema）相关的工作，还要阅读：
 
