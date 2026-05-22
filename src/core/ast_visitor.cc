@@ -1,3 +1,13 @@
+// ARCHITECTURE RULE:
+//
+// ASTVisitor is dispatch-only.
+//
+// Semantic orchestration MUST live inside processors/helpers.
+// Do NOT expand subsystem coordination inside Visit*.
+//
+// Historical note:
+// Template orchestration previously polluted this file and
+// caused architecture degradation.
 #include "core/ast_visitor.h"
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"

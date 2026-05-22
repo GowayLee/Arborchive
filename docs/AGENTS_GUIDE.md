@@ -1,6 +1,31 @@
 # AGENTS_GUIDE.md
 
-Guide for agents working with the Arborchive codebase - a C++ static analysis tool that parses C/C++ source code using Clang's AST and stores structural information in SQLite.
+Legacy reference / onboarding encyclopedia for agents working with the
+Arborchive codebase.
+
+This document describes project history, implementation inventory, and useful
+orientation notes. It is not architecture governance.
+
+Governance priority:
+
+```text
+AGENTS.md
+↓
+docs/AGENT_WORKFLOW.md
+↓
+docs/roadmap.md
+↓
+docs/AGENTS_GUIDE.md
+↓
+existing code patterns
+```
+
+Architecture governance is defined in `AGENTS.md`. Workflow execution is defined
+in `docs/AGENT_WORKFLOW.md`. If this guide conflicts with `AGENTS.md`,
+`AGENTS.md` wins.
+
+Do not infer approved architecture from legacy implementation notes in this
+file. In particular, do not treat `ASTVisitor` as an implementation layer.
 
 ## Project Overview
 
@@ -19,7 +44,7 @@ CLI → ConfigLoader → Router → ClangASTManager → ASTVisitor → Processor
 - **Router** (`src/core/router.cc`): Central coordinator, manages compilation pipeline
 - **ClangASTManager** (`src/core/clang_ast_manager.cc`): Manages Clang AST loading and processing
 - **CompilationRecorder** (`src/core/compilation_recorder.cc`): Records compilation metadata and timing
-- **AST Visitor** (`src/core/ast_visitor.cc`): Traverses Clang AST, delegates to processors
+- **AST Visitor** (`src/core/ast_visitor.cc`): Traverses Clang AST and should stay as close as possible to dispatch-oriented delegation. Some legacy orchestration may still exist; it is transitional technical debt, not preferred architecture.
 - **Processors** (`src/core/processor/`): Specialized handlers for AST node types
 - **Storage** (`src/db/`): Database operations, dependency resolution
 - **Utilities** (`src/util/`): ID generation, logging, key generation
@@ -100,6 +125,10 @@ CLI → ConfigLoader → Router → ClangASTManager → ASTVisitor → Processor
 10. Preprocessing: directives, includes
 
 ## Code Patterns
+
+These examples are local implementation idioms for processor/helper/storage
+code. They are not permission to place storage, dependency, cache, or schema
+orchestration inside `ASTVisitor`.
 
 ### ID Generation
 
@@ -203,7 +232,10 @@ void Router::processCompilation(const Configuration &config) {
 
 ## Implementation Status
 
-**Completion: ~85-90%**
+This section is a legacy snapshot and may be stale. Use `docs/roadmap.md` for
+current phase planning and `AGENTS.md` for architecture governance.
+
+**Completion: historical estimate ~85-90%**
 
 ✅ **Fully Implemented:**
 
@@ -232,20 +264,23 @@ make help     # Show all commands
 
 ## Adding New Processors
 
-1. Create processor class inheriting from `BaseProcessor` in `src/core/processor/`
-2. Add `Visit` method in `ASTVisitor` for the AST node type
-3. Initialize processor in `ASTVisitor::initProcessors()`
-4. Create database model in `include/model/db/`
-5. Add table definition in `include/db/table_defs/`
-6. Run `python3 scripts/generate_instantiations.py` for ORM
-7. Create key generator in `src/util/key_generator/` if needed
-8. Create helper classes in `include/core/processor/` if needed
+Before adding a processor, confirm subsystem ownership in `AGENTS.md` and the
+current phase in `docs/roadmap.md`.
+
+1. Create or extend the processor/helper boundary that owns the semantic subsystem.
+2. Keep any `Visit*` method dispatch-oriented: lightweight guard, then delegation.
+3. Do not add semantic orchestration, schema row assembly, cache policy, or dependency coordination to `ASTVisitor`.
+4. Initialize the processor in `ASTVisitor::initProcessors()` only when needed for dispatch.
+5. Create database model in `include/model/db/` only for tables already allowed by `docs/datatable-list.txt`.
+6. Add table definition in `include/db/table_defs/`.
+7. Run `python3 scripts/generate_instantiations.py` for ORM when schema/model/table definitions change.
+8. Create key generator or helper classes only when they belong to the processor/helper layer, not the visitor layer.
 
 ## Development Guidelines
 
 - **Don't delete code** - comment out for change tracking
-- **Follow existing patterns** - maintain consistency
-- **Use caches** - always check cache before processing
+- **Follow governance first** - existing patterns may include transitional technical debt
+- **Use caches in processor/helper layers** - cache policy should not be orchestrated from `ASTVisitor`
 - **Log appropriately** - use correct log levels (INFO for progress, ERROR for failures, DEBUG for details, PERF for timing)
 - **Test thoroughly** - verify no regressions
 - **Monitor performance** - track impact of changes with `HighResTimer`
