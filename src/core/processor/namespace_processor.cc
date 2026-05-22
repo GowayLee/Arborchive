@@ -1,6 +1,8 @@
 #include "core/processor/namespace_processor.h"
+#include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/container.h"
+#include "model/db/declaration.h"
 #include "util/id_generator.h"
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
@@ -11,6 +13,9 @@ void NamespaceProcessor::processNamespaceDecl(
     const clang::NamespaceDecl *decl) {
   // Process the namespace itself
   processNamespace(decl);
+
+  // Process this concrete namespace declaration.
+  recordNamespaceDecl(decl);
 
   // Process inline namespace if applicable
   if (decl->isInline()) {
@@ -47,6 +52,31 @@ int NamespaceProcessor::getOrCreateNamespaceId(
 
 void NamespaceProcessor::processNamespace(const clang::NamespaceDecl *decl) {
   getOrCreateNamespaceId(decl);
+}
+
+void NamespaceProcessor::recordNamespaceDecl(
+    const clang::NamespaceDecl *decl) {
+  int namespace_id = getOrCreateNamespaceId(decl);
+  if (namespace_id < 0) {
+    return;
+  }
+
+  LocIdPair *decl_loc = PROC_DEFT(decl, ast_context_);
+  clang::SourceLocation rbrace_loc = decl->getRBraceLoc();
+  if (rbrace_loc.isInvalid()) {
+    rbrace_loc = decl->getEndLoc();
+  }
+  LocIdPair *body_loc = PROC_DEFT(rbrace_loc, rbrace_loc, ast_context_);
+
+  DbModel::NamespaceDecl namespace_decl_record = {
+      GENID(NamespaceDecl), namespace_id, decl_loc ? decl_loc->spec_id : -1,
+      body_loc ? body_loc->spec_id : -1};
+
+  StorageFacade::getInstance().insertClassObj(namespace_decl_record);
+
+  LOG_DEBUG << "Processed namespace declaration with ID: "
+            << namespace_decl_record.id << " for namespace ID: "
+            << namespace_id << std::endl;
 }
 
 void NamespaceProcessor::processNamespaceInline(

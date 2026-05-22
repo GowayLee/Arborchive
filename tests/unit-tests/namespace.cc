@@ -84,6 +84,10 @@ namespace p4_reopened {
 void g();
 }
 
+// Empty reopened namespace should create two declaration rows for one entity
+namespace p4_decl_reopened {}
+namespace p4_decl_reopened {}
+
 // Namespace with using declarations
 namespace using_test {
 

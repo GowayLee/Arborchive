@@ -81,6 +81,7 @@ template void StorageFacade::insertClassObj<DbModel::MacroParent&>(DbModel::Macr
 template void StorageFacade::insertClassObj<DbModel::Member&>(DbModel::Member&);
 template void StorageFacade::insertClassObj<DbModel::MemberVar&>(DbModel::MemberVar&);
 template void StorageFacade::insertClassObj<DbModel::Namespace&>(DbModel::Namespace&);
+template void StorageFacade::insertClassObj<DbModel::NamespaceDecl&>(DbModel::NamespaceDecl&);
 template void StorageFacade::insertClassObj<DbModel::NamespaceInline&>(DbModel::NamespaceInline&);
 template void StorageFacade::insertClassObj<DbModel::NamespaceMember&>(DbModel::NamespaceMember&);
 template void StorageFacade::insertClassObj<DbModel::NonTypeTemplateParameter&>(DbModel::NonTypeTemplateParameter&);

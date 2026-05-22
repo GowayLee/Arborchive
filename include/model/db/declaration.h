@@ -27,6 +27,13 @@ struct FriendDecl {
   int location;
 };
 
+struct NamespaceDecl {
+  int id;
+  int namespace_id;
+  int location;
+  int bodylocation;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_DECLRATION_H_

@@ -26,6 +26,15 @@ inline auto frienddecls() {
       make_column("location", &DbModel::FriendDecl::location));
 }
 
+inline auto namespace_decls() {
+  return make_table(
+      "namespace_decls",
+      make_column("id", &DbModel::NamespaceDecl::id, primary_key()),
+      make_column("namespace_id", &DbModel::NamespaceDecl::namespace_id),
+      make_column("location", &DbModel::NamespaceDecl::location),
+      make_column("bodylocation", &DbModel::NamespaceDecl::bodylocation));
+}
+
 // clang-format on
 
 } // namespace DeclTableFn

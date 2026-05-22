@@ -20,6 +20,7 @@ private:
   int getOrCreateNamespaceId(const clang::NamespaceDecl *decl);
 
   void processNamespace(const clang::NamespaceDecl *decl);
+  void recordNamespaceDecl(const clang::NamespaceDecl *decl);
   void processNamespaceInline(const clang::NamespaceDecl *decl);
   void processNamespaceMembers(const clang::NamespaceDecl *decl);
 
