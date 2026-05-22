@@ -75,6 +75,15 @@ namespace multi_block {
 int second_var = 2;
 }
 
+// Reopened namespace should keep one semantic namespace identity
+namespace p4_reopened {
+void f();
+}
+
+namespace p4_reopened {
+void g();
+}
+
 // Namespace with using declarations
 namespace using_test {
 

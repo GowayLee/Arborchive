@@ -3,6 +3,7 @@
 
 #include "base_processor.h"
 #include <clang/AST/Decl.h>
+#include <unordered_map>
 
 class NamespaceProcessor : public BaseProcessor {
 public:
@@ -16,9 +17,13 @@ public:
                               const clang::Decl *member);
 
 private:
+  int getOrCreateNamespaceId(const clang::NamespaceDecl *decl);
+
   void processNamespace(const clang::NamespaceDecl *decl);
   void processNamespaceInline(const clang::NamespaceDecl *decl);
   void processNamespaceMembers(const clang::NamespaceDecl *decl);
+
+  std::unordered_map<const clang::NamespaceDecl *, int> namespace_ids_;
 };
 
 #endif // _NAMESPACE_PROCESSOR_H_

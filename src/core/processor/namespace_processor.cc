@@ -5,6 +5,7 @@
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
+#include <llvm/Support/Casting.h>
 
 void NamespaceProcessor::processNamespaceDecl(
     const clang::NamespaceDecl *decl) {
@@ -20,22 +21,40 @@ void NamespaceProcessor::processNamespaceDecl(
   processNamespaceMembers(decl);
 }
 
-void NamespaceProcessor::processNamespace(const clang::NamespaceDecl *decl) {
+int NamespaceProcessor::getOrCreateNamespaceId(
+    const clang::NamespaceDecl *decl) {
+  if (!decl) {
+    return -1;
+  }
+
+  const clang::NamespaceDecl *canonical_decl = decl->getCanonicalDecl();
+  auto existing = namespace_ids_.find(canonical_decl);
+  if (existing != namespace_ids_.end()) {
+    return existing->second;
+  }
+
   int namespace_id = GENID(Namespace);
-  std::string name = decl->getNameAsString();
+  std::string name = canonical_decl->getNameAsString();
 
   DbModel::Namespace namespace_record = {namespace_id, name};
-
-  // Store in database using insertClassObj
   StorageFacade::getInstance().insertClassObj(namespace_record);
+  namespace_ids_.emplace(canonical_decl, namespace_id);
 
-  LOG_DEBUG << "Processed namespace: " << name << " with ID: " << namespace_id
-            << std::endl;
+  LOG_DEBUG << "Processed namespace: " << name << " with ID: "
+            << namespace_id << std::endl;
+  return namespace_id;
+}
+
+void NamespaceProcessor::processNamespace(const clang::NamespaceDecl *decl) {
+  getOrCreateNamespaceId(decl);
 }
 
 void NamespaceProcessor::processNamespaceInline(
     const clang::NamespaceDecl *decl) {
-  int namespace_id = GENID(Namespace);
+  int namespace_id = getOrCreateNamespaceId(decl);
+  if (namespace_id < 0) {
+    return;
+  }
 
   DbModel::NamespaceInline namespace_inline_record = {namespace_id};
 
@@ -48,8 +67,6 @@ void NamespaceProcessor::processNamespaceInline(
 
 void NamespaceProcessor::processNamespaceMembers(
     const clang::NamespaceDecl *decl) {
-  int parent_id = GENID(Namespace);
-
   // Iterate through all declarations in the namespace
   for (const auto *member : decl->decls()) {
     processNamespaceMember(decl, member);
@@ -58,14 +75,22 @@ void NamespaceProcessor::processNamespaceMembers(
 
 void NamespaceProcessor::processNamespaceMember(
     const clang::NamespaceDecl *parent_ns, const clang::Decl *member) {
-  int parent_id = GENID(Namespace);
-  // int member_id = GENID(NamespaceMember); // FIXME: About @ tables' issue
+  int parent_id = getOrCreateNamespaceId(parent_ns);
+  if (parent_id < 0) {
+    return;
+  }
 
-  DbModel::NamespaceMember namespace_member_record = {parent_id, -1};
+  int member_id = -1;
+  if (const auto *member_ns =
+          llvm::dyn_cast_or_null<clang::NamespaceDecl>(member)) {
+    member_id = getOrCreateNamespaceId(member_ns);
+  }
+
+  DbModel::NamespaceMember namespace_member_record = {parent_id, member_id};
 
   // Store in database using insertClassObj
   StorageFacade::getInstance().insertClassObj(namespace_member_record);
 
   LOG_DEBUG << "Processed namespace member with parent ID: " << parent_id
-            << " and member ID: " << -1 << std::endl;
+            << " and member ID: " << member_id << std::endl;
 }
