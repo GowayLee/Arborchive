@@ -10,6 +10,9 @@
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/concept.h"
+#include "model/db/function.h"
+#include "model/db/type.h"
+#include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
@@ -17,6 +20,7 @@
 #include <clang/AST/ASTConcept.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/ExprConcepts.h>
+#include <clang/AST/TypeLoc.h>
 #include <clang/Basic/SourceManager.h>
 #include <cstdint>
 #include <llvm/Support/raw_ostream.h>
@@ -394,4 +398,390 @@ int TemplateProcessor::resolveTemplateArgumentExprId(
     return *cachedId;
 
   return -1;
+}
+
+void TemplateProcessor::recordClassTemplateTypeArguments(
+    int typeId, const clang::TemplateArgumentList &templateArgs) {
+  if (typeId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        this->resolveTemplateArgumentTypeId(arg.getAsType());
+    if (argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertClassTemplateArgument(
+            typeId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::ClassTemplateArgument templateArgument = {
+        typeId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void TemplateProcessor::recordClassTemplateArgumentValues(
+    int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs) {
+  if (typeId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr =
+        this->getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertClassTemplateArgumentValue(
+            typeId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
+        typeId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void TemplateProcessor::recordClassTemplateArgumentValues(
+    int typeId, clang::TemplateSpecializationTypeLoc templateArgs) {
+  if (typeId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.getNumArgs(); ++index) {
+    const clang::TemplateArgumentLoc &argLoc = templateArgs.getArgLoc(index);
+    const clang::Expr *sourceExpr =
+        this->getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertClassTemplateArgumentValue(
+            typeId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
+        typeId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void TemplateProcessor::recordTemplateTemplateArguments(
+    int typeId, const clang::TemplateArgumentList &templateArgs) {
+  if (typeId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    int argTypeId =
+        this->resolveTemplateTemplateArgumentTypeId(arg);
+    if (argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertTemplateTemplateArgument(
+            typeId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::TemplateTemplateArgument templateArgument = {
+        typeId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void TemplateProcessor::recordTemplateTemplateInstantiations(
+    const clang::ClassTemplateDecl *classTemplateDecl,
+    const clang::TemplateArgumentList &templateArgs) {
+  if (!classTemplateDecl || !type_processor_ || !ast_context_)
+    return;
+
+  const clang::TemplateParameterList *params =
+      classTemplateDecl->getTemplateParameters();
+  if (!params)
+    return;
+
+  unsigned count = templateArgs.size();
+  if (params->size() < count)
+    count = params->size();
+
+  for (unsigned index = 0; index < count; ++index) {
+    const auto *param = llvm::dyn_cast_or_null<clang::TemplateTemplateParmDecl>(
+        params->getParam(index));
+    if (!param || param->isParameterPack())
+      continue;
+
+    const clang::TemplateArgument &arg = templateArgs[index];
+    const clang::TemplateDecl *templateDecl =
+        arg.getKind() == clang::TemplateArgument::Template
+            ? arg.getAsTemplate().getAsTemplateDecl()
+            : nullptr;
+    if (!llvm::isa_and_nonnull<clang::ClassTemplateDecl>(templateDecl))
+      continue;
+
+    int paramId = this->resolveTemplateTemplateParmId(param);
+    int argTypeId =
+        this->resolveTemplateTemplateArgumentTypeId(arg);
+    if (paramId == -1 || argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertTemplateTemplateInstantiation(argTypeId,
+                                                         paramId))
+      continue;
+
+    DbModel::TemplateTemplateInstantiation instantiation = {argTypeId,
+                                                            paramId};
+    STG.insertClassObj(instantiation);
+  }
+}
+
+void TemplateProcessor::recordFunctionTemplateTypeArguments(
+    int functionId, const clang::TemplateArgumentList *templateArgs) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs->get(index);
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        this->resolveTemplateArgumentTypeId(arg.getAsType());
+    if (argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertFunctionTemplateArgument(
+            functionId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::FunctionTemplateArgument templateArgument = {
+        functionId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void TemplateProcessor::recordFunctionTemplateArgumentValues(
+    int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr =
+        this->getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertFunctionTemplateArgumentValue(
+            functionId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
+        functionId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void TemplateProcessor::recordFunctionTemplateArgumentValues(
+    int functionId, const clang::TemplateArgumentLoc *templateArgs,
+    unsigned numTemplateArgs) {
+  if (functionId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < numTemplateArgs; ++index) {
+    const clang::TemplateArgumentLoc &argLoc = templateArgs[index];
+    const clang::Expr *sourceExpr =
+        this->getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertFunctionTemplateArgumentValue(
+            functionId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
+        functionId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void TemplateProcessor::recordVariableTemplateTypeArguments(
+    int variableId, const clang::TemplateArgumentList &templateArgs) {
+  if (variableId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        this->resolveTemplateArgumentTypeId(arg.getAsType());
+    if (argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertVariableTemplateArgument(
+            variableId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::VariableTemplateArgument templateArgument = {
+        variableId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void TemplateProcessor::recordVariableTemplateArgumentValues(
+    int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs) {
+  if (variableId == -1 || !templateArgs)
+    return;
+
+  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
+       ++index) {
+    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
+    const clang::Expr *sourceExpr =
+        this->getTemplateArgumentSourceExpr(argLoc);
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertVariableTemplateArgumentValue(
+            variableId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::VariableTemplateArgumentValue templateArgumentValue = {
+        variableId, static_cast<int>(index), exprId};
+    STG.insertClassObj(templateArgumentValue);
+  }
+}
+
+void TemplateProcessor::recordConceptTemplateTypeArguments(
+    int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs) {
+  if (conceptId == -1)
+    return;
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    if (arg.getKind() != clang::TemplateArgument::Type)
+      continue;
+
+    int argTypeId =
+        this->resolveTemplateArgumentTypeId(arg.getAsType());
+    if (argTypeId == -1)
+      continue;
+
+    if (!this->shouldInsertConceptTemplateArgument(
+            conceptId, static_cast<int>(index), argTypeId))
+      continue;
+
+    DbModel::ConceptTemplateArgument templateArgument = {
+        conceptId, static_cast<int>(index), argTypeId};
+    STG.insertClassObj(templateArgument);
+  }
+}
+
+void TemplateProcessor::recordConceptTemplateArgumentValues(
+    int conceptId, const clang::ConceptSpecializationExpr *expr) {
+  if (conceptId == -1 || !expr || !expr_processor_ || !ast_context_)
+    return;
+
+  llvm::ArrayRef<clang::TemplateArgument> templateArgs =
+      expr->getTemplateArguments();
+
+  const clang::ASTTemplateArgumentListInfo *argsAsWritten =
+      expr->getTemplateArgsAsWritten();
+
+  for (unsigned index = 0; index < templateArgs.size(); ++index) {
+    const clang::TemplateArgument &arg = templateArgs[index];
+    const clang::Expr *sourceExpr = nullptr;
+
+    // Prefer source expression from args-as-written (with location info)
+    if (argsAsWritten && index < argsAsWritten->getNumTemplateArgs()) {
+      const clang::TemplateArgumentLoc &argLoc = (*argsAsWritten)[index];
+      sourceExpr = this->getTemplateArgumentSourceExpr(argLoc);
+    }
+
+    // Fall back: Expression kind directly stores the source expr
+    if (!sourceExpr && arg.getKind() == clang::TemplateArgument::Expression) {
+      sourceExpr = arg.getAsExpr();
+    }
+
+    // Defer: no source expression available (e.g., Integral without source loc,
+    // SubstNonTypeTemplateParmExpr, dependent, pack, null, etc.)
+    if (!sourceExpr)
+      continue;
+
+    // Check for SubstNonTypeTemplateParmExpr — defer
+    if (llvm::isa<clang::SubstNonTypeTemplateParmExpr>(sourceExpr))
+      continue;
+
+    int exprId =
+        this->resolveTemplateArgumentExprId(sourceExpr);
+    if (exprId == -1)
+      continue;
+
+    if (!this->shouldInsertConceptTemplateArgumentValue(
+            conceptId, static_cast<int>(index), exprId))
+      continue;
+
+    DbModel::ConceptTemplateArgumentValue row = {conceptId,
+                                                  static_cast<int>(index),
+                                                  exprId};
+    STG.insertClassObj(row);
+  }
+}
+
+void TemplateProcessor::recordTemplateTypeConstraint(
+    const clang::TemplateTypeParmDecl *decl) {
+  if (!decl || !expr_processor_ || !ast_context_)
+    return;
+
+  const clang::TypeConstraint *typeConstraint = decl->getTypeConstraint();
+  if (!typeConstraint)
+    return;
+
+  const clang::Expr *constraintExpr =
+      typeConstraint->getImmediatelyDeclaredConstraint();
+  const auto *conceptExpr =
+      llvm::dyn_cast_or_null<clang::ConceptSpecializationExpr>(constraintExpr);
+  if (!conceptExpr)
+    return;
+
+  KeyType templateParamKey = KeyGen::Type::makeKey(decl, ast_context_);
+  int templateParamId = SEARCH_TYPE_CACHE(templateParamKey).value_or(-1);
+  if (templateParamId == -1)
+    return;
+
+  int conceptId = this->resolveConceptSpecializationId(conceptExpr,
+                                                       ast_context_);
+  if (conceptId == -1)
+    return;
+
+  int constraintExprId =
+      expr_processor_->processConceptSpecializationExpr(conceptExpr, conceptId);
+  if (constraintExprId == -1)
+    return;
+
+  if (this->shouldInsertTypeTemplateTypeConstraint(
+          templateParamId, constraintExprId)) {
+    DbModel::TypeTemplateTypeConstraint row = {templateParamId,
+                                               constraintExprId};
+    STG.insertClassObj(row);
+  }
+
+  if (this->shouldInsertIsTypeConstraint(conceptId)) {
+    DbModel::IsTypeConstraint row = {conceptId};
+    STG.insertClassObj(row);
+  }
 }

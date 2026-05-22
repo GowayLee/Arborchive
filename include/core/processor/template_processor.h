@@ -12,9 +12,14 @@ class ConceptDecl;
 class ConceptSpecializationExpr;
 class Expr;
 class QualType;
+class ASTTemplateArgumentListInfo;
+class ClassTemplateDecl;
 class TemplateArgument;
+class TemplateArgumentList;
 class TemplateArgumentLoc;
+class TemplateSpecializationTypeLoc;
 class TemplateTemplateParmDecl;
+class TemplateTypeParmDecl;
 class VarDecl;
 } // namespace clang
 
@@ -77,6 +82,34 @@ public:
   int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr);
   static const clang::Expr *getTemplateArgumentSourceExpr(
       const clang::TemplateArgumentLoc &argLoc);
+
+  void recordClassTemplateTypeArguments(
+      int typeId, const clang::TemplateArgumentList &templateArgs);
+  void recordClassTemplateArgumentValues(
+      int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs);
+  void recordClassTemplateArgumentValues(
+      int typeId, clang::TemplateSpecializationTypeLoc templateArgs);
+  void recordTemplateTemplateArguments(
+      int typeId, const clang::TemplateArgumentList &templateArgs);
+  void recordTemplateTemplateInstantiations(
+      const clang::ClassTemplateDecl *classTemplateDecl,
+      const clang::TemplateArgumentList &templateArgs);
+  void recordFunctionTemplateTypeArguments(
+      int functionId, const clang::TemplateArgumentList *templateArgs);
+  void recordFunctionTemplateArgumentValues(
+      int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs);
+  void recordFunctionTemplateArgumentValues(
+      int functionId, const clang::TemplateArgumentLoc *templateArgs,
+      unsigned numTemplateArgs);
+  void recordVariableTemplateTypeArguments(
+      int variableId, const clang::TemplateArgumentList &templateArgs);
+  void recordVariableTemplateArgumentValues(
+      int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs);
+  void recordConceptTemplateTypeArguments(
+      int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs);
+  void recordConceptTemplateArgumentValues(
+      int conceptId, const clang::ConceptSpecializationExpr *expr);
+  void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl);
 
 private:
   TypeProcessor *type_processor_ = nullptr;

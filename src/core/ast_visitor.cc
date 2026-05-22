@@ -28,451 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace {
-
-void recordClassTemplateTypeArguments(
-    int typeId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)typeProcessor;
-  (void)context;
-
-  if (typeId == -1)
-    return;
-
-  for (unsigned index = 0; index < templateArgs.size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs[index];
-    if (arg.getKind() != clang::TemplateArgument::Type)
-      continue;
-
-    int argTypeId =
-        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
-    if (argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertClassTemplateArgument(
-            typeId, static_cast<int>(index), argTypeId))
-      continue;
-
-    DbModel::ClassTemplateArgument templateArgument = {
-        typeId, static_cast<int>(index), argTypeId};
-    STG.insertClassObj(templateArgument);
-  }
-}
-
-void recordClassTemplateArgumentValues(
-    int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)exprProcessor;
-  (void)context;
-
-  if (typeId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
-       ++index) {
-    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr =
-        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertClassTemplateArgumentValue(
-            typeId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
-        typeId, static_cast<int>(index), exprId};
-    STG.insertClassObj(templateArgumentValue);
-  }
-}
-
-void recordClassTemplateArgumentValues(
-    int typeId, clang::TemplateSpecializationTypeLoc templateArgs,
-    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)exprProcessor;
-  (void)context;
-
-  if (typeId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < templateArgs.getNumArgs(); ++index) {
-    const clang::TemplateArgumentLoc &argLoc = templateArgs.getArgLoc(index);
-    const clang::Expr *sourceExpr =
-        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertClassTemplateArgumentValue(
-            typeId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::ClassTemplateArgumentValue templateArgumentValue = {
-        typeId, static_cast<int>(index), exprId};
-    STG.insertClassObj(templateArgumentValue);
-  }
-}
-
-void recordTemplateTemplateArguments(
-    int typeId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)typeProcessor;
-  (void)context;
-
-  if (typeId == -1)
-    return;
-
-  for (unsigned index = 0; index < templateArgs.size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs[index];
-    int argTypeId =
-        templateProcessor->resolveTemplateTemplateArgumentTypeId(arg);
-    if (argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertTemplateTemplateArgument(
-            typeId, static_cast<int>(index), argTypeId))
-      continue;
-
-    DbModel::TemplateTemplateArgument templateArgument = {
-        typeId, static_cast<int>(index), argTypeId};
-    STG.insertClassObj(templateArgument);
-  }
-}
-
-void recordTemplateTemplateInstantiations(
-    const clang::ClassTemplateDecl *classTemplateDecl,
-    const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  if (!classTemplateDecl || !typeProcessor || !context)
-    return;
-
-  const clang::TemplateParameterList *params =
-      classTemplateDecl->getTemplateParameters();
-  if (!params)
-    return;
-
-  unsigned count = templateArgs.size();
-  if (params->size() < count)
-    count = params->size();
-
-  for (unsigned index = 0; index < count; ++index) {
-    const auto *param = llvm::dyn_cast_or_null<clang::TemplateTemplateParmDecl>(
-        params->getParam(index));
-    if (!param || param->isParameterPack())
-      continue;
-
-    const clang::TemplateArgument &arg = templateArgs[index];
-    const clang::TemplateDecl *templateDecl =
-        arg.getKind() == clang::TemplateArgument::Template
-            ? arg.getAsTemplate().getAsTemplateDecl()
-            : nullptr;
-    if (!llvm::isa_and_nonnull<clang::ClassTemplateDecl>(templateDecl))
-      continue;
-
-    int paramId = templateProcessor->resolveTemplateTemplateParmId(param);
-    int argTypeId =
-        templateProcessor->resolveTemplateTemplateArgumentTypeId(arg);
-    if (paramId == -1 || argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertTemplateTemplateInstantiation(argTypeId,
-                                                                      paramId))
-      continue;
-
-    DbModel::TemplateTemplateInstantiation instantiation = {argTypeId,
-                                                            paramId};
-    STG.insertClassObj(instantiation);
-  }
-}
-
-void recordFunctionTemplateTypeArguments(
-    int functionId, const clang::TemplateArgumentList *templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)typeProcessor;
-  (void)context;
-
-  if (functionId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < templateArgs->size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs->get(index);
-    if (arg.getKind() != clang::TemplateArgument::Type)
-      continue;
-
-    int argTypeId =
-        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
-    if (argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertFunctionTemplateArgument(
-            functionId, static_cast<int>(index), argTypeId))
-      continue;
-
-    DbModel::FunctionTemplateArgument templateArgument = {
-        functionId, static_cast<int>(index), argTypeId};
-    STG.insertClassObj(templateArgument);
-  }
-}
-
-void recordFunctionTemplateArgumentValues(
-    int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)exprProcessor;
-  (void)context;
-
-  if (functionId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
-       ++index) {
-    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr =
-        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertFunctionTemplateArgumentValue(
-            functionId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
-        functionId, static_cast<int>(index), exprId};
-    STG.insertClassObj(templateArgumentValue);
-  }
-}
-
-void recordFunctionTemplateArgumentValues(
-    int functionId, const clang::TemplateArgumentLoc *templateArgs,
-    unsigned numTemplateArgs, ExprProcessor *exprProcessor,
-    TemplateProcessor *templateProcessor, clang::ASTContext *context) {
-  (void)exprProcessor;
-  (void)context;
-
-  if (functionId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < numTemplateArgs; ++index) {
-    const clang::TemplateArgumentLoc &argLoc = templateArgs[index];
-    const clang::Expr *sourceExpr =
-        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertFunctionTemplateArgumentValue(
-            functionId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
-        functionId, static_cast<int>(index), exprId};
-    STG.insertClassObj(templateArgumentValue);
-  }
-}
-
-void recordVariableTemplateTypeArguments(
-    int variableId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)typeProcessor;
-  (void)context;
-
-  if (variableId == -1)
-    return;
-
-  for (unsigned index = 0; index < templateArgs.size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs[index];
-    if (arg.getKind() != clang::TemplateArgument::Type)
-      continue;
-
-    int argTypeId =
-        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
-    if (argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertVariableTemplateArgument(
-            variableId, static_cast<int>(index), argTypeId))
-      continue;
-
-    DbModel::VariableTemplateArgument templateArgument = {
-        variableId, static_cast<int>(index), argTypeId};
-    STG.insertClassObj(templateArgument);
-  }
-}
-
-void recordVariableTemplateArgumentValues(
-    int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)exprProcessor;
-  (void)context;
-
-  if (variableId == -1 || !templateArgs)
-    return;
-
-  for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
-       ++index) {
-    const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr =
-        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertVariableTemplateArgumentValue(
-            variableId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::VariableTemplateArgumentValue templateArgumentValue = {
-        variableId, static_cast<int>(index), exprId};
-    STG.insertClassObj(templateArgumentValue);
-  }
-}
-
-void recordConceptTemplateTypeArguments(
-    int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs,
-    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  (void)typeProcessor;
-  (void)context;
-
-  if (conceptId == -1)
-    return;
-
-  for (unsigned index = 0; index < templateArgs.size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs[index];
-    if (arg.getKind() != clang::TemplateArgument::Type)
-      continue;
-
-    int argTypeId =
-        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
-    if (argTypeId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertConceptTemplateArgument(
-            conceptId, static_cast<int>(index), argTypeId))
-      continue;
-
-    DbModel::ConceptTemplateArgument templateArgument = {
-        conceptId, static_cast<int>(index), argTypeId};
-    STG.insertClassObj(templateArgument);
-  }
-}
-
-void recordConceptTemplateArgumentValues(
-    int conceptId, const clang::ConceptSpecializationExpr *expr,
-    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
-    clang::ASTContext *context) {
-  if (conceptId == -1 || !expr || !exprProcessor || !context)
-    return;
-
-  llvm::ArrayRef<clang::TemplateArgument> templateArgs =
-      expr->getTemplateArguments();
-
-  const clang::ASTTemplateArgumentListInfo *argsAsWritten =
-      expr->getTemplateArgsAsWritten();
-
-  for (unsigned index = 0; index < templateArgs.size(); ++index) {
-    const clang::TemplateArgument &arg = templateArgs[index];
-    const clang::Expr *sourceExpr = nullptr;
-
-    // Prefer source expression from args-as-written (with location info)
-    if (argsAsWritten && index < argsAsWritten->getNumTemplateArgs()) {
-      const clang::TemplateArgumentLoc &argLoc = (*argsAsWritten)[index];
-      sourceExpr = templateProcessor->getTemplateArgumentSourceExpr(argLoc);
-    }
-
-    // Fall back: Expression kind directly stores the source expr
-    if (!sourceExpr && arg.getKind() == clang::TemplateArgument::Expression) {
-      sourceExpr = arg.getAsExpr();
-    }
-
-    // Defer: no source expression available (e.g., Integral without source loc,
-    // SubstNonTypeTemplateParmExpr, dependent, pack, null, etc.)
-    if (!sourceExpr)
-      continue;
-
-    // Check for SubstNonTypeTemplateParmExpr — defer
-    if (llvm::isa<clang::SubstNonTypeTemplateParmExpr>(sourceExpr))
-      continue;
-
-    int exprId =
-        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
-    if (exprId == -1)
-      continue;
-
-    if (!templateProcessor->shouldInsertConceptTemplateArgumentValue(
-            conceptId, static_cast<int>(index), exprId))
-      continue;
-
-    DbModel::ConceptTemplateArgumentValue row = {conceptId,
-                                                  static_cast<int>(index),
-                                                  exprId};
-    STG.insertClassObj(row);
-  }
-}
-
-void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
-                                  ExprProcessor *exprProcessor,
-                                  TemplateProcessor *templateProcessor,
-                                  clang::ASTContext *context) {
-  if (!decl || !exprProcessor || !context)
-    return;
-
-  const clang::TypeConstraint *typeConstraint = decl->getTypeConstraint();
-  if (!typeConstraint)
-    return;
-
-  const clang::Expr *constraintExpr =
-      typeConstraint->getImmediatelyDeclaredConstraint();
-  const auto *conceptExpr =
-      llvm::dyn_cast_or_null<clang::ConceptSpecializationExpr>(constraintExpr);
-  if (!conceptExpr)
-    return;
-
-  KeyType templateParamKey = KeyGen::Type::makeKey(decl, context);
-  int templateParamId = SEARCH_TYPE_CACHE(templateParamKey).value_or(-1);
-  if (templateParamId == -1)
-    return;
-
-  int conceptId = templateProcessor->resolveConceptSpecializationId(conceptExpr,
-                                                                    context);
-  if (conceptId == -1)
-    return;
-
-  int constraintExprId =
-      exprProcessor->processConceptSpecializationExpr(conceptExpr, conceptId);
-  if (constraintExprId == -1)
-    return;
-
-  if (templateProcessor->shouldInsertTypeTemplateTypeConstraint(
-          templateParamId, constraintExprId)) {
-    DbModel::TypeTemplateTypeConstraint row = {templateParamId,
-                                               constraintExprId};
-    STG.insertClassObj(row);
-  }
-
-  if (templateProcessor->shouldInsertIsTypeConstraint(conceptId)) {
-    DbModel::IsTypeConstraint row = {conceptId};
-    STG.insertClassObj(row);
-  }
-}
-
-} // namespace
-
 ASTVisitor::ASTVisitor(clang::ASTContext *context)
     : context_(context), pp_(context->getPrintingPolicy()) {
   initProcessors();
@@ -554,12 +109,10 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
       }
     }
 
-    recordFunctionTemplateTypeArguments(
-        specializationId, decl->getTemplateSpecializationArgs(),
-        type_processor_.get(), template_processor_.get(), context_);
-    recordFunctionTemplateArgumentValues(
-        specializationId, decl->getTemplateSpecializationArgsAsWritten(),
-        expr_processor_.get(), template_processor_.get(), context_);
+    template_processor_->recordFunctionTemplateTypeArguments(
+        specializationId, decl->getTemplateSpecializationArgs());
+    template_processor_->recordFunctionTemplateArgumentValues(
+        specializationId, decl->getTemplateSpecializationArgsAsWritten());
   }
 
   return true;
@@ -597,9 +150,8 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
   if (clang::TypeSourceInfo *typeInfo = decl->getTypeSourceInfo()) {
     auto templateTypeLoc = typeInfo->getTypeLoc()
                                .getAsAdjusted<clang::TemplateSpecializationTypeLoc>();
-    recordClassTemplateArgumentValues(type_id, templateTypeLoc,
-                                      expr_processor_.get(),
-                                      template_processor_.get(), context_);
+    template_processor_->recordClassTemplateArgumentValues(type_id,
+                                                           templateTypeLoc);
   }
 
   if (const auto *specialization =
@@ -623,12 +175,10 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
       }
     }
 
-    recordVariableTemplateTypeArguments(
-        variableId, specialization->getTemplateInstantiationArgs(),
-        type_processor_.get(), template_processor_.get(), context_);
-    recordVariableTemplateArgumentValues(
-        variableId, specialization->getTemplateArgsAsWritten(),
-        expr_processor_.get(), template_processor_.get(), context_);
+    template_processor_->recordVariableTemplateTypeArguments(
+        variableId, specialization->getTemplateInstantiationArgs());
+    template_processor_->recordVariableTemplateArgumentValues(
+        variableId, specialization->getTemplateArgsAsWritten());
   }
   return true;
 }
@@ -683,8 +233,7 @@ bool ASTVisitor::VisitTypedefDecl(clang::TypedefDecl *decl) {
 
 bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
   type_processor_->processTemplateTypeParmDecl(decl);
-  recordTemplateTypeConstraint(decl, expr_processor_.get(),
-                               template_processor_.get(), context_);
+  template_processor_->recordTemplateTypeConstraint(decl);
   return true;
 }
 
@@ -933,18 +482,14 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
     }
   }
 
-  recordClassTemplateTypeArguments(
-      specializationId, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), template_processor_.get(), context_);
-  recordTemplateTemplateArguments(
-      specializationId, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), template_processor_.get(), context_);
-  recordTemplateTemplateInstantiations(
-      classTemplateDecl, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), template_processor_.get(), context_);
-  recordClassTemplateArgumentValues(
-      specializationId, decl->getTemplateArgsAsWritten(), expr_processor_.get(),
-      template_processor_.get(), context_);
+  template_processor_->recordClassTemplateTypeArguments(
+      specializationId, decl->getTemplateInstantiationArgs());
+  template_processor_->recordTemplateTemplateArguments(
+      specializationId, decl->getTemplateInstantiationArgs());
+  template_processor_->recordTemplateTemplateInstantiations(
+      classTemplateDecl, decl->getTemplateInstantiationArgs());
+  template_processor_->recordClassTemplateArgumentValues(
+      specializationId, decl->getTemplateArgsAsWritten());
 
   return true;
 }
@@ -1002,9 +547,8 @@ bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
             llvm::dyn_cast<clang::FunctionDecl>(expr->getDecl())) {
       KeyType functionKey = KeyGen::Function::makeKey(functionDecl, context_);
       int functionId = SEARCH_FUNCTION_CACHE(functionKey).value_or(-1);
-      recordFunctionTemplateArgumentValues(
-          functionId, expr->getTemplateArgs(), expr->getNumTemplateArgs(),
-          expr_processor_.get(), template_processor_.get(), context_);
+      template_processor_->recordFunctionTemplateArgumentValues(
+          functionId, expr->getTemplateArgs(), expr->getNumTemplateArgs());
     }
   }
 
@@ -1099,10 +643,8 @@ bool ASTVisitor::VisitConceptSpecializationExpr(
     STG.insertClassObj(instantiation);
   }
 
-  recordConceptTemplateTypeArguments(conceptId, expr->getTemplateArguments(),
-                                     type_processor_.get(),
-                                     template_processor_.get(), context_);
-  recordConceptTemplateArgumentValues(conceptId, expr, expr_processor_.get(),
-                                      template_processor_.get(), context_);
+  template_processor_->recordConceptTemplateTypeArguments(
+      conceptId, expr->getTemplateArguments());
+  template_processor_->recordConceptTemplateArgumentValues(conceptId, expr);
   return true;
 }
