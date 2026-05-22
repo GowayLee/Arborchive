@@ -10,7 +10,12 @@
 namespace clang {
 class ConceptDecl;
 class ConceptSpecializationExpr;
+class Expr;
+class QualType;
 class TemplateArgument;
+class TemplateArgumentLoc;
+class TemplateTemplateParmDecl;
+class VarDecl;
 } // namespace clang
 
 class ExprProcessor;
@@ -63,6 +68,15 @@ public:
   int resolveConceptSpecializationId(
       const clang::ConceptSpecializationExpr *expr,
       clang::ASTContext *context);
+  // ---- 跨领域模板参数解析 ----
+  int resolveVariableEntityId(const clang::VarDecl *decl);
+  int resolveTemplateArgumentTypeId(clang::QualType argType);
+  int resolveTemplateTemplateParmId(
+      const clang::TemplateTemplateParmDecl *decl);
+  int resolveTemplateTemplateArgumentTypeId(const clang::TemplateArgument &arg);
+  int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr);
+  static const clang::Expr *getTemplateArgumentSourceExpr(
+      const clang::TemplateArgumentLoc &argLoc);
 
 private:
   TypeProcessor *type_processor_ = nullptr;

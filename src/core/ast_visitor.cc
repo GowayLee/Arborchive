@@ -30,156 +30,13 @@
 
 namespace {
 
-int resolveVariableEntityId(const clang::VarDecl *decl,
-                            VariableProcessor *variableProcessor,
-                            clang::ASTContext *context) {
-  if (!decl || !variableProcessor || !context)
-    return -1;
-
-  KeyType variableKey = KeyGen::Var::makeKey(decl, context);
-  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
-    return *cachedId;
-
-  variableProcessor->processVarDecl(decl);
-  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
-    return *cachedId;
-
-  return -1;
-}
-
-int resolveTemplateArgumentTypeId(clang::QualType argType,
-                                  TypeProcessor *typeProcessor,
-                                  clang::ASTContext *context) {
-  if (argType.isNull() || !typeProcessor || !context)
-    return -1;
-
-  KeyType typeKey = KeyGen::Type::makeKey(argType, context);
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    return *cachedId;
-
-  if (const auto *builtinType = argType->getAs<clang::BuiltinType>())
-    return typeProcessor->processBuiltinType(builtinType, context);
-
-  if (const auto *recordType = argType->getAs<clang::RecordType>()) {
-    typeProcessor->processRecordType(recordType);
-    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-      return *cachedId;
-  }
-
-  int typeId = typeProcessor->processType(argType.getTypePtr());
-  if (typeId != -1)
-    return typeId;
-
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    return *cachedId;
-
-  return -1;
-}
-
-int resolveTemplateTemplateParmId(const clang::TemplateTemplateParmDecl *decl,
-                                  TypeProcessor *typeProcessor,
-                                  clang::ASTContext *context) {
-  if (!decl || !typeProcessor || !context)
-    return -1;
-
-  KeyType typeKey = KeyGen::Type::makeKey(decl, context);
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    return *cachedId;
-
-  int typeId = typeProcessor->processTemplateTemplateParmDecl(decl);
-  if (typeId != -1)
-    return typeId;
-
-  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-    return *cachedId;
-
-  return -1;
-}
-
-int resolveTemplateTemplateArgumentTypeId(const clang::TemplateArgument &arg,
-                                          TypeProcessor *typeProcessor,
-                                          clang::ASTContext *context) {
-  if (arg.getKind() != clang::TemplateArgument::Template || !typeProcessor ||
-      !context)
-    return -1;
-
-  const clang::TemplateDecl *templateDecl =
-      arg.getAsTemplate().getAsTemplateDecl();
-  const auto *classTemplateDecl =
-      llvm::dyn_cast_or_null<clang::ClassTemplateDecl>(templateDecl);
-  if (!classTemplateDecl || !classTemplateDecl->getTemplatedDecl())
-    return -1;
-
-  const clang::CXXRecordDecl *templatedDecl =
-      classTemplateDecl->getTemplatedDecl();
-  KeyType templateTypeKey = KeyGen::Type::makeKey(templatedDecl, context);
-  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
-    return *cachedId;
-
-  int templateTypeId = typeProcessor->processRecordDeclType(templatedDecl);
-  if (templateTypeId != -1)
-    return templateTypeId;
-
-  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
-    return *cachedId;
-
-  return -1;
-}
-
-const clang::Expr *
-getTemplateArgumentSourceExpr(const clang::TemplateArgumentLoc &argLoc) {
-  const clang::TemplateArgument &arg = argLoc.getArgument();
-
-  switch (arg.getKind()) {
-  case clang::TemplateArgument::Expression:
-    return argLoc.getSourceExpression();
-  case clang::TemplateArgument::Integral:
-    return argLoc.getSourceIntegralExpression();
-  default:
-    return nullptr;
-  }
-}
-
-int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr,
-                                  ExprProcessor *exprProcessor,
-                                  clang::ASTContext *context) {
-  if (!sourceExpr || !exprProcessor || !context)
-    return -1;
-
-  const clang::Expr *expr = sourceExpr->IgnoreParenImpCasts();
-  KeyType exprKey = KeyGen::Expr_::makeKey(expr, context);
-  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-    return *cachedId;
-
-  if (const auto *integerLiteral =
-          llvm::dyn_cast<clang::IntegerLiteral>(expr)) {
-    exprProcessor->processIntegerLiteral(integerLiteral);
-  } else if (const auto *floatingLiteral =
-                 llvm::dyn_cast<clang::FloatingLiteral>(expr)) {
-    exprProcessor->processFloatingLiteral(floatingLiteral);
-  } else if (const auto *characterLiteral =
-                 llvm::dyn_cast<clang::CharacterLiteral>(expr)) {
-    exprProcessor->processCharacterLiteral(characterLiteral);
-  } else if (const auto *boolLiteral =
-                 llvm::dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
-    exprProcessor->processBoolLiteral(boolLiteral);
-  } else if (const auto *declRefExpr =
-                 llvm::dyn_cast<clang::DeclRefExpr>(expr)) {
-    exprProcessor->processDeclRef(const_cast<clang::DeclRefExpr *>(declRefExpr));
-  } else {
-    return -1;
-  }
-
-  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
-    return *cachedId;
-
-  return -1;
-}
-
 void recordClassTemplateTypeArguments(
     int typeId, const clang::TemplateArgumentList &templateArgs,
     TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)typeProcessor;
+  (void)context;
+
   if (typeId == -1)
     return;
 
@@ -189,7 +46,7 @@ void recordClassTemplateTypeArguments(
       continue;
 
     int argTypeId =
-        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
     if (argTypeId == -1)
       continue;
 
@@ -207,15 +64,19 @@ void recordClassTemplateArgumentValues(
     int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs,
     ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)exprProcessor;
+  (void)context;
+
   if (typeId == -1 || !templateArgs)
     return;
 
   for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
        ++index) {
     const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    const clang::Expr *sourceExpr =
+        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -233,14 +94,18 @@ void recordClassTemplateArgumentValues(
     int typeId, clang::TemplateSpecializationTypeLoc templateArgs,
     ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)exprProcessor;
+  (void)context;
+
   if (typeId == -1 || !templateArgs)
     return;
 
   for (unsigned index = 0; index < templateArgs.getNumArgs(); ++index) {
     const clang::TemplateArgumentLoc &argLoc = templateArgs.getArgLoc(index);
-    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    const clang::Expr *sourceExpr =
+        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -258,13 +123,16 @@ void recordTemplateTemplateArguments(
     int typeId, const clang::TemplateArgumentList &templateArgs,
     TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)typeProcessor;
+  (void)context;
+
   if (typeId == -1)
     return;
 
   for (unsigned index = 0; index < templateArgs.size(); ++index) {
     const clang::TemplateArgument &arg = templateArgs[index];
     int argTypeId =
-        resolveTemplateTemplateArgumentTypeId(arg, typeProcessor, context);
+        templateProcessor->resolveTemplateTemplateArgumentTypeId(arg);
     if (argTypeId == -1)
       continue;
 
@@ -309,9 +177,9 @@ void recordTemplateTemplateInstantiations(
     if (!llvm::isa_and_nonnull<clang::ClassTemplateDecl>(templateDecl))
       continue;
 
-    int paramId = resolveTemplateTemplateParmId(param, typeProcessor, context);
+    int paramId = templateProcessor->resolveTemplateTemplateParmId(param);
     int argTypeId =
-        resolveTemplateTemplateArgumentTypeId(arg, typeProcessor, context);
+        templateProcessor->resolveTemplateTemplateArgumentTypeId(arg);
     if (paramId == -1 || argTypeId == -1)
       continue;
 
@@ -329,6 +197,9 @@ void recordFunctionTemplateTypeArguments(
     int functionId, const clang::TemplateArgumentList *templateArgs,
     TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)typeProcessor;
+  (void)context;
+
   if (functionId == -1 || !templateArgs)
     return;
 
@@ -338,7 +209,7 @@ void recordFunctionTemplateTypeArguments(
       continue;
 
     int argTypeId =
-        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
     if (argTypeId == -1)
       continue;
 
@@ -356,15 +227,19 @@ void recordFunctionTemplateArgumentValues(
     int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs,
     ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)exprProcessor;
+  (void)context;
+
   if (functionId == -1 || !templateArgs)
     return;
 
   for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
        ++index) {
     const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    const clang::Expr *sourceExpr =
+        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -382,14 +257,18 @@ void recordFunctionTemplateArgumentValues(
     int functionId, const clang::TemplateArgumentLoc *templateArgs,
     unsigned numTemplateArgs, ExprProcessor *exprProcessor,
     TemplateProcessor *templateProcessor, clang::ASTContext *context) {
+  (void)exprProcessor;
+  (void)context;
+
   if (functionId == -1 || !templateArgs)
     return;
 
   for (unsigned index = 0; index < numTemplateArgs; ++index) {
     const clang::TemplateArgumentLoc &argLoc = templateArgs[index];
-    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    const clang::Expr *sourceExpr =
+        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -407,6 +286,9 @@ void recordVariableTemplateTypeArguments(
     int variableId, const clang::TemplateArgumentList &templateArgs,
     TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)typeProcessor;
+  (void)context;
+
   if (variableId == -1)
     return;
 
@@ -416,7 +298,7 @@ void recordVariableTemplateTypeArguments(
       continue;
 
     int argTypeId =
-        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
     if (argTypeId == -1)
       continue;
 
@@ -434,15 +316,19 @@ void recordVariableTemplateArgumentValues(
     int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs,
     ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)exprProcessor;
+  (void)context;
+
   if (variableId == -1 || !templateArgs)
     return;
 
   for (unsigned index = 0; index < templateArgs->getNumTemplateArgs();
        ++index) {
     const clang::TemplateArgumentLoc &argLoc = (*templateArgs)[index];
-    const clang::Expr *sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+    const clang::Expr *sourceExpr =
+        templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -460,6 +346,9 @@ void recordConceptTemplateTypeArguments(
     int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs,
     TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
     clang::ASTContext *context) {
+  (void)typeProcessor;
+  (void)context;
+
   if (conceptId == -1)
     return;
 
@@ -469,7 +358,7 @@ void recordConceptTemplateTypeArguments(
       continue;
 
     int argTypeId =
-        resolveTemplateArgumentTypeId(arg.getAsType(), typeProcessor, context);
+        templateProcessor->resolveTemplateArgumentTypeId(arg.getAsType());
     if (argTypeId == -1)
       continue;
 
@@ -503,7 +392,7 @@ void recordConceptTemplateArgumentValues(
     // Prefer source expression from args-as-written (with location info)
     if (argsAsWritten && index < argsAsWritten->getNumTemplateArgs()) {
       const clang::TemplateArgumentLoc &argLoc = (*argsAsWritten)[index];
-      sourceExpr = getTemplateArgumentSourceExpr(argLoc);
+      sourceExpr = templateProcessor->getTemplateArgumentSourceExpr(argLoc);
     }
 
     // Fall back: Expression kind directly stores the source expr
@@ -521,7 +410,7 @@ void recordConceptTemplateArgumentValues(
       continue;
 
     int exprId =
-        resolveTemplateArgumentExprId(sourceExpr, exprProcessor, context);
+        templateProcessor->resolveTemplateArgumentExprId(sourceExpr);
     if (exprId == -1)
       continue;
 
@@ -716,17 +605,15 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
   if (const auto *specialization =
           llvm::dyn_cast_or_null<clang::VarTemplateSpecializationDecl>(decl)) {
     int variableId =
-        resolveVariableEntityId(specialization, variable_processor_.get(),
-                                context_);
+        template_processor_->resolveVariableEntityId(specialization);
     if (variableId == -1)
       return true;
 
     const clang::VarTemplateDecl *primaryTemplate =
         specialization->getSpecializedTemplate();
     if (primaryTemplate && primaryTemplate->getTemplatedDecl()) {
-      int templateId = resolveVariableEntityId(
-          primaryTemplate->getTemplatedDecl(), variable_processor_.get(),
-          context_);
+      int templateId = template_processor_->resolveVariableEntityId(
+          primaryTemplate->getTemplatedDecl());
       if (templateId != -1 &&
           template_processor_->shouldInsertVariableInstantiation(variableId,
                                                                  templateId)) {
@@ -1094,9 +981,7 @@ bool ASTVisitor::VisitVarTemplateDecl(clang::VarTemplateDecl *decl) {
   if (!templatedDecl)
     return true;
 
-  int variableId =
-      resolveVariableEntityId(templatedDecl, variable_processor_.get(),
-                              context_);
+  int variableId = template_processor_->resolveVariableEntityId(templatedDecl);
   if (variableId == -1 ||
       !template_processor_->shouldInsertVariableTemplate(variableId))
     return true;

@@ -4,11 +4,16 @@
 #endif
 
 #include "core/processor/template_processor.h"
+#include "core/processor/expr_processor.h"
+#include "core/processor/type_processor.h"
+#include "core/processor/variable_processor.h"
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/concept.h"
 #include "util/id_generator.h"
+#include "util/key_generator/expr.h"
 #include "util/key_generator/type.h"
+#include "util/key_generator/variable.h"
 #include <clang/AST/ASTConcept.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/ExprConcepts.h>
@@ -249,4 +254,144 @@ int TemplateProcessor::resolveConceptSpecializationId(
   int conceptId = IDGenerator::generateId<ConceptSpecializationId>();
   conceptSpecializationIds.emplace(specializationKey, conceptId);
   return conceptId;
+}
+
+int TemplateProcessor::resolveVariableEntityId(const clang::VarDecl *decl) {
+  if (!decl || !variable_processor_ || !ast_context_)
+    return -1;
+
+  KeyType variableKey = KeyGen::Var::makeKey(decl, ast_context_);
+  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
+    return *cachedId;
+
+  variable_processor_->processVarDecl(decl);
+  if (auto cachedId = SEARCH_VARIABLE_CACHE(variableKey))
+    return *cachedId;
+
+  return -1;
+}
+
+int TemplateProcessor::resolveTemplateArgumentTypeId(clang::QualType argType) {
+  if (argType.isNull() || !type_processor_ || !ast_context_)
+    return -1;
+
+  KeyType typeKey = KeyGen::Type::makeKey(argType, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  if (const auto *builtinType = argType->getAs<clang::BuiltinType>())
+    return type_processor_->processBuiltinType(builtinType, ast_context_);
+
+  if (const auto *recordType = argType->getAs<clang::RecordType>()) {
+    type_processor_->processRecordType(recordType);
+    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+      return *cachedId;
+  }
+
+  int typeId = type_processor_->processType(argType.getTypePtr());
+  if (typeId != -1)
+    return typeId;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  return -1;
+}
+
+int TemplateProcessor::resolveTemplateTemplateParmId(
+    const clang::TemplateTemplateParmDecl *decl) {
+  if (!decl || !type_processor_ || !ast_context_)
+    return -1;
+
+  KeyType typeKey = KeyGen::Type::makeKey(decl, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  int typeId = type_processor_->processTemplateTemplateParmDecl(decl);
+  if (typeId != -1)
+    return typeId;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+    return *cachedId;
+
+  return -1;
+}
+
+int TemplateProcessor::resolveTemplateTemplateArgumentTypeId(
+    const clang::TemplateArgument &arg) {
+  if (arg.getKind() != clang::TemplateArgument::Template || !type_processor_ ||
+      !ast_context_)
+    return -1;
+
+  const clang::TemplateDecl *templateDecl =
+      arg.getAsTemplate().getAsTemplateDecl();
+  const auto *classTemplateDecl =
+      llvm::dyn_cast_or_null<clang::ClassTemplateDecl>(templateDecl);
+  if (!classTemplateDecl || !classTemplateDecl->getTemplatedDecl())
+    return -1;
+
+  const clang::CXXRecordDecl *templatedDecl =
+      classTemplateDecl->getTemplatedDecl();
+  KeyType templateTypeKey = KeyGen::Type::makeKey(templatedDecl, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
+    return *cachedId;
+
+  int templateTypeId = type_processor_->processRecordDeclType(templatedDecl);
+  if (templateTypeId != -1)
+    return templateTypeId;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateTypeKey))
+    return *cachedId;
+
+  return -1;
+}
+
+const clang::Expr *TemplateProcessor::getTemplateArgumentSourceExpr(
+    const clang::TemplateArgumentLoc &argLoc) {
+  const clang::TemplateArgument &arg = argLoc.getArgument();
+
+  switch (arg.getKind()) {
+  case clang::TemplateArgument::Expression:
+    return argLoc.getSourceExpression();
+  case clang::TemplateArgument::Integral:
+    return argLoc.getSourceIntegralExpression();
+  default:
+    return nullptr;
+  }
+}
+
+int TemplateProcessor::resolveTemplateArgumentExprId(
+    const clang::Expr *sourceExpr) {
+  if (!sourceExpr || !expr_processor_ || !ast_context_)
+    return -1;
+
+  const clang::Expr *expr = sourceExpr->IgnoreParenImpCasts();
+  KeyType exprKey = KeyGen::Expr_::makeKey(expr, ast_context_);
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  if (const auto *integerLiteral =
+          llvm::dyn_cast<clang::IntegerLiteral>(expr)) {
+    expr_processor_->processIntegerLiteral(integerLiteral);
+  } else if (const auto *floatingLiteral =
+                 llvm::dyn_cast<clang::FloatingLiteral>(expr)) {
+    expr_processor_->processFloatingLiteral(floatingLiteral);
+  } else if (const auto *characterLiteral =
+                 llvm::dyn_cast<clang::CharacterLiteral>(expr)) {
+    expr_processor_->processCharacterLiteral(characterLiteral);
+  } else if (const auto *boolLiteral =
+                 llvm::dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
+    expr_processor_->processBoolLiteral(boolLiteral);
+  } else if (const auto *declRefExpr =
+                 llvm::dyn_cast<clang::DeclRefExpr>(expr)) {
+    expr_processor_->processDeclRef(
+        const_cast<clang::DeclRefExpr *>(declRefExpr));
+  } else {
+    return -1;
+  }
+
+  if (auto cachedId = SEARCH_EXPR_CACHE(exprKey))
+    return *cachedId;
+
+  return -1;
 }
