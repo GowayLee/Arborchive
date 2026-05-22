@@ -8,16 +8,20 @@
 #include "core/processor/type_processor.h"
 #include "core/processor/variable_processor.h"
 #include "core/srcloc_recorder.h"
+#include "db/dependency_manager.h"
 #include "db/storage_facade.h"
 #include "model/db/concept.h"
+#include "model/db/declaration.h"
 #include "model/db/function.h"
 #include "model/db/type.h"
 #include "model/db/variable.h"
 #include "util/id_generator.h"
 #include "util/key_generator/expr.h"
+#include "util/key_generator/function.h"
 #include "util/key_generator/type.h"
 #include "util/key_generator/variable.h"
 #include <clang/AST/ASTConcept.h>
+#include <clang/AST/DeclFriend.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/ExprConcepts.h>
 #include <clang/AST/TypeLoc.h>
@@ -784,4 +788,233 @@ void TemplateProcessor::recordTemplateTypeConstraint(
     DbModel::IsTypeConstraint row = {conceptId};
     STG.insertClassObj(row);
   }
+}
+
+void TemplateProcessor::processFunctionTemplateSpecialization(
+    const clang::FunctionDecl *decl, int functionId) {
+  if (decl && decl->isFunctionTemplateSpecialization()) {
+    KeyType functionKey = KeyGen::Function::makeKey(decl, ast_context_);
+    int specializationId = functionId;
+    if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey))
+      specializationId = *cachedId;
+    if (specializationId == -1)
+      return;
+
+    if (const clang::FunctionTemplateDecl *primaryTemplate =
+            decl->getPrimaryTemplate()) {
+      const clang::FunctionDecl *templatedDecl =
+          primaryTemplate->getTemplatedDecl();
+      KeyType templateKey = KeyGen::Function::makeKey(templatedDecl,
+                                                      ast_context_);
+
+      if (auto cachedId = SEARCH_FUNCTION_CACHE(templateKey)) {
+        if (this->shouldInsertFunctionInstantiation(
+                specializationId, *cachedId)) {
+          DbModel::FunctionInstantiation instantiation = {
+              specializationId, *cachedId};
+          STG.insertClassObj(instantiation);
+        }
+      } else {
+        PendingUpdate update{
+            templateKey, CacheType::FUNCTION,
+            [specializationId,
+             templateProcessor = this](int resolvedId) {
+              if (!templateProcessor->shouldInsertFunctionInstantiation(
+                      specializationId, resolvedId))
+                return;
+
+              DbModel::FunctionInstantiation instantiation = {
+                  specializationId, resolvedId};
+              STG.insertClassObj(instantiation);
+            }};
+        DependencyManager::instance().addDependency(update);
+      }
+    }
+
+    this->recordFunctionTemplateTypeArguments(
+        specializationId, decl->getTemplateSpecializationArgs());
+    this->recordFunctionTemplateArgumentValues(
+        specializationId, decl->getTemplateSpecializationArgsAsWritten());
+  }
+}
+
+void TemplateProcessor::processVarTemplateSpecialization(
+    const clang::VarTemplateSpecializationDecl *decl, int) {
+  if (const auto *specialization =
+          llvm::dyn_cast_or_null<clang::VarTemplateSpecializationDecl>(decl)) {
+    int variableId =
+        this->resolveVariableEntityId(specialization);
+    if (variableId == -1)
+      return;
+
+    const clang::VarTemplateDecl *primaryTemplate =
+        specialization->getSpecializedTemplate();
+    if (primaryTemplate && primaryTemplate->getTemplatedDecl()) {
+      int templateId = this->resolveVariableEntityId(
+          primaryTemplate->getTemplatedDecl());
+      if (templateId != -1 &&
+          this->shouldInsertVariableInstantiation(variableId,
+                                                  templateId)) {
+        DbModel::VariableInstantiation instantiation = {variableId,
+                                                        templateId};
+        STG.insertClassObj(instantiation);
+      }
+    }
+
+    this->recordVariableTemplateTypeArguments(
+        variableId, specialization->getTemplateInstantiationArgs());
+    this->recordVariableTemplateArgumentValues(
+        variableId, specialization->getTemplateArgsAsWritten());
+  }
+}
+
+void TemplateProcessor::processClassTemplateSpecialization(
+    const clang::ClassTemplateSpecializationDecl *decl) {
+  if (!decl)
+    return;
+
+  const clang::ClassTemplateDecl *classTemplateDecl = nullptr;
+  auto instantiatedFrom = decl->getInstantiatedFrom();
+  if (!instantiatedFrom.isNull())
+    classTemplateDecl = instantiatedFrom.dyn_cast<clang::ClassTemplateDecl *>();
+  if (!classTemplateDecl)
+    classTemplateDecl = decl->getSpecializedTemplate();
+  if (!classTemplateDecl)
+    return;
+
+  const clang::CXXRecordDecl *templatedDecl =
+      classTemplateDecl->getTemplatedDecl();
+  if (!templatedDecl)
+    return;
+
+  KeyType specializationKey = KeyGen::Type::makeKey(decl, ast_context_);
+  if (!SEARCH_TYPE_CACHE(specializationKey))
+    type_processor_->processRecordDeclType(decl);
+
+  KeyType templateKey = KeyGen::Type::makeKey(templatedDecl, ast_context_);
+  if (!SEARCH_TYPE_CACHE(templateKey))
+    type_processor_->processRecordDeclType(templatedDecl);
+
+  int specializationId = -1;
+  int templateId = -1;
+
+  if (auto cachedId = SEARCH_TYPE_CACHE(specializationKey))
+    specializationId = *cachedId;
+  if (auto cachedId = SEARCH_TYPE_CACHE(templateKey))
+    templateId = *cachedId;
+
+  if (specializationId != -1 && templateId != -1) {
+    if (this->shouldInsertClassInstantiation(specializationId,
+                                             templateId)) {
+      DbModel::ClassInstantiation instantiation = {specializationId,
+                                                   templateId};
+      STG.insertClassObj(instantiation);
+    }
+  }
+
+  this->recordClassTemplateTypeArguments(
+      specializationId, decl->getTemplateInstantiationArgs());
+  this->recordTemplateTemplateArguments(
+      specializationId, decl->getTemplateInstantiationArgs());
+  this->recordTemplateTemplateInstantiations(
+      classTemplateDecl, decl->getTemplateInstantiationArgs());
+  this->recordClassTemplateArgumentValues(
+      specializationId, decl->getTemplateArgsAsWritten());
+}
+
+void TemplateProcessor::processFriendDecl(const clang::FriendDecl *decl) {
+  if (!decl)
+    return;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(decl, ast_context_);
+  const int friendDeclId = GENID(FriendDecl);
+  int typeId = -1;
+  int declId = -1;
+
+  auto resolveRecordType = [&](const clang::RecordType *recordType) -> int {
+    if (!recordType || !recordType->getDecl())
+      return -1;
+
+    type_processor_->processRecordType(recordType);
+    KeyType typeKey = KeyGen::Type::makeKey(recordType->getDecl(),
+                                            ast_context_);
+    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
+      return *cachedId;
+
+    return -1;
+  };
+
+  auto resolveFriendType = [&](clang::QualType friendType) -> int {
+    if (friendType.isNull())
+      return -1;
+
+    if (const auto *recordType = friendType->getAs<clang::RecordType>())
+      return resolveRecordType(recordType);
+
+    return type_processor_->processType(friendType.getTypePtr());
+  };
+
+  if (clang::TypeSourceInfo *friendTypeInfo = decl->getFriendType()) {
+    typeId = resolveFriendType(friendTypeInfo->getType());
+  } else if (clang::NamedDecl *friendNamedDecl = decl->getFriendDecl()) {
+    if (const auto *functionDecl =
+            llvm::dyn_cast<clang::FunctionDecl>(friendNamedDecl)) {
+      KeyType functionKey = KeyGen::Function::makeKey(functionDecl,
+                                                      ast_context_);
+      if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey)) {
+        declId = *cachedId;
+      } else {
+        PendingUpdate update{
+            functionKey, CacheType::FUNCTION,
+            [friendDeclId, typeId, location = locIdPair->spec_id](
+                int resolvedId) {
+              DbModel::FriendDecl updatedRecord = {friendDeclId, typeId,
+                                                   resolvedId, location};
+              STG.insertClassObj(updatedRecord);
+            }};
+        DependencyManager::instance().addDependency(update);
+      }
+    } else if (const auto *typeDecl =
+                   llvm::dyn_cast<clang::TypeDecl>(friendNamedDecl)) {
+      if (const auto *recordDecl =
+              llvm::dyn_cast<clang::RecordDecl>(typeDecl)) {
+        if (const auto *recordType =
+                llvm::dyn_cast_or_null<clang::RecordType>(
+                    recordDecl->getTypeForDecl()))
+          typeId = resolveRecordType(recordType);
+      }
+    }
+  }
+
+  DbModel::FriendDecl friendDeclModel = {friendDeclId, typeId, declId,
+                                         locIdPair->spec_id};
+  STG.insertClassObj(friendDeclModel);
+}
+
+void TemplateProcessor::processConceptSpecialization(
+    const clang::ConceptSpecializationExpr *expr) {
+  if (!expr)
+    return;
+
+  int templateId = this->resolveConceptTemplateId(
+      expr->getNamedConcept(), ast_context_);
+  if (templateId == -1)
+    return;
+
+  int conceptId = this->resolveConceptSpecializationId(expr,
+                                                       ast_context_);
+  if (conceptId == -1)
+    return;
+
+  expr_processor_->processConceptSpecializationExpr(expr, conceptId);
+
+  if (this->shouldInsertConceptInstantiation(conceptId,
+                                             templateId)) {
+    DbModel::ConceptInstantiation instantiation = {conceptId, templateId};
+    STG.insertClassObj(instantiation);
+  }
+
+  this->recordConceptTemplateTypeArguments(
+      conceptId, expr->getTemplateArguments());
+  this->recordConceptTemplateArgumentValues(conceptId, expr);
 }

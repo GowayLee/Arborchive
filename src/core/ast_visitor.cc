@@ -71,49 +71,7 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
                                                 param->getType());
   }
 
-  if (decl && decl->isFunctionTemplateSpecialization()) {
-    KeyType functionKey = KeyGen::Function::makeKey(decl, context_);
-    int specializationId = func_id;
-    if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey))
-      specializationId = *cachedId;
-    if (specializationId == -1)
-      return true;
-
-    if (const clang::FunctionTemplateDecl *primaryTemplate =
-            decl->getPrimaryTemplate()) {
-      const clang::FunctionDecl *templatedDecl =
-          primaryTemplate->getTemplatedDecl();
-      KeyType templateKey = KeyGen::Function::makeKey(templatedDecl, context_);
-
-      if (auto cachedId = SEARCH_FUNCTION_CACHE(templateKey)) {
-        if (template_processor_->shouldInsertFunctionInstantiation(
-                specializationId, *cachedId)) {
-          DbModel::FunctionInstantiation instantiation = {
-              specializationId, *cachedId};
-          STG.insertClassObj(instantiation);
-        }
-      } else {
-        PendingUpdate update{
-            templateKey, CacheType::FUNCTION,
-            [specializationId,
-             templateProcessor = template_processor_.get()](int resolvedId) {
-              if (!templateProcessor->shouldInsertFunctionInstantiation(
-                      specializationId, resolvedId))
-                return;
-
-              DbModel::FunctionInstantiation instantiation = {
-                  specializationId, resolvedId};
-              STG.insertClassObj(instantiation);
-            }};
-        DependencyManager::instance().addDependency(update);
-      }
-    }
-
-    template_processor_->recordFunctionTemplateTypeArguments(
-        specializationId, decl->getTemplateSpecializationArgs());
-    template_processor_->recordFunctionTemplateArgumentValues(
-        specializationId, decl->getTemplateSpecializationArgsAsWritten());
-  }
+  template_processor_->processFunctionTemplateSpecialization(decl, func_id);
 
   return true;
 }
@@ -154,32 +112,9 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
                                                            templateTypeLoc);
   }
 
-  if (const auto *specialization =
-          llvm::dyn_cast_or_null<clang::VarTemplateSpecializationDecl>(decl)) {
-    int variableId =
-        template_processor_->resolveVariableEntityId(specialization);
-    if (variableId == -1)
-      return true;
-
-    const clang::VarTemplateDecl *primaryTemplate =
-        specialization->getSpecializedTemplate();
-    if (primaryTemplate && primaryTemplate->getTemplatedDecl()) {
-      int templateId = template_processor_->resolveVariableEntityId(
-          primaryTemplate->getTemplatedDecl());
-      if (templateId != -1 &&
-          template_processor_->shouldInsertVariableInstantiation(variableId,
-                                                                 templateId)) {
-        DbModel::VariableInstantiation instantiation = {variableId,
-                                                        templateId};
-        STG.insertClassObj(instantiation);
-      }
-    }
-
-    template_processor_->recordVariableTemplateTypeArguments(
-        variableId, specialization->getTemplateInstantiationArgs());
-    template_processor_->recordVariableTemplateArgumentValues(
-        variableId, specialization->getTemplateArgsAsWritten());
-  }
+  template_processor_->processVarTemplateSpecialization(
+      llvm::dyn_cast_or_null<clang::VarTemplateSpecializationDecl>(decl),
+      var_decl_id);
   return true;
 }
 
@@ -335,70 +270,7 @@ bool ASTVisitor::VisitCompoundStmt(clang::CompoundStmt *compoundStmt) {
 }
 
 bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) {
-  if (!decl)
-    return true;
-
-  LocIdPair *locIdPair = SrcLocRecorder::processDefault(decl, context_);
-  const int friendDeclId = GENID(FriendDecl);
-  int typeId = -1;
-  int declId = -1;
-
-  auto resolveRecordType = [&](const clang::RecordType *recordType) -> int {
-    if (!recordType || !recordType->getDecl())
-      return -1;
-
-    type_processor_->processRecordType(recordType);
-    KeyType typeKey = KeyGen::Type::makeKey(recordType->getDecl(), context_);
-    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-      return *cachedId;
-
-    return -1;
-  };
-
-  auto resolveFriendType = [&](clang::QualType friendType) -> int {
-    if (friendType.isNull())
-      return -1;
-
-    if (const auto *recordType = friendType->getAs<clang::RecordType>())
-      return resolveRecordType(recordType);
-
-    return type_processor_->processType(friendType.getTypePtr());
-  };
-
-  if (clang::TypeSourceInfo *friendTypeInfo = decl->getFriendType()) {
-    typeId = resolveFriendType(friendTypeInfo->getType());
-  } else if (clang::NamedDecl *friendNamedDecl = decl->getFriendDecl()) {
-    if (const auto *functionDecl =
-            llvm::dyn_cast<clang::FunctionDecl>(friendNamedDecl)) {
-      KeyType functionKey = KeyGen::Function::makeKey(functionDecl, context_);
-      if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey)) {
-        declId = *cachedId;
-      } else {
-        PendingUpdate update{
-            functionKey, CacheType::FUNCTION,
-            [friendDeclId, typeId, location = locIdPair->spec_id](
-                int resolvedId) {
-              DbModel::FriendDecl updatedRecord = {friendDeclId, typeId,
-                                                   resolvedId, location};
-              STG.insertClassObj(updatedRecord);
-            }};
-        DependencyManager::instance().addDependency(update);
-      }
-    } else if (const auto *typeDecl =
-                   llvm::dyn_cast<clang::TypeDecl>(friendNamedDecl)) {
-      if (const auto *recordDecl =
-              llvm::dyn_cast<clang::RecordDecl>(typeDecl)) {
-        if (const auto *recordType =
-                llvm::dyn_cast_or_null<clang::RecordType>(
-                    recordDecl->getTypeForDecl()))
-          typeId = resolveRecordType(recordType);
-      }
-    }
-  }
-
-  DbModel::FriendDecl friendDeclModel = {friendDeclId, typeId, declId,
-                                         locIdPair->spec_id};
-  STG.insertClassObj(friendDeclModel);
+  template_processor_->processFriendDecl(decl);
   return true;
 }
 
@@ -440,57 +312,7 @@ bool ASTVisitor::VisitClassTemplateDecl(clang::ClassTemplateDecl *decl) {
 
 bool ASTVisitor::VisitClassTemplateSpecializationDecl(
     clang::ClassTemplateSpecializationDecl *decl) {
-  if (!decl)
-    return true;
-
-  const clang::ClassTemplateDecl *classTemplateDecl = nullptr;
-  auto instantiatedFrom = decl->getInstantiatedFrom();
-  if (!instantiatedFrom.isNull())
-    classTemplateDecl = instantiatedFrom.dyn_cast<clang::ClassTemplateDecl *>();
-  if (!classTemplateDecl)
-    classTemplateDecl = decl->getSpecializedTemplate();
-  if (!classTemplateDecl)
-    return true;
-
-  const clang::CXXRecordDecl *templatedDecl =
-      classTemplateDecl->getTemplatedDecl();
-  if (!templatedDecl)
-    return true;
-
-  KeyType specializationKey = KeyGen::Type::makeKey(decl, context_);
-  if (!SEARCH_TYPE_CACHE(specializationKey))
-    type_processor_->processRecordDeclType(decl);
-
-  KeyType templateKey = KeyGen::Type::makeKey(templatedDecl, context_);
-  if (!SEARCH_TYPE_CACHE(templateKey))
-    type_processor_->processRecordDeclType(templatedDecl);
-
-  int specializationId = -1;
-  int templateId = -1;
-
-  if (auto cachedId = SEARCH_TYPE_CACHE(specializationKey))
-    specializationId = *cachedId;
-  if (auto cachedId = SEARCH_TYPE_CACHE(templateKey))
-    templateId = *cachedId;
-
-  if (specializationId != -1 && templateId != -1) {
-    if (template_processor_->shouldInsertClassInstantiation(specializationId,
-                                                            templateId)) {
-      DbModel::ClassInstantiation instantiation = {specializationId,
-                                                   templateId};
-      STG.insertClassObj(instantiation);
-    }
-  }
-
-  template_processor_->recordClassTemplateTypeArguments(
-      specializationId, decl->getTemplateInstantiationArgs());
-  template_processor_->recordTemplateTemplateArguments(
-      specializationId, decl->getTemplateInstantiationArgs());
-  template_processor_->recordTemplateTemplateInstantiations(
-      classTemplateDecl, decl->getTemplateInstantiationArgs());
-  template_processor_->recordClassTemplateArgumentValues(
-      specializationId, decl->getTemplateArgsAsWritten());
-
+  template_processor_->processClassTemplateSpecialization(decl);
   return true;
 }
 
@@ -622,29 +444,6 @@ bool ASTVisitor::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *
 
 bool ASTVisitor::VisitConceptSpecializationExpr(
     clang::ConceptSpecializationExpr *expr) {
-  if (!expr)
-    return true;
-
-  int templateId = template_processor_->resolveConceptTemplateId(
-      expr->getNamedConcept(), context_);
-  if (templateId == -1)
-    return true;
-
-  int conceptId = template_processor_->resolveConceptSpecializationId(expr,
-                                                                      context_);
-  if (conceptId == -1)
-    return true;
-
-  expr_processor_->processConceptSpecializationExpr(expr, conceptId);
-
-  if (template_processor_->shouldInsertConceptInstantiation(conceptId,
-                                                            templateId)) {
-    DbModel::ConceptInstantiation instantiation = {conceptId, templateId};
-    STG.insertClassObj(instantiation);
-  }
-
-  template_processor_->recordConceptTemplateTypeArguments(
-      conceptId, expr->getTemplateArguments());
-  template_processor_->recordConceptTemplateArgumentValues(conceptId, expr);
+  template_processor_->processConceptSpecialization(expr);
   return true;
 }

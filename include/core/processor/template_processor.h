@@ -14,6 +14,9 @@ class Expr;
 class QualType;
 class ASTTemplateArgumentListInfo;
 class ClassTemplateDecl;
+class ClassTemplateSpecializationDecl;
+class FriendDecl;
+class FunctionDecl;
 class TemplateArgument;
 class TemplateArgumentList;
 class TemplateArgumentLoc;
@@ -21,6 +24,7 @@ class TemplateSpecializationTypeLoc;
 class TemplateTemplateParmDecl;
 class TemplateTypeParmDecl;
 class VarDecl;
+class VarTemplateSpecializationDecl;
 } // namespace clang
 
 class ExprProcessor;
@@ -110,6 +114,19 @@ public:
   void recordConceptTemplateArgumentValues(
       int conceptId, const clang::ConceptSpecializationExpr *expr);
   void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl);
+
+  // ---- Visit* orchestration ----
+  void processFunctionTemplateSpecialization(
+      const clang::FunctionDecl *decl,
+      int functionId);
+  void processVarTemplateSpecialization(
+      const clang::VarTemplateSpecializationDecl *decl,
+      int variableId);
+  void processClassTemplateSpecialization(
+      const clang::ClassTemplateSpecializationDecl *decl);
+  void processFriendDecl(const clang::FriendDecl *decl);
+  void processConceptSpecialization(
+      const clang::ConceptSpecializationExpr *expr);
 
 private:
   TypeProcessor *type_processor_ = nullptr;
