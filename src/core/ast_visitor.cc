@@ -30,143 +30,6 @@
 
 namespace {
 
-std::unordered_set<std::string> classInstantiationDedup;
-std::unordered_set<std::string> classTemplateArgumentDedup;
-std::unordered_set<std::string> classTemplateArgumentValueDedup;
-std::unordered_set<std::string> functionInstantiationDedup;
-std::unordered_set<std::string> functionTemplateArgumentDedup;
-std::unordered_set<std::string> functionTemplateArgumentValueDedup;
-std::unordered_set<std::string> variableTemplateDedup;
-std::unordered_set<std::string> variableInstantiationDedup;
-std::unordered_set<std::string> variableTemplateArgumentDedup;
-std::unordered_set<std::string> variableTemplateArgumentValueDedup;
-std::unordered_set<std::string> templateTemplateInstantiationDedup;
-std::unordered_set<std::string> templateTemplateArgumentDedup;
-std::unordered_set<std::string> conceptInstantiationDedup;
-std::unordered_set<std::string> conceptTemplateArgumentDedup;
-std::unordered_set<std::string> typeTemplateTypeConstraintDedup;
-std::unordered_set<int> isTypeConstraintDedup;
-std::unordered_set<int> nontypeTemplateParameterDedup;
-std::unordered_set<std::string> conceptTemplateArgumentValueDedup;
-std::unordered_map<std::string, int> conceptTemplateIds;
-std::unordered_map<std::string, int> conceptSpecializationIds;
-
-struct ConceptSpecializationId {
-  int id;
-};
-
-std::string makePairKey(int first, int second) {
-  return std::to_string(first) + ":" + std::to_string(second);
-}
-
-std::string makeTripleKey(int first, int second, int third) {
-  return std::to_string(first) + ":" + std::to_string(second) + ":" +
-         std::to_string(third);
-}
-
-bool shouldInsertClassInstantiation(int to, int from) {
-  return classInstantiationDedup.insert(makePairKey(to, from)).second;
-}
-
-bool shouldInsertClassTemplateArgument(int typeId, int index, int argType) {
-  return classTemplateArgumentDedup
-      .insert(makeTripleKey(typeId, index, argType))
-      .second;
-}
-
-bool shouldInsertClassTemplateArgumentValue(int typeId, int index,
-                                            int argValue) {
-  return classTemplateArgumentValueDedup
-      .insert(makeTripleKey(typeId, index, argValue))
-      .second;
-}
-
-bool shouldInsertFunctionInstantiation(int to, int from) {
-  return functionInstantiationDedup.insert(makePairKey(to, from)).second;
-}
-
-bool shouldInsertFunctionTemplateArgument(int functionId, int index,
-                                          int argType) {
-  return functionTemplateArgumentDedup
-      .insert(makeTripleKey(functionId, index, argType))
-      .second;
-}
-
-bool shouldInsertFunctionTemplateArgumentValue(int functionId, int index,
-                                               int argValue) {
-  return functionTemplateArgumentValueDedup
-      .insert(makeTripleKey(functionId, index, argValue))
-      .second;
-}
-
-bool shouldInsertVariableTemplate(int variableId) {
-  return variableTemplateDedup.insert(std::to_string(variableId)).second;
-}
-
-bool shouldInsertVariableInstantiation(int to, int from) {
-  return variableInstantiationDedup
-      .insert(makePairKey(to, from))
-      .second;
-}
-
-bool shouldInsertVariableTemplateArgument(int variableId, int index,
-                                          int argType) {
-  return variableTemplateArgumentDedup
-      .insert(makeTripleKey(variableId, index, argType))
-      .second;
-}
-
-bool shouldInsertVariableTemplateArgumentValue(int variableId, int index,
-                                               int argValue) {
-  return variableTemplateArgumentValueDedup
-      .insert(makeTripleKey(variableId, index, argValue))
-      .second;
-}
-
-bool shouldInsertTemplateTemplateInstantiation(int to, int from) {
-  return templateTemplateInstantiationDedup.insert(makePairKey(to, from))
-      .second;
-}
-
-bool shouldInsertTemplateTemplateArgument(int typeId, int index, int argType) {
-  return templateTemplateArgumentDedup
-      .insert(makeTripleKey(typeId, index, argType))
-      .second;
-}
-
-bool shouldInsertConceptInstantiation(int conceptId, int templateId) {
-  return conceptInstantiationDedup.insert(makePairKey(conceptId, templateId))
-      .second;
-}
-
-bool shouldInsertConceptTemplateArgument(int conceptId, int index,
-                                         int argType) {
-  return conceptTemplateArgumentDedup
-      .insert(makeTripleKey(conceptId, index, argType))
-      .second;
-}
-
-bool shouldInsertTypeTemplateTypeConstraint(int typeId, int constraintId) {
-  return typeTemplateTypeConstraintDedup
-      .insert(makePairKey(typeId, constraintId))
-      .second;
-}
-
-bool shouldInsertIsTypeConstraint(int conceptId) {
-  return isTypeConstraintDedup.insert(conceptId).second;
-}
-
-bool shouldInsertNontypeTemplateParameter(int id) {
-  return nontypeTemplateParameterDedup.insert(id).second;
-}
-
-bool shouldInsertConceptTemplateArgumentValue(int conceptId, int index,
-                                              int argValue) {
-  return conceptTemplateArgumentValueDedup
-      .insert(makeTripleKey(conceptId, index, argValue))
-      .second;
-}
-
 int resolveVariableEntityId(const clang::VarDecl *decl,
                             VariableProcessor *variableProcessor,
                             clang::ASTContext *context) {
@@ -263,104 +126,6 @@ int resolveTemplateTemplateArgumentTypeId(const clang::TemplateArgument &arg,
   return -1;
 }
 
-std::string makeConceptTemplateKey(const clang::ConceptDecl *decl,
-                                   clang::ASTContext *context) {
-  if (!decl || !context)
-    return "";
-
-  const clang::ConceptDecl *canonicalDecl = decl->getCanonicalDecl();
-  return KeyGen::Type::makeKey(canonicalDecl, context);
-}
-
-int resolveConceptTemplateId(const clang::ConceptDecl *decl,
-                             clang::ASTContext *context) {
-  if (!decl || !context)
-    return -1;
-
-  const clang::ConceptDecl *canonicalDecl = decl->getCanonicalDecl();
-  std::string conceptKey = makeConceptTemplateKey(canonicalDecl, context);
-  if (conceptKey.empty())
-    return -1;
-
-  if (auto it = conceptTemplateIds.find(conceptKey);
-      it != conceptTemplateIds.end())
-    return it->second;
-
-  LocIdPair *locIdPair = SrcLocRecorder::processDefault(canonicalDecl, context);
-  DbModel::ConceptTemplate conceptTemplate = {
-      GENID(ConceptTemplate), canonicalDecl->getNameAsString(),
-      locIdPair->spec_id};
-
-  conceptTemplateIds.emplace(conceptKey, conceptTemplate.id);
-  STG.insertClassObj(conceptTemplate);
-  return conceptTemplate.id;
-}
-
-std::string makeTemplateArgumentListKey(llvm::ArrayRef<clang::TemplateArgument> args,
-                                        clang::ASTContext *context) {
-  std::string key;
-  llvm::raw_string_ostream os(key);
-  clang::PrintingPolicy policy(context->getLangOpts());
-
-  for (unsigned index = 0; index < args.size(); ++index) {
-    if (index != 0)
-      os << ",";
-    args[index].print(policy, os, true);
-  }
-
-  return os.str();
-}
-
-std::string makeConceptSpecializationKey(
-    const clang::ConceptSpecializationExpr *expr,
-    clang::ASTContext *context) {
-  if (!expr || !context)
-    return "";
-
-  std::string conceptKey = makeConceptTemplateKey(expr->getNamedConcept(),
-                                                  context);
-  if (conceptKey.empty())
-    return "";
-
-  const clang::SourceManager &sourceManager = context->getSourceManager();
-  clang::SourceLocation beginLoc =
-      sourceManager.getSpellingLoc(expr->getBeginLoc());
-  clang::SourceLocation endLoc =
-      sourceManager.getSpellingLoc(expr->getEndLoc());
-
-  std::string locationKey;
-  if (beginLoc.isValid() && endLoc.isValid()) {
-    locationKey =
-        beginLoc.printToString(sourceManager) + "-" +
-        endLoc.printToString(sourceManager);
-  } else if (const auto *specializationDecl = expr->getSpecializationDecl()) {
-    locationKey = "implicit-decl-" + std::to_string(specializationDecl->getID());
-  } else {
-    locationKey =
-        "addr-" + std::to_string(reinterpret_cast<std::uintptr_t>(expr));
-  }
-
-  return conceptKey + "<" +
-         makeTemplateArgumentListKey(expr->getTemplateArguments(), context) +
-         ">@" + locationKey;
-}
-
-int resolveConceptSpecializationId(
-    const clang::ConceptSpecializationExpr *expr,
-    clang::ASTContext *context) {
-  std::string specializationKey = makeConceptSpecializationKey(expr, context);
-  if (specializationKey.empty())
-    return -1;
-
-  if (auto it = conceptSpecializationIds.find(specializationKey);
-      it != conceptSpecializationIds.end())
-    return it->second;
-
-  int conceptId = IDGenerator::generateId<ConceptSpecializationId>();
-  conceptSpecializationIds.emplace(specializationKey, conceptId);
-  return conceptId;
-}
-
 const clang::Expr *
 getTemplateArgumentSourceExpr(const clang::TemplateArgumentLoc &argLoc) {
   const clang::TemplateArgument &arg = argLoc.getArgument();
@@ -413,7 +178,8 @@ int resolveTemplateArgumentExprId(const clang::Expr *sourceExpr,
 
 void recordClassTemplateTypeArguments(
     int typeId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (typeId == -1)
     return;
 
@@ -427,8 +193,8 @@ void recordClassTemplateTypeArguments(
     if (argTypeId == -1)
       continue;
 
-    if (!shouldInsertClassTemplateArgument(typeId, static_cast<int>(index),
-                                           argTypeId))
+    if (!templateProcessor->shouldInsertClassTemplateArgument(
+            typeId, static_cast<int>(index), argTypeId))
       continue;
 
     DbModel::ClassTemplateArgument templateArgument = {
@@ -439,7 +205,8 @@ void recordClassTemplateTypeArguments(
 
 void recordClassTemplateArgumentValues(
     int typeId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (typeId == -1 || !templateArgs)
     return;
 
@@ -452,9 +219,8 @@ void recordClassTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertClassTemplateArgumentValue(typeId,
-                                                static_cast<int>(index),
-                                                exprId))
+    if (!templateProcessor->shouldInsertClassTemplateArgumentValue(
+            typeId, static_cast<int>(index), exprId))
       continue;
 
     DbModel::ClassTemplateArgumentValue templateArgumentValue = {
@@ -465,7 +231,8 @@ void recordClassTemplateArgumentValues(
 
 void recordClassTemplateArgumentValues(
     int typeId, clang::TemplateSpecializationTypeLoc templateArgs,
-    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (typeId == -1 || !templateArgs)
     return;
 
@@ -477,9 +244,8 @@ void recordClassTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertClassTemplateArgumentValue(typeId,
-                                                static_cast<int>(index),
-                                                exprId))
+    if (!templateProcessor->shouldInsertClassTemplateArgumentValue(
+            typeId, static_cast<int>(index), exprId))
       continue;
 
     DbModel::ClassTemplateArgumentValue templateArgumentValue = {
@@ -490,7 +256,8 @@ void recordClassTemplateArgumentValues(
 
 void recordTemplateTemplateArguments(
     int typeId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (typeId == -1)
     return;
 
@@ -501,7 +268,7 @@ void recordTemplateTemplateArguments(
     if (argTypeId == -1)
       continue;
 
-    if (!shouldInsertTemplateTemplateArgument(
+    if (!templateProcessor->shouldInsertTemplateTemplateArgument(
             typeId, static_cast<int>(index), argTypeId))
       continue;
 
@@ -514,7 +281,8 @@ void recordTemplateTemplateArguments(
 void recordTemplateTemplateInstantiations(
     const clang::ClassTemplateDecl *classTemplateDecl,
     const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (!classTemplateDecl || !typeProcessor || !context)
     return;
 
@@ -547,7 +315,8 @@ void recordTemplateTemplateInstantiations(
     if (paramId == -1 || argTypeId == -1)
       continue;
 
-    if (!shouldInsertTemplateTemplateInstantiation(argTypeId, paramId))
+    if (!templateProcessor->shouldInsertTemplateTemplateInstantiation(argTypeId,
+                                                                      paramId))
       continue;
 
     DbModel::TemplateTemplateInstantiation instantiation = {argTypeId,
@@ -558,7 +327,8 @@ void recordTemplateTemplateInstantiations(
 
 void recordFunctionTemplateTypeArguments(
     int functionId, const clang::TemplateArgumentList *templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (functionId == -1 || !templateArgs)
     return;
 
@@ -572,7 +342,7 @@ void recordFunctionTemplateTypeArguments(
     if (argTypeId == -1)
       continue;
 
-    if (!shouldInsertFunctionTemplateArgument(
+    if (!templateProcessor->shouldInsertFunctionTemplateArgument(
             functionId, static_cast<int>(index), argTypeId))
       continue;
 
@@ -584,7 +354,8 @@ void recordFunctionTemplateTypeArguments(
 
 void recordFunctionTemplateArgumentValues(
     int functionId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (functionId == -1 || !templateArgs)
     return;
 
@@ -597,9 +368,8 @@ void recordFunctionTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertFunctionTemplateArgumentValue(functionId,
-                                                   static_cast<int>(index),
-                                                   exprId))
+    if (!templateProcessor->shouldInsertFunctionTemplateArgumentValue(
+            functionId, static_cast<int>(index), exprId))
       continue;
 
     DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
@@ -611,7 +381,7 @@ void recordFunctionTemplateArgumentValues(
 void recordFunctionTemplateArgumentValues(
     int functionId, const clang::TemplateArgumentLoc *templateArgs,
     unsigned numTemplateArgs, ExprProcessor *exprProcessor,
-    clang::ASTContext *context) {
+    TemplateProcessor *templateProcessor, clang::ASTContext *context) {
   if (functionId == -1 || !templateArgs)
     return;
 
@@ -623,9 +393,8 @@ void recordFunctionTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertFunctionTemplateArgumentValue(functionId,
-                                                   static_cast<int>(index),
-                                                   exprId))
+    if (!templateProcessor->shouldInsertFunctionTemplateArgumentValue(
+            functionId, static_cast<int>(index), exprId))
       continue;
 
     DbModel::FunctionTemplateArgumentValue templateArgumentValue = {
@@ -636,7 +405,8 @@ void recordFunctionTemplateArgumentValues(
 
 void recordVariableTemplateTypeArguments(
     int variableId, const clang::TemplateArgumentList &templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (variableId == -1)
     return;
 
@@ -650,7 +420,7 @@ void recordVariableTemplateTypeArguments(
     if (argTypeId == -1)
       continue;
 
-    if (!shouldInsertVariableTemplateArgument(
+    if (!templateProcessor->shouldInsertVariableTemplateArgument(
             variableId, static_cast<int>(index), argTypeId))
       continue;
 
@@ -662,7 +432,8 @@ void recordVariableTemplateTypeArguments(
 
 void recordVariableTemplateArgumentValues(
     int variableId, const clang::ASTTemplateArgumentListInfo *templateArgs,
-    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (variableId == -1 || !templateArgs)
     return;
 
@@ -675,7 +446,7 @@ void recordVariableTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertVariableTemplateArgumentValue(
+    if (!templateProcessor->shouldInsertVariableTemplateArgumentValue(
             variableId, static_cast<int>(index), exprId))
       continue;
 
@@ -687,7 +458,8 @@ void recordVariableTemplateArgumentValues(
 
 void recordConceptTemplateTypeArguments(
     int conceptId, llvm::ArrayRef<clang::TemplateArgument> templateArgs,
-    TypeProcessor *typeProcessor, clang::ASTContext *context) {
+    TypeProcessor *typeProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (conceptId == -1)
     return;
 
@@ -701,9 +473,8 @@ void recordConceptTemplateTypeArguments(
     if (argTypeId == -1)
       continue;
 
-    if (!shouldInsertConceptTemplateArgument(conceptId,
-                                             static_cast<int>(index),
-                                             argTypeId))
+    if (!templateProcessor->shouldInsertConceptTemplateArgument(
+            conceptId, static_cast<int>(index), argTypeId))
       continue;
 
     DbModel::ConceptTemplateArgument templateArgument = {
@@ -714,7 +485,8 @@ void recordConceptTemplateTypeArguments(
 
 void recordConceptTemplateArgumentValues(
     int conceptId, const clang::ConceptSpecializationExpr *expr,
-    ExprProcessor *exprProcessor, clang::ASTContext *context) {
+    ExprProcessor *exprProcessor, TemplateProcessor *templateProcessor,
+    clang::ASTContext *context) {
   if (conceptId == -1 || !expr || !exprProcessor || !context)
     return;
 
@@ -753,9 +525,8 @@ void recordConceptTemplateArgumentValues(
     if (exprId == -1)
       continue;
 
-    if (!shouldInsertConceptTemplateArgumentValue(conceptId,
-                                                  static_cast<int>(index),
-                                                  exprId))
+    if (!templateProcessor->shouldInsertConceptTemplateArgumentValue(
+            conceptId, static_cast<int>(index), exprId))
       continue;
 
     DbModel::ConceptTemplateArgumentValue row = {conceptId,
@@ -767,6 +538,7 @@ void recordConceptTemplateArgumentValues(
 
 void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
                                   ExprProcessor *exprProcessor,
+                                  TemplateProcessor *templateProcessor,
                                   clang::ASTContext *context) {
   if (!decl || !exprProcessor || !context)
     return;
@@ -787,7 +559,8 @@ void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
   if (templateParamId == -1)
     return;
 
-  int conceptId = resolveConceptSpecializationId(conceptExpr, context);
+  int conceptId = templateProcessor->resolveConceptSpecializationId(conceptExpr,
+                                                                    context);
   if (conceptId == -1)
     return;
 
@@ -796,14 +569,14 @@ void recordTemplateTypeConstraint(const clang::TemplateTypeParmDecl *decl,
   if (constraintExprId == -1)
     return;
 
-  if (shouldInsertTypeTemplateTypeConstraint(templateParamId,
-                                             constraintExprId)) {
+  if (templateProcessor->shouldInsertTypeTemplateTypeConstraint(
+          templateParamId, constraintExprId)) {
     DbModel::TypeTemplateTypeConstraint row = {templateParamId,
                                                constraintExprId};
     STG.insertClassObj(row);
   }
 
-  if (shouldInsertIsTypeConstraint(conceptId)) {
+  if (templateProcessor->shouldInsertIsTypeConstraint(conceptId)) {
     DbModel::IsTypeConstraint row = {conceptId};
     STG.insertClassObj(row);
   }
@@ -826,6 +599,9 @@ void ASTVisitor::initProcessors() {
   stmt_processor_ = std::make_unique<StmtProcessor>(context_, pp_);
   expr_processor_ = std::make_unique<ExprProcessor>(context_, pp_, type_processor_.get());
   specifier_processor_ = std::make_unique<SpecifierProcessor>(context_, pp_);
+  template_processor_ = std::make_unique<TemplateProcessor>(
+      context_, pp_, type_processor_.get(), expr_processor_.get(),
+      variable_processor_.get());
 }
 
 // 实现各种Visit方法
@@ -866,7 +642,8 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
       KeyType templateKey = KeyGen::Function::makeKey(templatedDecl, context_);
 
       if (auto cachedId = SEARCH_FUNCTION_CACHE(templateKey)) {
-        if (shouldInsertFunctionInstantiation(specializationId, *cachedId)) {
+        if (template_processor_->shouldInsertFunctionInstantiation(
+                specializationId, *cachedId)) {
           DbModel::FunctionInstantiation instantiation = {
               specializationId, *cachedId};
           STG.insertClassObj(instantiation);
@@ -874,9 +651,10 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
       } else {
         PendingUpdate update{
             templateKey, CacheType::FUNCTION,
-            [specializationId](int resolvedId) {
-              if (!shouldInsertFunctionInstantiation(specializationId,
-                                                     resolvedId))
+            [specializationId,
+             templateProcessor = template_processor_.get()](int resolvedId) {
+              if (!templateProcessor->shouldInsertFunctionInstantiation(
+                      specializationId, resolvedId))
                 return;
 
               DbModel::FunctionInstantiation instantiation = {
@@ -889,10 +667,10 @@ bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl *decl) {
 
     recordFunctionTemplateTypeArguments(
         specializationId, decl->getTemplateSpecializationArgs(),
-        type_processor_.get(), context_);
+        type_processor_.get(), template_processor_.get(), context_);
     recordFunctionTemplateArgumentValues(
         specializationId, decl->getTemplateSpecializationArgsAsWritten(),
-        expr_processor_.get(), context_);
+        expr_processor_.get(), template_processor_.get(), context_);
   }
 
   return true;
@@ -931,7 +709,8 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
     auto templateTypeLoc = typeInfo->getTypeLoc()
                                .getAsAdjusted<clang::TemplateSpecializationTypeLoc>();
     recordClassTemplateArgumentValues(type_id, templateTypeLoc,
-                                      expr_processor_.get(), context_);
+                                      expr_processor_.get(),
+                                      template_processor_.get(), context_);
   }
 
   if (const auto *specialization =
@@ -949,7 +728,8 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
           primaryTemplate->getTemplatedDecl(), variable_processor_.get(),
           context_);
       if (templateId != -1 &&
-          shouldInsertVariableInstantiation(variableId, templateId)) {
+          template_processor_->shouldInsertVariableInstantiation(variableId,
+                                                                 templateId)) {
         DbModel::VariableInstantiation instantiation = {variableId,
                                                         templateId};
         STG.insertClassObj(instantiation);
@@ -958,10 +738,10 @@ bool ASTVisitor::VisitVarDecl(clang::VarDecl *decl) {
 
     recordVariableTemplateTypeArguments(
         variableId, specialization->getTemplateInstantiationArgs(),
-        type_processor_.get(), context_);
+        type_processor_.get(), template_processor_.get(), context_);
     recordVariableTemplateArgumentValues(
         variableId, specialization->getTemplateArgsAsWritten(),
-        expr_processor_.get(), context_);
+        expr_processor_.get(), template_processor_.get(), context_);
   }
   return true;
 }
@@ -1016,7 +796,8 @@ bool ASTVisitor::VisitTypedefDecl(clang::TypedefDecl *decl) {
 
 bool ASTVisitor::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl *decl) {
   type_processor_->processTemplateTypeParmDecl(decl);
-  recordTemplateTypeConstraint(decl, expr_processor_.get(), context_);
+  recordTemplateTypeConstraint(decl, expr_processor_.get(),
+                               template_processor_.get(), context_);
   return true;
 }
 
@@ -1035,7 +816,7 @@ bool ASTVisitor::VisitNonTypeTemplateParmDecl(
   if (exprId == -1)
     return true;
 
-  if (shouldInsertNontypeTemplateParameter(exprId)) {
+  if (template_processor_->shouldInsertNontypeTemplateParameter(exprId)) {
     DbModel::NonTypeTemplateParameter row = {exprId};
     STG.insertClassObj(row);
   }
@@ -1186,7 +967,7 @@ bool ASTVisitor::VisitFriendDecl(clang::FriendDecl *decl) {
 }
 
 bool ASTVisitor::VisitConceptDecl(clang::ConceptDecl *decl) {
-  resolveConceptTemplateId(decl, context_);
+  template_processor_->resolveConceptTemplateId(decl, context_);
   return true;
 }
 
@@ -1257,7 +1038,8 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
     templateId = *cachedId;
 
   if (specializationId != -1 && templateId != -1) {
-    if (shouldInsertClassInstantiation(specializationId, templateId)) {
+    if (template_processor_->shouldInsertClassInstantiation(specializationId,
+                                                            templateId)) {
       DbModel::ClassInstantiation instantiation = {specializationId,
                                                    templateId};
       STG.insertClassObj(instantiation);
@@ -1266,16 +1048,16 @@ bool ASTVisitor::VisitClassTemplateSpecializationDecl(
 
   recordClassTemplateTypeArguments(
       specializationId, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), context_);
+      type_processor_.get(), template_processor_.get(), context_);
   recordTemplateTemplateArguments(
       specializationId, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), context_);
+      type_processor_.get(), template_processor_.get(), context_);
   recordTemplateTemplateInstantiations(
       classTemplateDecl, decl->getTemplateInstantiationArgs(),
-      type_processor_.get(), context_);
+      type_processor_.get(), template_processor_.get(), context_);
   recordClassTemplateArgumentValues(
       specializationId, decl->getTemplateArgsAsWritten(), expr_processor_.get(),
-      context_);
+      template_processor_.get(), context_);
 
   return true;
 }
@@ -1315,7 +1097,8 @@ bool ASTVisitor::VisitVarTemplateDecl(clang::VarTemplateDecl *decl) {
   int variableId =
       resolveVariableEntityId(templatedDecl, variable_processor_.get(),
                               context_);
-  if (variableId == -1 || !shouldInsertVariableTemplate(variableId))
+  if (variableId == -1 ||
+      !template_processor_->shouldInsertVariableTemplate(variableId))
     return true;
 
   DbModel::IsVariableTemplate isVariableTemplate = {variableId};
@@ -1336,7 +1119,7 @@ bool ASTVisitor::VisitDeclRefExpr(clang::DeclRefExpr *expr) {
       int functionId = SEARCH_FUNCTION_CACHE(functionKey).value_or(-1);
       recordFunctionTemplateArgumentValues(
           functionId, expr->getTemplateArgs(), expr->getNumTemplateArgs(),
-          expr_processor_.get(), context_);
+          expr_processor_.get(), template_processor_.get(), context_);
     }
   }
 
@@ -1413,24 +1196,28 @@ bool ASTVisitor::VisitConceptSpecializationExpr(
   if (!expr)
     return true;
 
-  int templateId = resolveConceptTemplateId(expr->getNamedConcept(), context_);
+  int templateId = template_processor_->resolveConceptTemplateId(
+      expr->getNamedConcept(), context_);
   if (templateId == -1)
     return true;
 
-  int conceptId = resolveConceptSpecializationId(expr, context_);
+  int conceptId = template_processor_->resolveConceptSpecializationId(expr,
+                                                                      context_);
   if (conceptId == -1)
     return true;
 
   expr_processor_->processConceptSpecializationExpr(expr, conceptId);
 
-  if (shouldInsertConceptInstantiation(conceptId, templateId)) {
+  if (template_processor_->shouldInsertConceptInstantiation(conceptId,
+                                                            templateId)) {
     DbModel::ConceptInstantiation instantiation = {conceptId, templateId};
     STG.insertClassObj(instantiation);
   }
 
   recordConceptTemplateTypeArguments(conceptId, expr->getTemplateArguments(),
-                                     type_processor_.get(), context_);
+                                     type_processor_.get(),
+                                     template_processor_.get(), context_);
   recordConceptTemplateArgumentValues(conceptId, expr, expr_processor_.get(),
-                                      context_);
+                                      template_processor_.get(), context_);
   return true;
 }
