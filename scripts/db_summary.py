@@ -37,6 +37,9 @@ CORE_TABLES = [
     "files",
     "folders",
     "namespaces",
+    "namespace_decls",
+    "usings",
+    "using_container",
     "declarations",
 ]
 
@@ -76,6 +79,10 @@ SUMMARY_TABLES = {
         "end_line",
         "end_column",
     ],
+    "namespaces": ["id", "name"],
+    "namespace_decls": ["id", "namespace_id", "location", "bodylocation"],
+    "usings": ["id", "element_id", "location", "kind"],
+    "using_container": ["parent", "child"],
 }
 
 
@@ -179,4 +186,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

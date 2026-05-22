@@ -1,4 +1,5 @@
 #include "core/processor/namespace_processor.h"
+#include "core/compilation_recorder.h"
 #include "core/srcloc_recorder.h"
 #include "db/storage_facade.h"
 #include "model/db/container.h"
@@ -7,6 +8,7 @@
 #include "util/logger/macros.h"
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclBase.h>
+#include <clang/AST/DeclCXX.h>
 #include <llvm/Support/Casting.h>
 
 void NamespaceProcessor::processNamespaceDecl(
@@ -24,6 +26,20 @@ void NamespaceProcessor::processNamespaceDecl(
 
   // Process namespace members
   processNamespaceMembers(decl);
+}
+
+void NamespaceProcessor::processUsingDecl(const clang::UsingDecl *decl) {
+  recordUsing(decl, 1);
+}
+
+void NamespaceProcessor::processUsingDirectiveDecl(
+    const clang::UsingDirectiveDecl *decl) {
+  recordUsing(decl, 2);
+}
+
+void NamespaceProcessor::processUnresolvedUsingTypenameDecl(
+    const clang::UnresolvedUsingTypenameDecl *decl) {
+  recordUsing(decl, 1);
 }
 
 int NamespaceProcessor::getOrCreateNamespaceId(
@@ -101,6 +117,55 @@ void NamespaceProcessor::processNamespaceMembers(
   for (const auto *member : decl->decls()) {
     processNamespaceMember(decl, member);
   }
+}
+
+void NamespaceProcessor::recordUsing(const clang::Decl *decl, int kind) {
+  if (!decl) {
+    return;
+  }
+  if (decl->isImplicit()) {
+    LOG_DEBUG << "Skipping implicit using declaration" << std::endl;
+    return;
+  }
+
+  LocIdPair *decl_loc = PROC_DEFT(decl, ast_context_);
+  DbModel::Using using_record = {GENID(Using), -1,
+                                 decl_loc ? decl_loc->spec_id : -1, kind};
+
+  StorageFacade::getInstance().insertClassObj(using_record);
+
+  if (auto parent_id = resolveUsingOwnerElement(decl->getDeclContext())) {
+    DbModel::UsingContainer using_container = {*parent_id, using_record.id};
+    StorageFacade::getInstance().insertClassObj(using_container);
+  } else {
+    LOG_DEBUG << "Skipped using_container for unsupported owner context"
+              << std::endl;
+  }
+
+  LOG_DEBUG << "Processed using with ID: " << using_record.id
+            << " and kind: " << kind << std::endl;
+}
+
+std::optional<int> NamespaceProcessor::resolveUsingOwnerElement(
+    const clang::DeclContext *context) {
+  if (!context) {
+    return std::nullopt;
+  }
+
+  if (const auto *namespace_decl =
+          llvm::dyn_cast<clang::NamespaceDecl>(context)) {
+    int namespace_id = getOrCreateNamespaceId(namespace_decl);
+    if (namespace_id >= 0) {
+      return namespace_id;
+    }
+    return std::nullopt;
+  }
+
+  if (llvm::isa<clang::TranslationUnitDecl>(context)) {
+    return CompRecorder::getInstance().getSourceFileId();
+  }
+
+  return std::nullopt;
 }
 
 void NamespaceProcessor::processNamespaceMember(

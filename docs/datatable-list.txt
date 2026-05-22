@@ -65,9 +65,9 @@ DONE    64. type_decls
 DONE    65. type_def
 DONE    66. type_decl_top
    67. type_requires
-   68. namespace_decls
-   69. usings
-   70. using_container
+DONE    68. namespace_decls
+DONE    69. usings
+DONE    70. using_container
    71. static_asserts
 DONE    72. params
    73. overrides

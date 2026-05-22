@@ -46,6 +46,10 @@ public:
   // 声明类型
   bool VisitCXXRecordDecl(clang::CXXRecordDecl *decl);
   bool VisitNamespaceDecl(clang::NamespaceDecl *decl);
+  bool VisitUsingDecl(clang::UsingDecl *decl);
+  bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl *decl);
+  bool VisitUnresolvedUsingTypenameDecl(
+      clang::UnresolvedUsingTypenameDecl *decl);
 
   // Function Family
   bool VisitFunctionDecl(clang::FunctionDecl *decl);

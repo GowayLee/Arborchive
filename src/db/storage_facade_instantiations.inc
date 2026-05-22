@@ -113,6 +113,8 @@ template void StorageFacade::insertClassObj<DbModel::TypeSpecifiers&>(DbModel::T
 template void StorageFacade::insertClassObj<DbModel::TypeTemplateTypeConstraint&>(DbModel::TypeTemplateTypeConstraint&);
 template void StorageFacade::insertClassObj<DbModel::TypedefBase&>(DbModel::TypedefBase&);
 template void StorageFacade::insertClassObj<DbModel::UserType&>(DbModel::UserType&);
+template void StorageFacade::insertClassObj<DbModel::Using&>(DbModel::Using&);
+template void StorageFacade::insertClassObj<DbModel::UsingContainer&>(DbModel::UsingContainer&);
 template void StorageFacade::insertClassObj<DbModel::ValueBind&>(DbModel::ValueBind&);
 template void StorageFacade::insertClassObj<DbModel::ValueText&>(DbModel::ValueText&);
 template void StorageFacade::insertClassObj<DbModel::Values&>(DbModel::Values&);

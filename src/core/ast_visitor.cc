@@ -437,6 +437,22 @@ bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
   return true;
 }
 
+bool ASTVisitor::VisitUsingDecl(clang::UsingDecl *decl) {
+  namespace_processor_->processUsingDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl *decl) {
+  namespace_processor_->processUsingDirectiveDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitUnresolvedUsingTypenameDecl(
+    clang::UnresolvedUsingTypenameDecl *decl) {
+  namespace_processor_->processUnresolvedUsingTypenameDecl(decl);
+  return true;
+}
+
 bool ASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr) {
   expr_processor_->processArraySubscriptExpr(expr);
   return true;

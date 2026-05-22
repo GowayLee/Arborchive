@@ -36,6 +36,7 @@ phase 应只覆盖一个清晰的 AST/语义边界，优先做到：
 | P1 frienddecls | complete frienddecls 144 | `frienddecls`(144) | `5b07c13` | done / verified |
 | P2 template system phase | template declaration markers, instantiations, arguments, value extraction safe subset, variable templates, template-template arguments, concept templates | 96-99, 102-109, 111, 113, 114, 116 | `9f395d6`, `f655a10`, `2e02b8a`, `b93ffa6`, `9770870`, `eb7035f`, `9a2c2fc`, `d6323a2` | stage complete |
 | P3 template / concept closure | constraint expr extraction, type constraint binding, template-template semantics, non-type/value template argument support, deferred feasibility | 90, 91, 96-111 except 112, 113-117 | see P3 process notes | done / verified |
+| P4 namespace / using / ownership | canonical namespace identity, namespace_decls extraction, using declarations/directives, lexical ownership (using_container) | `namespaces`(150), `namespace_inline`(151), `namespacembrs`(152), `namespace_decls`(68), `usings`(69), `using_container`(70) | `78e1a2b`, `7baaab1`, `9f9ec24` | stage complete |
 
 ### Template / Concept Closure
 
@@ -63,25 +64,43 @@ documented deferred.
 | P3d non-type/value template argument expr support | safe subset complete | Process notes: `docs/my-docs/p3/p3d_value_template_argument_support.md`; handoff: `docs/my-docs/p3/p3d_value_template_argument_handoff.md`. |
 | P3e template-template argument value feasibility | feasibility complete | Process notes: `docs/my-docs/p3/p3e_template_template_argument_value_feasibility.md`; 112 stays deferred by design. |
 
-## Upcoming Phases (P4+)
+## Completed Phases (continued)
 
-### P4: Namespaces & Using System
+### P4: Namespaces & Using System — stage complete
 
-P4 负责命名空间图和 using 关系抽取，目标是先稳定 DeclContext 层级和名称可见性关系。
+P4 完成了命名空间语义实体、声明层和词法所有权的基础设施。
 
-#### P4a: Namespace Declarations
+Sub-phase breakdown:
 
-- Tables: `namespace_decls`
-- Focus: namespace graph、nested namespace、anonymous namespace、DeclContext hierarchy
+#### P4a-0: Canonical Namespace Identity
+
+- Status: DONE
+- Key change: `getCanonicalDecl()` 去重，重开 namespace 块共享同一 semantic entity ID
+- Tables affected: `namespaces`
+- Commit: `7baaab1`
+
+#### P4a-1: Namespace Declarations
+
+- Status: DONE
+- Tables: `namespace_decls`, `namespace_inline`, `namespacembrs`
 - Key AST: `NamespaceDecl`
-- Complexity: Low
+- Commit: `9f9ec24`
 
-#### P4b: Using Directives & Aliases
+#### P4b-1: Using Declarations & Directives
 
-- Tables: `usings`, `using_container`
-- Focus: `using namespace X;`、`using X::Y;`、`using typename T::type;`
-- Key AST: `UsingDecl`, `UsingDirectiveDecl`, `UsingShadowDecl`
-- Complexity: Low-Medium
+- Status: DONE (safe subset)
+- Tables: `usings`
+- Key AST: `UsingDecl`, `UsingDirectiveDecl`, `UnresolvedUsingTypenameDecl`
+- Note: `element_id` is intentionally deferred (see P4 ownership model)
+
+#### P4b-2: Lexical Ownership
+
+- Status: DONE (safe subset)
+- Tables: `using_container`
+- Scope: NamespaceDecl and TranslationUnitDecl owners only
+- Note: class/function/block ownership intentionally deferred (see P4 ownership model)
+
+Deferred items are documented in `docs/p4-ownership-model.md`.
 
 ### P5: Class Hierarchy & Record Layout
 

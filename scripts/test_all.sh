@@ -10,6 +10,7 @@ CASES=(
   "slight-case"
   "moderate-case"
   "intense-case"
+  "unit-tests/namespace"
 )
 
 mkdir -p "$OUT_DIR"
@@ -19,7 +20,7 @@ make debug -j "$JOBS"
 
 for case_name in "${CASES[@]}"; do
   src="$ROOT_DIR/tests/${case_name}.cc"
-  db="$OUT_DIR/${case_name}.db"
+  db="$OUT_DIR/${case_name//\//-}.db"
 
   if [[ ! -f "$src" ]]; then
     echo "[test_all] Missing test source: $src" >&2
@@ -43,4 +44,3 @@ for case_name in "${CASES[@]}"; do
 done
 
 echo "[test_all] All checks passed."
-

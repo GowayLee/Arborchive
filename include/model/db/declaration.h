@@ -34,6 +34,18 @@ struct NamespaceDecl {
   int bodylocation;
 };
 
+struct Using {
+  int id;
+  int element_id;
+  int location;
+  int kind;
+};
+
+struct UsingContainer {
+  int parent;
+  int child;
+};
+
 } // namespace DbModel
 
 #endif // _MODEL_DECLRATION_H_
