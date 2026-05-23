@@ -234,6 +234,31 @@ struct NonTypeTemplateParameter {
   int id;
 };
 
+struct Derivation {
+  int id;
+  int sub;
+  int index;
+  int super;
+  int location;
+  using KeyType = std::string;
+};
+
+struct DerSpecifier {
+  int der_id;
+  int spec_id;
+};
+
+struct DirectBaseOffset {
+  int der_id;
+  int offset;
+};
+
+struct VirtualBaseOffset {
+  int sub;
+  int super;
+  int offset;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

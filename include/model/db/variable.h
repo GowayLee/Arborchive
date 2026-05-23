@@ -106,6 +106,12 @@ struct VarRequire {
   int id;
   int constraint;
 };
+
+struct FieldOffset {
+  int id;
+  int byteoffset;
+  int bitoffset;
+};
 } // namespace DbModel
 
 #endif // _MODEL_VARIABLE_H_

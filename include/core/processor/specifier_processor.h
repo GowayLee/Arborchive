@@ -4,6 +4,8 @@
 #include "core/processor/base_processor.h"
 #include "model/db/specifiers.h"
 #include <clang/AST/Decl.h>
+#include <clang/AST/DeclCXX.h>
+#include <vector>
 
 using namespace clang;
 
@@ -21,6 +23,9 @@ public:
   // 处理变量的说明符
   void processVariableSpecifiers(int var_id, const VarDecl *VD);
   void processVariableSpecifiers(int var_id, const FieldDecl *FD);
+
+  // 处理 C++ base specifier 的访问控制与 virtual 标记。
+  std::vector<int> processBaseSpecifiers(const CXXBaseSpecifier &base);
 
   SpecifierProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};

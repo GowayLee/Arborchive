@@ -175,6 +175,40 @@ inline auto nontype_template_parameters() {
       make_column("id", &DbModel::NonTypeTemplateParameter::id));
 }
 
+inline auto derivations() {
+  return make_table(
+      "derivations",
+      make_column("derivation", &DbModel::Derivation::id, primary_key()),
+      make_column("sub", &DbModel::Derivation::sub),
+      make_column("index", &DbModel::Derivation::index),
+      make_column("super", &DbModel::Derivation::super),
+      make_column("location", &DbModel::Derivation::location));
+}
+
+inline auto derspecifiers() {
+  return make_table(
+      "derspecifiers",
+      make_column("der_id", &DbModel::DerSpecifier::der_id),
+      make_column("spec_id", &DbModel::DerSpecifier::spec_id));
+}
+
+inline auto direct_base_offsets() {
+  return make_table(
+      "direct_base_offsets",
+      make_column("der_id", &DbModel::DirectBaseOffset::der_id, primary_key()),
+      make_column("offset", &DbModel::DirectBaseOffset::offset));
+}
+
+inline auto virtual_base_offsets() {
+  return make_table(
+      "virtual_base_offsets",
+      make_column("sub", &DbModel::VirtualBaseOffset::sub),
+      make_column("super", &DbModel::VirtualBaseOffset::super),
+      make_column("offset", &DbModel::VirtualBaseOffset::offset),
+      primary_key(&DbModel::VirtualBaseOffset::sub,
+                  &DbModel::VirtualBaseOffset::super));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

@@ -137,10 +137,10 @@ DONE   124. varspecifiers
   137. unspecifiedtype
 DONE   138. member
   139. enclosingfunction
-  140. derivations
-  141. derspecifiers
-  142. direct_base_offsets
-  143. virtual_base_offsets
+DONE   140. derivations
+DONE   141. derspecifiers
+DONE   142. direct_base_offsets
+DONE   143. virtual_base_offsets
 DONE  144. frienddecls
   145. comments
   146. commentbinding
@@ -168,7 +168,7 @@ DONE   161. funbind
 DONE   168. values
 DONE   169. valuetext
 DONE   170. valuebind
-  171. fieldoffsets
+DONE   171. fieldoffsets
   172. bitfield
   173. initialisers
   174. braced_initialisers

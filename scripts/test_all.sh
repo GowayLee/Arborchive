@@ -11,6 +11,8 @@ CASES=(
   "moderate-case"
   "intense-case"
   "unit-tests/namespace"
+  "unit-tests/p5/hierarchy_case"
+  "unit-tests/p5/layout_case"
 )
 
 mkdir -p "$OUT_DIR"

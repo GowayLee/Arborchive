@@ -23,10 +23,14 @@ template void StorageFacade::insertClassObj<DbModel::CoroutineNew&>(DbModel::Cor
 template void StorageFacade::insertClassObj<DbModel::DeclType&>(DbModel::DeclType&);
 template void StorageFacade::insertClassObj<DbModel::Declaration&>(DbModel::Declaration&);
 template void StorageFacade::insertClassObj<DbModel::DeductionGuideForClass&>(DbModel::DeductionGuideForClass&);
+template void StorageFacade::insertClassObj<DbModel::DerSpecifier&>(DbModel::DerSpecifier&);
+template void StorageFacade::insertClassObj<DbModel::Derivation&>(DbModel::Derivation&);
 template void StorageFacade::insertClassObj<DbModel::DerivedType&>(DbModel::DerivedType&);
+template void StorageFacade::insertClassObj<DbModel::DirectBaseOffset&>(DbModel::DirectBaseOffset&);
 template void StorageFacade::insertClassObj<DbModel::DoBody&>(DbModel::DoBody&);
 template void StorageFacade::insertClassObj<DbModel::EnumConstant&>(DbModel::EnumConstant&);
 template void StorageFacade::insertClassObj<DbModel::Expr&>(DbModel::Expr&);
+template void StorageFacade::insertClassObj<DbModel::FieldOffset&>(DbModel::FieldOffset&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);
 template void StorageFacade::insertClassObj<DbModel::ForBody&>(DbModel::ForBody&);
@@ -129,4 +133,5 @@ template void StorageFacade::insertClassObj<DbModel::Variable&>(DbModel::Variabl
 template void StorageFacade::insertClassObj<DbModel::VariableInstantiation&>(DbModel::VariableInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::VariableTemplateArgument&>(DbModel::VariableTemplateArgument&);
 template void StorageFacade::insertClassObj<DbModel::VariableTemplateArgumentValue&>(DbModel::VariableTemplateArgumentValue&);
+template void StorageFacade::insertClassObj<DbModel::VirtualBaseOffset&>(DbModel::VirtualBaseOffset&);
 template void StorageFacade::insertClassObj<DbModel::WhileBody&>(DbModel::WhileBody&);

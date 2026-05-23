@@ -56,6 +56,10 @@ void ASTVisitor::initProcessors() {
   template_processor_ = std::make_unique<TemplateProcessor>(
       context_, pp_, type_processor_.get(), expr_processor_.get(),
       variable_processor_.get());
+  inheritance_processor_ = std::make_unique<InheritanceProcessor>(
+      context_, pp_, type_processor_.get(), specifier_processor_.get());
+  record_layout_processor_ = std::make_unique<RecordLayoutProcessor>(
+      context_, pp_, type_processor_.get(), variable_processor_.get());
 }
 
 // 实现各种Visit方法
@@ -206,8 +210,13 @@ bool ASTVisitor::VisitNonTypeTemplateParmDecl(
 }
 
 bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
-  // LOG_DEBUG << "Visiting CXXRecordDecl" << std::endl;
+  if (!decl)
+    return true;
 
+  // IMPORTANT: hierarchy extraction must run before layout extraction because
+  // RecordLayoutProcessor depends on derivation cache population.
+  inheritance_processor_->processCXXRecordDecl(decl);
+  record_layout_processor_->processCXXRecordDecl(decl);
   return true;
 }
 

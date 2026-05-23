@@ -2,8 +2,10 @@
 #define _AST_VISITOR_H_
 
 #include "core/processor/expr_processor.h"
+#include "core/processor/inheritance_processor.h"
 #include "core/processor/function_processor.h"
 #include "core/processor/namespace_processor.h"
+#include "core/processor/record_layout_processor.h"
 #include "core/processor/specifier_processor.h"
 #include "core/processor/stmt_processor.h"
 #include "core/processor/template_processor.h"
@@ -34,6 +36,8 @@ private:
   std::unique_ptr<ExprProcessor> expr_processor_ = nullptr;
   std::unique_ptr<SpecifierProcessor> specifier_processor_ = nullptr;
   std::unique_ptr<TemplateProcessor> template_processor_ = nullptr;
+  std::unique_ptr<InheritanceProcessor> inheritance_processor_ = nullptr;
+  std::unique_ptr<RecordLayoutProcessor> record_layout_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext *context);

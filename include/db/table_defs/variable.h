@@ -133,6 +133,14 @@ inline auto var_requires() {
       make_column("constraint", &DbModel::VarRequire::constraint));
 }
 
+inline auto fieldoffsets() {
+  return make_table(
+      "fieldoffsets",
+      make_column("id", &DbModel::FieldOffset::id, primary_key()),
+      make_column("byteoffset", &DbModel::FieldOffset::byteoffset),
+      make_column("bitoffset", &DbModel::FieldOffset::bitoffset));
+}
+
 // clang-format on
 
 } // namespace VarTableFn
