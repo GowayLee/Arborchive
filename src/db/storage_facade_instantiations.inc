@@ -72,6 +72,8 @@ template void StorageFacade::insertClassObj<DbModel::IsStandartLayoutClass&>(DbM
 template void StorageFacade::insertClassObj<DbModel::IsStructuredBinding&>(DbModel::IsStructuredBinding&);
 template void StorageFacade::insertClassObj<DbModel::IsTypeConstraint&>(DbModel::IsTypeConstraint&);
 template void StorageFacade::insertClassObj<DbModel::IsVariableTemplate&>(DbModel::IsVariableTemplate&);
+template void StorageFacade::insertClassObj<DbModel::Lambda&>(DbModel::Lambda&);
+template void StorageFacade::insertClassObj<DbModel::LambdaCapture&>(DbModel::LambdaCapture&);
 template void StorageFacade::insertClassObj<DbModel::LocalVar&>(DbModel::LocalVar&);
 template void StorageFacade::insertClassObj<DbModel::Location&>(DbModel::Location&);
 template void StorageFacade::insertClassObj<DbModel::LocationDefault&>(DbModel::LocationDefault&);

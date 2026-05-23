@@ -3,6 +3,7 @@
 
 #include "core/processor/expr_processor.h"
 #include "core/processor/inheritance_processor.h"
+#include "core/processor/lambda_processor.h"
 #include "core/processor/function_processor.h"
 #include "core/processor/namespace_processor.h"
 #include "core/processor/record_layout_processor.h"
@@ -18,6 +19,7 @@
 namespace clang {
 class ConceptDecl;
 class ConceptSpecializationExpr;
+class LambdaExpr;
 class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
 } // namespace clang
@@ -38,6 +40,7 @@ private:
   std::unique_ptr<TemplateProcessor> template_processor_ = nullptr;
   std::unique_ptr<InheritanceProcessor> inheritance_processor_ = nullptr;
   std::unique_ptr<RecordLayoutProcessor> record_layout_processor_ = nullptr;
+  std::unique_ptr<Lambda_Processor> lambda_processor_ = nullptr;
 
 public:
   explicit ASTVisitor(clang::ASTContext *context);
@@ -107,6 +110,7 @@ public:
   bool VisitInitListExpr(clang::InitListExpr *expr);
   bool VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *expr);
   bool VisitConceptSpecializationExpr(clang::ConceptSpecializationExpr *expr);
+  bool VisitLambdaExpr(clang::LambdaExpr *expr);
 
   // Literal Family
   bool VisitStringLiteral(const clang::StringLiteral *literal);

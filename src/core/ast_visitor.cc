@@ -60,6 +60,8 @@ void ASTVisitor::initProcessors() {
       context_, pp_, type_processor_.get(), specifier_processor_.get());
   record_layout_processor_ = std::make_unique<RecordLayoutProcessor>(
       context_, pp_, type_processor_.get(), variable_processor_.get());
+  lambda_processor_ = std::make_unique<Lambda_Processor>(
+      context_, pp_, type_processor_.get(), variable_processor_.get());
 }
 
 // 实现各种Visit方法
@@ -480,5 +482,10 @@ bool ASTVisitor::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *
 bool ASTVisitor::VisitConceptSpecializationExpr(
     clang::ConceptSpecializationExpr *expr) {
   template_processor_->processConceptSpecialization(expr);
+  return true;
+}
+
+bool ASTVisitor::VisitLambdaExpr(clang::LambdaExpr *expr) {
+  lambda_processor_->processLambdaExpr(expr);
   return true;
 }
