@@ -13,6 +13,11 @@
 #include <clang/Basic/Lambda.h>
 #include <llvm/ADT/DenseMap.h>
 
+Lambda_Processor::~Lambda_Processor() {
+  for (const PendingLambdaCapture &pending : pending_field_only_captures_)
+    recordFieldOnlyCaptures(pending.expr, pending.lambdaExprId);
+}
+
 void Lambda_Processor::processLambdaExpr(clang::LambdaExpr *expr) {
   if (!expr)
     return;
@@ -25,8 +30,10 @@ void Lambda_Processor::processLambdaExpr(clang::LambdaExpr *expr) {
                             expr->hasExplicitResultType()};
   STG.insertClassObj(lambda);
 
-  if (processed_lambda_exprs_.insert(lambdaExprId).second)
+  if (processed_lambda_exprs_.insert(lambdaExprId).second) {
     recordCaptures(expr, lambdaExprId);
+    pending_field_only_captures_.push_back({expr, lambdaExprId});
+  }
 }
 
 int Lambda_Processor::getOrCreateLambdaExprId(clang::LambdaExpr *expr) {
@@ -71,25 +78,22 @@ void Lambda_Processor::recordCaptures(const clang::LambdaExpr *expr,
     return;
 
   unsigned captureIndex = 0;
-  for (auto captureIt = expr->capture_begin(); captureIt != expr->capture_end();
-       ++captureIt, ++captureIndex) {
-    const clang::LambdaCapture *capture = captureIt;
-    if (!capture)
-      continue;
-
-    const clang::FieldDecl *field = resolveCaptureField(expr, capture);
+  auto recordCapture = [&](const clang::LambdaCapture *capture,
+                           unsigned captureIndex) {
+    const clang::FieldDecl *field =
+        resolveCaptureField(expr, capture, captureIndex);
     int fieldId = resolveCaptureFieldId(field);
     if (fieldId == -1) {
       LOG_DEBUG << "Skipping lambda capture without stable member field"
                 << std::endl;
-      continue;
+      return;
     }
 
     int locationId = getCaptureLocationId(capture);
     if (locationId == -1) {
       LOG_DEBUG << "Skipping lambda capture without stable source location"
                 << std::endl;
-      continue;
+      return;
     }
 
     DbModel::LambdaCapture captureRow = {
@@ -101,12 +105,68 @@ void Lambda_Processor::recordCaptures(const clang::LambdaExpr *expr,
         capture->isImplicit(),
         locationId};
     STG.insertClassObj(captureRow);
+    recorded_capture_fields_.insert(field);
+  };
+
+  const clang::CXXRecordDecl *lambdaClass = expr->getLambdaClass();
+  if (lambdaClass && lambdaClass->capture_size() > 0) {
+    for (const clang::LambdaCapture &capture : lambdaClass->captures())
+      recordCapture(&capture, captureIndex++);
+  } else {
+    for (auto captureIt = expr->capture_begin();
+         captureIt != expr->capture_end(); ++captureIt, ++captureIndex) {
+      const clang::LambdaCapture *capture = captureIt;
+      if (!capture)
+        continue;
+
+      recordCapture(capture, captureIndex);
+    }
+  }
+
+  recordFieldOnlyCaptures(expr, lambdaExprId);
+}
+
+void Lambda_Processor::recordFieldOnlyCaptures(const clang::LambdaExpr *expr,
+                                               int lambdaExprId) {
+  if (!expr || lambdaExprId == -1)
+    return;
+
+  const clang::CXXRecordDecl *lambdaClass = expr->getLambdaClass();
+  if (!lambdaClass || expr->getCaptureDefault() != clang::LCD_None)
+    return;
+
+  unsigned fieldIndex = 0;
+  for (const clang::FieldDecl *field : lambdaClass->fields()) {
+    if (!field || recorded_capture_fields_.count(field)) {
+      ++fieldIndex;
+      continue;
+    }
+
+    int fieldId = resolveCaptureFieldId(field);
+    int locationId = getFieldLocationId(field);
+    if (fieldId == -1 || locationId == -1) {
+      ++fieldIndex;
+      continue;
+    }
+
+    DbModel::LambdaCapture captureRow = {
+        GENID(LambdaCapture),
+        lambdaExprId,
+        static_cast<int>(fieldIndex),
+        fieldId,
+        field->getType()->isReferenceType(),
+        false,
+        locationId};
+    STG.insertClassObj(captureRow);
+    recorded_capture_fields_.insert(field);
+    ++fieldIndex;
   }
 }
 
 const clang::FieldDecl *Lambda_Processor::resolveCaptureField(
-    const clang::LambdaExpr *expr, const clang::LambdaCapture *capture) const {
-  if (!expr || !capture || expr->isInitCapture(capture))
+    const clang::LambdaExpr *expr, const clang::LambdaCapture *capture,
+    unsigned captureIndex) const {
+  if (!expr || !capture)
     return nullptr;
 
   const clang::CXXRecordDecl *lambdaClass = expr->getLambdaClass();
@@ -127,6 +187,25 @@ const clang::FieldDecl *Lambda_Processor::resolveCaptureField(
   if (capture->capturesThis())
     return thisCapture;
 
+  return resolveCaptureFieldByIndex(expr, captureIndex);
+}
+
+const clang::FieldDecl *Lambda_Processor::resolveCaptureFieldByIndex(
+    const clang::LambdaExpr *expr, unsigned captureIndex) const {
+  if (!expr)
+    return nullptr;
+
+  const clang::CXXRecordDecl *lambdaClass = expr->getLambdaClass();
+  if (!lambdaClass)
+    return nullptr;
+
+  unsigned fieldIndex = 0;
+  for (const clang::FieldDecl *field : lambdaClass->fields()) {
+    if (fieldIndex == captureIndex)
+      return field;
+    ++fieldIndex;
+  }
+
   return nullptr;
 }
 
@@ -145,6 +224,18 @@ int Lambda_Processor::getCaptureLocationId(
     return -1;
 
   clang::SourceLocation loc = capture->getLocation();
+  if (loc.isInvalid())
+    return -1;
+
+  LocIdPair *locIdPair = SrcLocRecorder::processDefault(loc, loc, ast_context_);
+  return locIdPair ? locIdPair->spec_id : -1;
+}
+
+int Lambda_Processor::getFieldLocationId(const clang::FieldDecl *field) const {
+  if (!field || !ast_context_)
+    return -1;
+
+  clang::SourceLocation loc = field->getLocation();
   if (loc.isInvalid())
     return -1;
 

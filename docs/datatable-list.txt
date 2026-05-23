@@ -186,8 +186,8 @@ DONE   183. aggregate_array_init
   186. uuidof_bind
 DONE   187. sizeof_bind
   188. code_block
-  189. lambdas
-  190. lambda_capture
+DONE   189. lambdas
+DONE   190. lambda_capture
   191. fold
 DONE   192. stmts
   193. type_vla
