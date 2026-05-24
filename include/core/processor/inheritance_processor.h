@@ -28,6 +28,9 @@ private:
   const clang::CXXRecordDecl *
   getProcessableDefinition(const clang::CXXRecordDecl *decl) const;
   int resolveRecordTypeId(const clang::CXXRecordDecl *decl);
+  int resolveBaseTypeId(const clang::CXXBaseSpecifier &base,
+                        bool &is_dependent,
+                        std::string &dependent_super_name);
   void processBaseSpecifier(const clang::CXXBaseSpecifier &base, int index,
                             int sub_id);
   void recordDerivationSpecifiers(int derivation_id,

@@ -59,24 +59,50 @@ int InheritanceProcessor::resolveRecordTypeId(
   return type_processor_->processRecordDeclType(decl);
 }
 
+int InheritanceProcessor::resolveBaseTypeId(
+    const clang::CXXBaseSpecifier &base, bool &is_dependent,
+    std::string &dependent_super_name) {
+  is_dependent = false;
+  dependent_super_name.clear();
+
+  if (!type_processor_)
+    return -1;
+
+  clang::QualType baseType = base.getType();
+  if (baseType.isNull())
+    return -1;
+
+  if (baseType->isDependentType() || baseType->isInstantiationDependentType() ||
+      baseType->isTemplateTypeParmType()) {
+    is_dependent = true;
+    dependent_super_name = baseType.getAsString(pp_);
+    return type_processor_->processDependentType(baseType);
+  }
+
+  const clang::CXXRecordDecl *baseDecl = baseType->getAsCXXRecordDecl();
+  if (!baseDecl) {
+    is_dependent = true;
+    dependent_super_name = baseType.getAsString(pp_);
+    return type_processor_->processDependentType(baseType);
+  }
+
+  return resolveRecordTypeId(baseDecl);
+}
+
 void InheritanceProcessor::processBaseSpecifier(
     const clang::CXXBaseSpecifier &base, int index, int sub_id) {
   if (sub_id == -1 || base.isPackExpansion())
     return;
 
-  clang::QualType baseType = base.getType();
-  if (baseType.isNull() || baseType->isDependentType())
-    return;
-
-  const clang::CXXRecordDecl *baseDecl = baseType->getAsCXXRecordDecl();
-  if (!baseDecl)
-    return;
-
-  const int superId = resolveRecordTypeId(baseDecl);
+  bool isDependent = false;
+  std::string dependentSuperName;
+  const int superId = resolveBaseTypeId(base, isDependent, dependentSuperName);
   if (superId == -1)
     return;
 
-  const std::string key = makeDerivationKey(sub_id, index, superId);
+  std::string key = makeDerivationKey(sub_id, index, superId);
+  if (!dependentSuperName.empty())
+    key += ":" + dependentSuperName;
   auto &repo = CacheManager::instance()
                    .getRepository<CacheRepository<DbModel::Derivation>>();
   if (repo.find(key))
@@ -91,8 +117,13 @@ void InheritanceProcessor::processBaseSpecifier(
       locationId = locIdPair->spec_id;
   }
 
-  DbModel::Derivation derivation = {GENID(Derivation), sub_id, index, superId,
-                                    locationId};
+  DbModel::Derivation derivation = {GENID(Derivation),
+                                    sub_id,
+                                    index,
+                                    superId,
+                                    locationId,
+                                    isDependent ? 1 : 0,
+                                    dependentSuperName};
   repo.insert(key, derivation.id);
   STG.insertClassObj(derivation);
 

@@ -17,8 +17,9 @@ public:
   void processRecordDecl(const RecordDecl *RD);
   void processEnumDecl(const EnumDecl *ED);
   void processTypedefDecl(const TypedefDecl *TND);
-  void processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
+  int processTemplateTypeParmDecl(const TemplateTypeParmDecl *TTPD);
   int processTemplateTemplateParmDecl(const TemplateTemplateParmDecl *TTPD);
+  int processDependentType(QualType QT);
   void processTypeDecl(const TypeDecl *TD);
   int processRecordDeclType(const RecordDecl *RD);
   void processRecordType(const RecordType *RT);

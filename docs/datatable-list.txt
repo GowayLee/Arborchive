@@ -1,3 +1,6 @@
+Canonical CodeQL-Compatible Tables
+==================================
+
 DONE     1. compilations
 DONE     2. compilation_args
 DONE     3. compilation_build_mode
@@ -169,7 +172,7 @@ DONE   168. values
 DONE   169. valuetext
 DONE   170. valuebind
 DONE   171. fieldoffsets
-  172. bitfield
+DONE   172. bitfield
   173. initialisers
   174. braced_initialisers
   175. expr_ancestor
@@ -232,3 +235,12 @@ DONE   223. includes
   232. xmlComments
   233. xmlChars
   234. xmllocations
+
+Arbor Semantic Extension Tables
+===============================
+
+DONE   235. arbor_layout_provenance
+DONE   236. arbor_record_layout_traits
+DONE   237. arbor_direct_base_layout_traits
+DONE   238. arbor_field_layout_traits
+DONE   239. arbor_indirect_field_paths

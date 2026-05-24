@@ -13,6 +13,7 @@ CASES=(
   "unit-tests/namespace"
   "unit-tests/p5/hierarchy_case"
   "unit-tests/p5/layout_case"
+  "unit-tests/p5/semantic_gaps_case"
   "unit-tests/p6/lambda_case"
 )
 

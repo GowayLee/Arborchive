@@ -6,17 +6,23 @@
 #include "db/storage_facade.h"
 #include "model/db/type.h"
 #include "model/db/variable.h"
+#include "util/id_generator.h"
 #include "util/logger/macros.h"
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/Attr.h>
 #include <clang/AST/CharUnits.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/RecordLayout.h>
 #include <clang/AST/Type.h>
+#include <clang/Basic/TargetCXXABI.h>
+#include <clang/Basic/TargetInfo.h>
+#include <clang/Basic/Version.h>
 #include <cstdint>
 #include <exception>
 #include <limits>
 #include <optional>
 #include <string>
+#include <vector>
 
 void RecordLayoutProcessor::processCXXRecordDecl(
     const clang::CXXRecordDecl *decl) {
@@ -31,9 +37,11 @@ void RecordLayoutProcessor::processCXXRecordDecl(
   try {
     const clang::ASTRecordLayout &layout =
         ast_context_->getASTRecordLayout(definition);
+    recordLayoutMetadata(definition, layout, subId);
     recordDirectBaseOffsets(definition, layout, subId);
     recordVirtualBaseOffsets(definition, layout, subId);
     recordFieldOffsets(definition, layout);
+    recordIndirectFieldPaths(definition, subId);
   } catch (const std::exception &ex) {
     LOG_WARNING << "Skipping record layout for " << definition->getNameAsString()
                 << ": " << ex.what() << std::endl;
@@ -122,6 +130,34 @@ RecordLayoutProcessor::bitsToBitOffset(uint64_t bit_offset) const {
   return static_cast<int>(intraByteOffset);
 }
 
+int RecordLayoutProcessor::toIntFlag(bool value) const { return value ? 1 : 0; }
+
+void RecordLayoutProcessor::recordLayoutMetadata(
+    const clang::CXXRecordDecl *decl, const clang::ASTRecordLayout &layout,
+    int sub_id) {
+  if (!decl || sub_id == -1 || !ast_context_)
+    return;
+
+  const clang::TargetInfo &target = ast_context_->getTargetInfo();
+  DbModel::ArborLayoutProvenance provenance = {
+      sub_id,
+      CLANG_VERSION_STRING,
+      target.getTriple().str(),
+      clang::TargetCXXABI::getSpelling(ast_context_->getCXXABIKind()),
+      static_cast<int>(target.getCharWidth()),
+      static_cast<int>(target.getPointerWidth(clang::LangAS::Default))};
+  STG.insertClassObj(provenance);
+
+  DbModel::ArborRecordLayoutTrait traits = {
+      sub_id,
+      toIntFlag(layout.endsWithZeroSizedObject()),
+      toIntFlag(layout.leadsWithZeroSizedBase()),
+      toIntFlag(layout.hasOwnVFPtr()),
+      toIntFlag(layout.hasExtendableVFPtr()),
+      toIntFlag(layout.hasVBPtr())};
+  STG.insertClassObj(traits);
+}
+
 void RecordLayoutProcessor::recordDirectBaseOffsets(
     const clang::CXXRecordDecl *decl, const clang::ASTRecordLayout &layout,
     int sub_id) {
@@ -170,6 +206,18 @@ void RecordLayoutProcessor::recordDirectBaseOffsets(
     if (offset) {
       DbModel::DirectBaseOffset directBaseOffset = {*derivationId, *offset};
       STG.insertClassObj(directBaseOffset);
+
+      const clang::CXXRecordDecl *primaryBase = layout.getPrimaryBase();
+      const bool isPrimary =
+          primaryBase && primaryBase->getDefinition() == baseDefinition;
+      const bool isEmptyBase = baseDefinition->isEmpty();
+      DbModel::ArborDirectBaseLayoutTrait directBaseTrait = {
+          *derivationId,
+          toIntFlag(isEmptyBase),
+          toIntFlag(isEmptyBase && *offset == 0),
+          toIntFlag(isPrimary),
+          toIntFlag(isPrimary && layout.isPrimaryBaseVirtual())};
+      STG.insertClassObj(directBaseTrait);
     }
     ++index;
   }
@@ -240,5 +288,95 @@ void RecordLayoutProcessor::recordFieldOffsets(
     DbModel::FieldOffset fieldOffset = {memberVarId, *byteOffset,
                                         *intraByteOffset};
     STG.insertClassObj(fieldOffset);
+    recordBitField(field, memberVarId);
+    recordFieldLayoutTraits(decl, field, memberVarId);
   }
+}
+
+void RecordLayoutProcessor::recordBitField(const clang::FieldDecl *field,
+                                           int member_var_id) {
+  if (!field || member_var_id == -1 || !field->isBitField() ||
+      field->isUnnamedBitField() || !ast_context_)
+    return;
+
+  const int declaredBits =
+      static_cast<int>(field->getBitWidthValue(*ast_context_));
+  DbModel::BitField bitField = {member_var_id, declaredBits, declaredBits};
+  STG.insertClassObj(bitField);
+}
+
+void RecordLayoutProcessor::recordFieldLayoutTraits(
+    const clang::CXXRecordDecl *parent, const clang::FieldDecl *field,
+    int member_var_id) {
+  if (!parent || !field || member_var_id == -1 || !ast_context_)
+    return;
+
+  DbModel::ArborFieldLayoutTrait traits = {
+      member_var_id,
+      toIntFlag(field->isBitField()),
+      toIntFlag(field->isZeroSize(*ast_context_)),
+      toIntFlag(field->isPotentiallyOverlapping()),
+      toIntFlag(field->hasAttr<clang::NoUniqueAddressAttr>()),
+      toIntFlag(field->isAnonymousStructOrUnion()),
+      toIntFlag(parent->isUnion())};
+  STG.insertClassObj(traits);
+}
+
+void RecordLayoutProcessor::recordIndirectFieldPaths(
+    const clang::CXXRecordDecl *decl, int sub_id) {
+  if (!decl || sub_id == -1 || !type_processor_ || !variable_processor_)
+    return;
+
+  for (const clang::Decl *child : decl->decls()) {
+    const auto *indirect = llvm::dyn_cast<clang::IndirectFieldDecl>(child);
+    if (!indirect)
+      continue;
+
+    const clang::FieldDecl *leaf = indirect->getAnonField();
+    if (!leaf || leaf->isInvalidDecl())
+      continue;
+
+    const int typeId = type_processor_->processType(leaf->getType().getTypePtr());
+    const int leafId = variable_processor_->resolveMemberVarId(leaf, typeId);
+    if (leafId == -1)
+      continue;
+
+    DbModel::ArborIndirectFieldPath path = {
+        GENID(ArborIndirectFieldPath),
+        sub_id,
+        leafId,
+        indirect->getNameAsString(),
+        buildIndirectFieldPath(indirect),
+        static_cast<int>(indirect->getChainingSize())};
+    STG.insertClassObj(path);
+  }
+}
+
+std::string RecordLayoutProcessor::buildIndirectFieldPath(
+    const clang::IndirectFieldDecl *decl) const {
+  if (!decl)
+    return "";
+
+  std::vector<std::string> components;
+  for (const clang::NamedDecl *component : decl->chain()) {
+    if (!component)
+      continue;
+
+    std::string name = component->getNameAsString();
+    if (name.empty()) {
+      if (const auto *field = llvm::dyn_cast<clang::FieldDecl>(component))
+        name = field->getType().getAsString(pp_);
+      if (name.empty())
+        name = "<anonymous>";
+    }
+    components.push_back(name);
+  }
+
+  std::string path;
+  for (size_t i = 0; i < components.size(); ++i) {
+    if (i != 0)
+      path += ".";
+    path += components[i];
+  }
+  return path;
 }

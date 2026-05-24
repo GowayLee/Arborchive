@@ -92,6 +92,9 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::is_structured_binding(),
       VarTableFn::var_requires(),
       VarTableFn::fieldoffsets(),
+      VarTableFn::bitfield(),
+      VarTableFn::arbor_field_layout_traits(),
+      VarTableFn::arbor_indirect_field_paths(),
       // Type Tables
       TypeTableFn::types(), // deprecated - intermediary table no longer needed
       TypeTableFn::type_decls(),
@@ -119,6 +122,9 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::derspecifiers(),
       TypeTableFn::direct_base_offsets(),
       TypeTableFn::virtual_base_offsets(),
+      TypeTableFn::arbor_layout_provenance(),
+      TypeTableFn::arbor_record_layout_traits(),
+      TypeTableFn::arbor_direct_base_layout_traits(),
       // Concept Tables
       ConceptTableFn::concept_templates(),
       ConceptTableFn::concept_instantiation(),

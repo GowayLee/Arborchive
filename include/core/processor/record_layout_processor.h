@@ -5,6 +5,7 @@
 #include <clang/AST/DeclCXX.h>
 #include <cstdint>
 #include <optional>
+#include <string>
 
 class TypeProcessor;
 class VariableProcessor;
@@ -36,7 +37,10 @@ private:
   std::optional<int> toInt(clang::CharUnits units) const;
   std::optional<int> bitsToByteOffset(uint64_t bit_offset) const;
   std::optional<int> bitsToBitOffset(uint64_t bit_offset) const;
+  int toIntFlag(bool value) const;
 
+  void recordLayoutMetadata(const clang::CXXRecordDecl *decl,
+                            const clang::ASTRecordLayout &layout, int sub_id);
   void recordDirectBaseOffsets(const clang::CXXRecordDecl *decl,
                                const clang::ASTRecordLayout &layout,
                                int sub_id);
@@ -45,6 +49,12 @@ private:
                                 int sub_id);
   void recordFieldOffsets(const clang::CXXRecordDecl *decl,
                           const clang::ASTRecordLayout &layout);
+  void recordBitField(const clang::FieldDecl *field, int member_var_id);
+  void recordFieldLayoutTraits(const clang::CXXRecordDecl *parent,
+                               const clang::FieldDecl *field,
+                               int member_var_id);
+  void recordIndirectFieldPaths(const clang::CXXRecordDecl *decl, int sub_id);
+  std::string buildIndirectFieldPath(const clang::IndirectFieldDecl *decl) const;
 };
 
 #endif // _RECORD_LAYOUT_PROCESSOR_H_

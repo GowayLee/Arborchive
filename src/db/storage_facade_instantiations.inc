@@ -2,7 +2,13 @@
 
 template void StorageFacade::insertClassObj<DbModel::AggregateArrayInit&>(DbModel::AggregateArrayInit&);
 template void StorageFacade::insertClassObj<DbModel::AggregateFieldInit&>(DbModel::AggregateFieldInit&);
+template void StorageFacade::insertClassObj<DbModel::ArborDirectBaseLayoutTrait&>(DbModel::ArborDirectBaseLayoutTrait&);
+template void StorageFacade::insertClassObj<DbModel::ArborFieldLayoutTrait&>(DbModel::ArborFieldLayoutTrait&);
+template void StorageFacade::insertClassObj<DbModel::ArborIndirectFieldPath&>(DbModel::ArborIndirectFieldPath&);
+template void StorageFacade::insertClassObj<DbModel::ArborLayoutProvenance&>(DbModel::ArborLayoutProvenance&);
+template void StorageFacade::insertClassObj<DbModel::ArborRecordLayoutTrait&>(DbModel::ArborRecordLayoutTrait&);
 template void StorageFacade::insertClassObj<DbModel::ArraySizes&>(DbModel::ArraySizes&);
+template void StorageFacade::insertClassObj<DbModel::BitField&>(DbModel::BitField&);
 template void StorageFacade::insertClassObj<DbModel::BuiltinType_&>(DbModel::BuiltinType_&);
 template void StorageFacade::insertClassObj<DbModel::ClassInstantiation&>(DbModel::ClassInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::ClassTemplateArgument&>(DbModel::ClassTemplateArgument&);

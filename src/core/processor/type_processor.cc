@@ -88,14 +88,15 @@ void TypeProcessor::processTypedefDecl(const TypedefDecl *TND) {
   }
 }
 
-void TypeProcessor::processTemplateTypeParmDecl(
+int TypeProcessor::processTemplateTypeParmDecl(
     const TemplateTypeParmDecl *TTPD) {
   if (!TTPD)
-    return;
+    return -1;
 
   KeyType userTypeKey = KeyGen::Type::makeKey(TTPD, ast_context_);
   if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
     _typeId = *cachedId;
+    return *cachedId;
   } else {
     DbModel::UserType userTypeModel = {
         GENID(UserType), TTPD->getNameAsString(),
@@ -106,6 +107,7 @@ void TypeProcessor::processTemplateTypeParmDecl(
   }
 
   processTypeDecl(TTPD);
+  return _typeId;
 }
 
 int TypeProcessor::processTemplateTemplateParmDecl(
@@ -126,6 +128,42 @@ int TypeProcessor::processTemplateTemplateParmDecl(
   DbModel::UserType userTypeModel = {
       GENID(UserType), name,
       static_cast<int>(UserTypeKind::TEMPLATE_TEMPLATE_PARAMETER)};
+  INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
+  STG.insertClassObj(userTypeModel);
+  _typeId = userTypeModel.id;
+  return userTypeModel.id;
+}
+
+int TypeProcessor::processDependentType(QualType QT) {
+  if (QT.isNull())
+    return -1;
+
+  if (const auto *TTP = QT->getAs<TemplateTypeParmType>()) {
+    if (const clang::TemplateTypeParmDecl *decl = TTP->getDecl())
+      return processTemplateTypeParmDecl(decl);
+  }
+
+  clang::QualType canonical = QT.getCanonicalType();
+  if (!canonical.isNull()) {
+    if (const auto *TTP = canonical->getAs<TemplateTypeParmType>()) {
+      if (const clang::TemplateTypeParmDecl *decl = TTP->getDecl())
+        return processTemplateTypeParmDecl(decl);
+    }
+  }
+
+  KeyType userTypeKey = KeyGen::Type::makeKey(QT, ast_context_);
+  if (auto cachedId = SEARCH_TYPE_CACHE(userTypeKey)) {
+    _typeId = *cachedId;
+    return *cachedId;
+  }
+
+  std::string typeName = QT.getAsString(pp_);
+  if (typeName.empty())
+    typeName = "<dependent>";
+
+  DbModel::UserType userTypeModel = {
+      GENID(UserType), typeName,
+      static_cast<int>(UserTypeKind::UNKNOWN_USERTYPE)};
   INSERT_TYPE_CACHE(userTypeKey, userTypeModel.id);
   STG.insertClassObj(userTypeModel);
   _typeId = userTypeModel.id;
