@@ -12,6 +12,21 @@ AGENTS.md wins.
 This document defines execution flow, implementation discipline, and validation
 protocol. It does not redefine architecture ownership.
 
+## Trellis-Style Context Layer
+
+Arborchive also maintains `.trellis/` as an agent context layer:
+
+- `.trellis/workflow.md` summarizes the Orient, Plan, Implement, Verify, and
+  Summarize workflow for agents.
+- `.trellis/spec/` stores reusable long-term engineering rules.
+- `.trellis/tasks/` stores context for individual tasks.
+- `.trellis/workspace/` stores session notes and reusable memory.
+- `docs/` remains the home for human-readable roadmaps, phase summaries, and
+  long-form analysis.
+
+This layer complements `AGENTS.md` and this execution protocol. It does not
+replace `docs/`, `docs/roadmap.md`, or `docs/AGENTS_GUIDE.md`.
+
 ---
 
 # Phase 1 — Context Loading
@@ -27,9 +42,17 @@ Before modifying C++ behavior, agents MUST understand:
 Minimum required context:
 
 - `AGENTS.md`
+- `docs/AGENT_WORKFLOW.md` (`docs/agent_workflow.md` in this checkout)
+- `.trellis/workflow.md`
+- `.trellis/spec/README.md`
+- relevant `.trellis/spec/arborchive/*.md` files for the task
 - `docs/roadmap.md`
 - `src/core/ast_visitor.cc`
 - related processor/model/table files
+
+For complex tasks, agents MUST read `.trellis/workflow.md` before planning and
+the relevant `.trellis/spec/arborchive/*.md` files before implementation or
+verification.
 
 If schema/ORM changes are involved, also review:
 
