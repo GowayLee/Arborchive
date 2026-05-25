@@ -133,6 +133,49 @@ inline auto var_requires() {
       make_column("constraint", &DbModel::VarRequire::constraint));
 }
 
+inline auto fieldoffsets() {
+  return make_table(
+      "fieldoffsets",
+      make_column("id", &DbModel::FieldOffset::id, primary_key()),
+      make_column("byteoffset", &DbModel::FieldOffset::byteoffset),
+      make_column("bitoffset", &DbModel::FieldOffset::bitoffset));
+}
+
+inline auto bitfield() {
+  return make_table(
+      "bitfield",
+      make_column("id", &DbModel::BitField::id, primary_key()),
+      make_column("bits", &DbModel::BitField::bits),
+      make_column("declared_bits", &DbModel::BitField::declared_bits));
+}
+
+inline auto arbor_field_layout_traits() {
+  return make_table(
+      "arbor_field_layout_traits",
+      make_column("id", &DbModel::ArborFieldLayoutTrait::id, primary_key()),
+      make_column("is_bitfield", &DbModel::ArborFieldLayoutTrait::is_bitfield),
+      make_column("is_zero_size", &DbModel::ArborFieldLayoutTrait::is_zero_size),
+      make_column("is_potentially_overlapping",
+                  &DbModel::ArborFieldLayoutTrait::is_potentially_overlapping),
+      make_column("has_no_unique_address",
+                  &DbModel::ArborFieldLayoutTrait::has_no_unique_address),
+      make_column("is_anonymous_struct_or_union",
+                  &DbModel::ArborFieldLayoutTrait::is_anonymous_struct_or_union),
+      make_column("parent_is_union",
+                  &DbModel::ArborFieldLayoutTrait::parent_is_union));
+}
+
+inline auto arbor_indirect_field_paths() {
+  return make_table(
+      "arbor_indirect_field_paths",
+      make_column("id", &DbModel::ArborIndirectFieldPath::id, primary_key()),
+      make_column("parent", &DbModel::ArborIndirectFieldPath::parent),
+      make_column("leaf", &DbModel::ArborIndirectFieldPath::leaf),
+      make_column("name", &DbModel::ArborIndirectFieldPath::name),
+      make_column("path", &DbModel::ArborIndirectFieldPath::path),
+      make_column("field_count", &DbModel::ArborIndirectFieldPath::field_count));
+}
+
 // clang-format on
 
 } // namespace VarTableFn

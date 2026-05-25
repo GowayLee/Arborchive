@@ -1,3 +1,13 @@
+// ARCHITECTURE RULE:
+//
+// ASTVisitor is dispatch-only.
+//
+// Semantic orchestration MUST live inside processors/helpers.
+// Do NOT expand subsystem coordination inside Visit*.
+//
+// Historical note:
+// Template orchestration previously polluted this file and
+// caused architecture degradation.
 #include "core/ast_visitor.h"
 #include "core/srcloc_recorder.h"
 #include "db/dependency_manager.h"
@@ -46,6 +56,12 @@ void ASTVisitor::initProcessors() {
   template_processor_ = std::make_unique<TemplateProcessor>(
       context_, pp_, type_processor_.get(), expr_processor_.get(),
       variable_processor_.get());
+  inheritance_processor_ = std::make_unique<InheritanceProcessor>(
+      context_, pp_, type_processor_.get(), specifier_processor_.get());
+  record_layout_processor_ = std::make_unique<RecordLayoutProcessor>(
+      context_, pp_, type_processor_.get(), variable_processor_.get());
+  lambda_processor_ = std::make_unique<Lambda_Processor>(
+      context_, pp_, type_processor_.get(), variable_processor_.get());
 }
 
 // 实现各种Visit方法
@@ -196,8 +212,13 @@ bool ASTVisitor::VisitNonTypeTemplateParmDecl(
 }
 
 bool ASTVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *decl) {
-  // LOG_DEBUG << "Visiting CXXRecordDecl" << std::endl;
+  if (!decl)
+    return true;
 
+  // IMPORTANT: hierarchy extraction must run before layout extraction because
+  // RecordLayoutProcessor depends on derivation cache population.
+  inheritance_processor_->processCXXRecordDecl(decl);
+  record_layout_processor_->processCXXRecordDecl(decl);
   return true;
 }
 
@@ -427,6 +448,22 @@ bool ASTVisitor::VisitNamespaceDecl(clang::NamespaceDecl *decl) {
   return true;
 }
 
+bool ASTVisitor::VisitUsingDecl(clang::UsingDecl *decl) {
+  namespace_processor_->processUsingDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl *decl) {
+  namespace_processor_->processUsingDirectiveDecl(decl);
+  return true;
+}
+
+bool ASTVisitor::VisitUnresolvedUsingTypenameDecl(
+    clang::UnresolvedUsingTypenameDecl *decl) {
+  namespace_processor_->processUnresolvedUsingTypenameDecl(decl);
+  return true;
+}
+
 bool ASTVisitor::VisitArraySubscriptExpr(clang::ArraySubscriptExpr *expr) {
   expr_processor_->processArraySubscriptExpr(expr);
   return true;
@@ -445,5 +482,10 @@ bool ASTVisitor::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr *
 bool ASTVisitor::VisitConceptSpecializationExpr(
     clang::ConceptSpecializationExpr *expr) {
   template_processor_->processConceptSpecialization(expr);
+  return true;
+}
+
+bool ASTVisitor::VisitLambdaExpr(clang::LambdaExpr *expr) {
+  lambda_processor_->processLambdaExpr(expr);
   return true;
 }

@@ -234,6 +234,59 @@ struct NonTypeTemplateParameter {
   int id;
 };
 
+struct Derivation {
+  int id;
+  int sub;
+  int index;
+  int super;
+  int location;
+  int is_dependent = 0;
+  std::string dependent_super_name = "";
+  using KeyType = std::string;
+};
+
+struct DerSpecifier {
+  int der_id;
+  int spec_id;
+};
+
+struct DirectBaseOffset {
+  int der_id;
+  int offset;
+};
+
+struct VirtualBaseOffset {
+  int sub;
+  int super;
+  int offset;
+};
+
+struct ArborLayoutProvenance {
+  int id;
+  std::string clang_version;
+  std::string target_triple;
+  std::string abi_kind;
+  int char_width;
+  int pointer_width;
+};
+
+struct ArborRecordLayoutTrait {
+  int id;
+  int ends_with_zero_sized_object;
+  int leads_with_zero_sized_base;
+  int has_own_vfptr;
+  int has_extendable_vfptr;
+  int has_vbptr;
+};
+
+struct ArborDirectBaseLayoutTrait {
+  int der_id;
+  int is_empty_base;
+  int uses_empty_base_optimization;
+  int is_primary_base;
+  int is_primary_base_virtual;
+};
+
 // For enumconstants table
 struct EnumConstant {
   int id;

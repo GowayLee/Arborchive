@@ -175,6 +175,84 @@ inline auto nontype_template_parameters() {
       make_column("id", &DbModel::NonTypeTemplateParameter::id));
 }
 
+inline auto derivations() {
+  return make_table(
+      "derivations",
+      make_column("derivation", &DbModel::Derivation::id, primary_key()),
+      make_column("sub", &DbModel::Derivation::sub),
+      make_column("index", &DbModel::Derivation::index),
+      make_column("super", &DbModel::Derivation::super),
+      make_column("location", &DbModel::Derivation::location),
+      make_column("is_dependent", &DbModel::Derivation::is_dependent),
+      make_column("dependent_super_name",
+                  &DbModel::Derivation::dependent_super_name));
+}
+
+inline auto derspecifiers() {
+  return make_table(
+      "derspecifiers",
+      make_column("der_id", &DbModel::DerSpecifier::der_id),
+      make_column("spec_id", &DbModel::DerSpecifier::spec_id));
+}
+
+inline auto direct_base_offsets() {
+  return make_table(
+      "direct_base_offsets",
+      make_column("der_id", &DbModel::DirectBaseOffset::der_id, primary_key()),
+      make_column("offset", &DbModel::DirectBaseOffset::offset));
+}
+
+inline auto virtual_base_offsets() {
+  return make_table(
+      "virtual_base_offsets",
+      make_column("sub", &DbModel::VirtualBaseOffset::sub),
+      make_column("super", &DbModel::VirtualBaseOffset::super),
+      make_column("offset", &DbModel::VirtualBaseOffset::offset),
+      primary_key(&DbModel::VirtualBaseOffset::sub,
+                  &DbModel::VirtualBaseOffset::super));
+}
+
+inline auto arbor_layout_provenance() {
+  return make_table(
+      "arbor_layout_provenance",
+      make_column("id", &DbModel::ArborLayoutProvenance::id, primary_key()),
+      make_column("clang_version", &DbModel::ArborLayoutProvenance::clang_version),
+      make_column("target_triple", &DbModel::ArborLayoutProvenance::target_triple),
+      make_column("abi_kind", &DbModel::ArborLayoutProvenance::abi_kind),
+      make_column("char_width", &DbModel::ArborLayoutProvenance::char_width),
+      make_column("pointer_width", &DbModel::ArborLayoutProvenance::pointer_width));
+}
+
+inline auto arbor_record_layout_traits() {
+  return make_table(
+      "arbor_record_layout_traits",
+      make_column("id", &DbModel::ArborRecordLayoutTrait::id, primary_key()),
+      make_column("ends_with_zero_sized_object",
+                  &DbModel::ArborRecordLayoutTrait::ends_with_zero_sized_object),
+      make_column("leads_with_zero_sized_base",
+                  &DbModel::ArborRecordLayoutTrait::leads_with_zero_sized_base),
+      make_column("has_own_vfptr", &DbModel::ArborRecordLayoutTrait::has_own_vfptr),
+      make_column("has_extendable_vfptr",
+                  &DbModel::ArborRecordLayoutTrait::has_extendable_vfptr),
+      make_column("has_vbptr", &DbModel::ArborRecordLayoutTrait::has_vbptr));
+}
+
+inline auto arbor_direct_base_layout_traits() {
+  return make_table(
+      "arbor_direct_base_layout_traits",
+      make_column("der_id", &DbModel::ArborDirectBaseLayoutTrait::der_id,
+                  primary_key()),
+      make_column("is_empty_base",
+                  &DbModel::ArborDirectBaseLayoutTrait::is_empty_base),
+      make_column("uses_empty_base_optimization",
+                  &DbModel::ArborDirectBaseLayoutTrait::
+                      uses_empty_base_optimization),
+      make_column("is_primary_base",
+                  &DbModel::ArborDirectBaseLayoutTrait::is_primary_base),
+      make_column("is_primary_base_virtual",
+                  &DbModel::ArborDirectBaseLayoutTrait::is_primary_base_virtual));
+}
+
 // New C language feature tables
 inline auto enumconstants() {
   return make_table(

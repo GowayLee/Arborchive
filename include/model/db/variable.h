@@ -106,6 +106,37 @@ struct VarRequire {
   int id;
   int constraint;
 };
+
+struct FieldOffset {
+  int id;
+  int byteoffset;
+  int bitoffset;
+};
+
+struct BitField {
+  int id;
+  int bits;
+  int declared_bits;
+};
+
+struct ArborFieldLayoutTrait {
+  int id;
+  int is_bitfield;
+  int is_zero_size;
+  int is_potentially_overlapping;
+  int has_no_unique_address;
+  int is_anonymous_struct_or_union;
+  int parent_is_union;
+};
+
+struct ArborIndirectFieldPath {
+  int id;
+  int parent;
+  int leaf;
+  std::string name;
+  std::string path;
+  int field_count;
+};
 } // namespace DbModel
 
 #endif // _MODEL_VARIABLE_H_

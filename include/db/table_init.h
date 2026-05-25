@@ -10,6 +10,7 @@
 #include "table_defs/element.h"
 #include "table_defs/expr.h"
 #include "table_defs/function.h"
+#include "table_defs/lambda.h"
 #include "table_defs/location.h"
 #include "table_defs/preprocessor.h"
 #include "table_defs/specifiers.h"
@@ -44,6 +45,9 @@ inline auto initStorage(const std::string &path) {
       // Declaration Tables
       DeclTableFn::declarations(),
       DeclTableFn::frienddecls(),
+      DeclTableFn::namespace_decls(),
+      DeclTableFn::usings(),
+      DeclTableFn::using_container(),
       // Function Tables
       FuncTableFn::functions(),
       FuncTableFn::fun_decls(),
@@ -87,6 +91,10 @@ inline auto initStorage(const std::string &path) {
       VarTableFn::var_decl_specifiers(),
       VarTableFn::is_structured_binding(),
       VarTableFn::var_requires(),
+      VarTableFn::fieldoffsets(),
+      VarTableFn::bitfield(),
+      VarTableFn::arbor_field_layout_traits(),
+      VarTableFn::arbor_indirect_field_paths(),
       // Type Tables
       TypeTableFn::types(), // deprecated - intermediary table no longer needed
       TypeTableFn::type_decls(),
@@ -110,6 +118,13 @@ inline auto initStorage(const std::string &path) {
       TypeTableFn::template_template_argument(),
       TypeTableFn::type_template_type_constraint(),
       TypeTableFn::nontype_template_parameters(),
+      TypeTableFn::derivations(),
+      TypeTableFn::derspecifiers(),
+      TypeTableFn::direct_base_offsets(),
+      TypeTableFn::virtual_base_offsets(),
+      TypeTableFn::arbor_layout_provenance(),
+      TypeTableFn::arbor_record_layout_traits(),
+      TypeTableFn::arbor_direct_base_layout_traits(),
       // Concept Tables
       ConceptTableFn::concept_templates(),
       ConceptTableFn::concept_instantiation(),
@@ -146,6 +161,9 @@ inline auto initStorage(const std::string &path) {
       ExprTableFn::aggregatearrayinit(),
       ExprTableFn::aggregatefieldinit(),
       ExprTableFn::sizeofbind(),
+      // Lambda Tables
+      LambdaTableFn::lambdas(),
+      LambdaTableFn::lambda_capture(),
       // Element Tables;
       ElementTableFn::parameterized_element(),
       // Class Table;

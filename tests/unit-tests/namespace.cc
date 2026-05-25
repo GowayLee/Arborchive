@@ -75,11 +75,56 @@ namespace multi_block {
 int second_var = 2;
 }
 
+// Reopened namespace should keep one semantic namespace identity
+namespace p4_reopened {
+void f();
+}
+
+namespace p4_reopened {
+void g();
+}
+
+// Empty reopened namespace should create two declaration rows for one entity
+namespace p4_decl_reopened {}
+namespace p4_decl_reopened {}
+
+// P4b using declarations and directives
+namespace using_source {
+int value = 0;
+struct Holder {
+  using type = int;
+};
+namespace nested {
+int nested_value = 1;
+}
+} // namespace using_source
+
+using namespace using_source::nested;
+using using_source::value;
+
 // Namespace with using declarations
 namespace using_test {
+using namespace using_source;
+using using_source::value;
+using namespace using_source::nested;
+using using_source::nested::nested_value;
 
-void test_using() {}
+template <typename T> struct DependentUsing : T {
+  using typename T::type;
+};
+
+void test_using() {
+  using using_source::value;
+}
 } // namespace using_test
+
+namespace using_reopened {
+using using_source::value;
+}
+
+namespace using_reopened {
+using using_source::nested::nested_value;
+}
 
 
 int main() {

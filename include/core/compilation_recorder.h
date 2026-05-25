@@ -2,6 +2,7 @@
 #define _CORE_COMP_RECORDER_H_
 
 #include "model/db/compilation.h"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,8 @@ public:
 
   void recordArguments(const std::vector<std::string> &flags);
   void recordTime(CompTimeKind kind, double seconds);
-  void recordFile(const std::string &file);
+  int recordFile(const std::string &file);
+  std::optional<int> getSourceFileId() const;
   void finalize(double total_cpu, double total_elapsed);
 
   static CompRecorder &getInstance() {
@@ -28,6 +30,7 @@ public:
 private:
   CompRecorder() = default;
   int compilation_id_;
+  int source_file_id_ = -1;
   int time_record_seq_ = 0;
 };
 

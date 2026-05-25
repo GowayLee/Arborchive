@@ -1,3 +1,6 @@
+Canonical CodeQL-Compatible Tables
+==================================
+
 DONE     1. compilations
 DONE     2. compilation_args
 DONE     3. compilation_build_mode
@@ -65,9 +68,9 @@ DONE    64. type_decls
 DONE    65. type_def
 DONE    66. type_decl_top
    67. type_requires
-   68. namespace_decls
-   69. usings
-   70. using_container
+DONE    68. namespace_decls
+DONE    69. usings
+DONE    70. using_container
    71. static_asserts
 DONE    72. params
    73. overrides
@@ -137,10 +140,10 @@ DONE   124. varspecifiers
   137. unspecifiedtype
 DONE   138. member
   139. enclosingfunction
-  140. derivations
-  141. derspecifiers
-  142. direct_base_offsets
-  143. virtual_base_offsets
+DONE   140. derivations
+DONE   141. derspecifiers
+DONE   142. direct_base_offsets
+DONE   143. virtual_base_offsets
 DONE  144. frienddecls
   145. comments
   146. commentbinding
@@ -168,8 +171,8 @@ DONE   161. funbind
 DONE   168. values
 DONE   169. valuetext
 DONE   170. valuebind
-  171. fieldoffsets
-  172. bitfield
+DONE   171. fieldoffsets
+DONE   172. bitfield
   173. initialisers
   174. braced_initialisers
   175. expr_ancestor
@@ -186,8 +189,8 @@ DONE   183. aggregate_array_init
   186. uuidof_bind
 DONE   187. sizeof_bind
   188. code_block
-  189. lambdas
-  190. lambda_capture
+DONE   189. lambdas
+DONE   190. lambda_capture
   191. fold
 DONE   192. stmts
   193. type_vla
@@ -232,3 +235,12 @@ DONE   223. includes
   232. xmlComments
   233. xmlChars
   234. xmllocations
+
+Arbor Semantic Extension Tables
+===============================
+
+DONE   235. arbor_layout_provenance
+DONE   236. arbor_record_layout_traits
+DONE   237. arbor_direct_base_layout_traits
+DONE   238. arbor_field_layout_traits
+DONE   239. arbor_indirect_field_paths

@@ -13,6 +13,7 @@ public:
   int processVarDecl(const VarDecl *VD);
   int processParmVarDecl(const ParmVarDecl *PVD);
   int processFieldDecl(const FieldDecl *FD);
+  int resolveMemberVarId(const FieldDecl *FD, int type_id);
 
   VariableProcessor(ASTContext *ast_context, const PrintingPolicy pp)
       : BaseProcessor(ast_context, pp) {};

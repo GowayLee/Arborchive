@@ -1,132 +1,297 @@
 # AGENTS.md
 
-Arborchive 的 agent 总控入口。更完整的项目百科保存在 `docs/AGENTS_GUIDE.md`；具体工作流看 `docs/agent_workflow.md`；当前 TODO 路线图看 `docs/roadmap.md`。
+Arborchive architecture governance for AI coding agents and maintainers.
 
-## 默认规则
+This document defines the architectural boundaries of the project.
+It is not a general development note or onboarding tutorial.
 
-- 默认用中文回复。
-- 小步 patch，保持每一步可回滚、可验证。
-- 不做大规模 C++ 重构，除非用户明确要求。
-- 不删除既有 C++ 代码；必要时先保留上下文并解释原因。
-- 修改前先说明计划；修改后必须说明 changed files、validation commands、test results、remaining risks。
-- 生成的测试数据库统一放在 `tests/output/`。
+---
 
-## 修改前必读
+# Documentation Hierarchy
 
-开始改 C++ 行为前，按顺序读：
+Priority order:
 
-1. `AGENTS.md`
-2. `docs/agent_workflow.md`
-3. `docs/roadmap.md`
-4. `src/core/ast_visitor.cc`
-5. 相关 Processor 的头文件和实现：
-   - `include/core/processor/<name>_processor.h`
-   - `src/core/processor/<name>_processor.cc`
-6. 相关 DB model 和 table definition：
-   - `include/model/db/<domain>.h`
-   - `include/db/table_defs/<domain>.h`
-7. 相关 key generator：
-   - `include/util/key_generator/`
-   - `src/util/key_generator/`
+text AGENTS.md ↓ docs/AGENT_WORKFLOW.md ↓ docs/roadmap.md ↓ existing code patterns
 
-如果修改 schema / ORM，还必须读：
+Canonical workflow file: `docs/AGENT_WORKFLOW.md`.
+Legacy/onboarding encyclopedia: `docs/AGENTS_GUIDE.md`.
 
-- `docs/datatable-list.txt`
-- `docs/semmlecode.cpp.dbscheme`
-- `include/db/table_init.h`
-- `include/db/storage_facade.h`
-- `src/db/storage_facade.cc`
-- `scripts/generate_instantiations.py`
-- `src/db/storage_facade_instantiations.inc`
+If existing code conflicts with this document:
 
-## Schema 硬约束
+text AGENTS.md wins.
 
-- 不允许自主新增 `docs/datatable-list.txt` 之外的新表。
-- 表名必须严格使用 `docs/datatable-list.txt` 中的命名。
-- 字段语义优先参考 `docs/semmlecode.cpp.dbscheme`。
-- 不允许用 `friend_decls`、`template_decls`、`template_parameters` 这类自定义命名替代目标表。
-- 补实现 datatable-list 表时，必须同步更新 model、table_defs、table_init，并运行 ORM 生成脚本。
+If `docs/AGENTS_GUIDE.md` conflicts with this document, `AGENTS.md` wins.
 
-## 当前 TODO
+Historical code patterns are not architectural truth. They may document current
+or legacy implementation facts, not approved architecture.
 
-当前路线以 `docs/roadmap.md` 为准。已阶段性完成：
+---
 
-- P0: `ImplicitCastExpr` DerivedType recording，主要落 `derivedtypes`(81)。
-- P1: Friend declarations，主要落 `frienddecls`(144)。
-- P2: Template system phase，覆盖 class/function/variable templates、template-template safe subset、concept safe subset。
+# Core Principles
 
-下一阶段只推进 `docs/roadmap.md` 中的 P3 路线，不把 deferred 表扩展成无关重构。
+- 默认使用中文回复。
+- 小步 patch：保持可回滚、可验证、可 review。
+- 以 semantic subsystem 为单位推进功能，而不是随机补表。
+- 优先保持 architecture boundary，而不是追求局部快速实现。
+- 不做无关大型重构，除非用户明确要求。
 
-不要把这些任务扩展成无关重构。
+Every patch should:
+- explain the plan before modification
+- report changed files
+- report validation commands/results
+- report remaining risks
 
-## 默认验证
+---
 
-每次 patch 后优先跑：
+# Architectural Boundaries
 
-```bash
-scripts/test_all.sh
+## ASTVisitor Target Boundary
+
+Architectural target: `src/core/ast_visitor.cc` should remain as close as
+possible to a dispatch-only layer.
+
+`Visit*` methods should normally only:
+- identify AST entrypoints
+- perform lightweight guards
+- delegate work to processors/helpers
+
+The current codebase is transitional. Some legacy orchestration still exists
+inside `ASTVisitor`. These patterns are technical debt, not preferred
+architecture and not a template for new work.
+
+## Transitional Legacy Patterns
+
+Tolerated temporarily when already present:
+
+- lightweight multi-processor delegation needed for compatibility during subsystem migration
+- narrow compatibility glue while moving ownership into processors/helpers
+- small guard logic required to preserve traversal behavior
+
+These patterns MUST NOT expand further. New orchestration MUST NOT be added to
+`ASTVisitor`. When touching legacy orchestration-heavy code, prefer shrinking
+the visitor boundary or moving logic into processor/helper layers.
+
+## Visit* Examples
+
+Preferred pattern:
+
+```cpp
+bool ASTVisitor::VisitFooDecl(clang::FooDecl *D) {
+  if (!D) return true;
+  foo_processor_->processFooDecl(D);
+  return true;
+}
 ```
 
-它会执行：
+Transitional legacy pattern, tolerated only when already present:
 
-```bash
-make debug -j 8
-./build/demo -c ./config.example.toml -s ./tests/slight-case.cc -o ./tests/output/slight-case.db
-./build/demo -c ./config.example.toml -s ./tests/moderate-case.cc -o ./tests/output/moderate-case.db
-./build/demo -c ./config.example.toml -s ./tests/intense-case.cc -o ./tests/output/intense-case.db
+```cpp
+bool ASTVisitor::VisitFooDecl(clang::FooDecl *D) {
+  if (!D) return true;
+  type_processor_->processType(D->getType());
+  foo_processor_->processFooDecl(D);
+  return true;
+}
 ```
 
-检查数据库摘要：
+This is limited orchestration for compatibility. It is not preferred for new
+work and should not grow.
 
-```bash
-scripts/db_summary.py tests/output/slight-case.db
-scripts/db_summary.py tests/output/moderate-case.db
-scripts/db_summary.py tests/output/intense-case.db
+Forbidden pattern:
+
+```cpp
+bool ASTVisitor::VisitFooDecl(clang::FooDecl *D) {
+  auto *Special = llvm::dyn_cast<clang::SpecialFooDecl>(D);
+  auto key = KeyGenerator::makeFooKey(D);
+  if (CacheManager::instance().find(key)) return true;
+  DependencyManager::instance().addDependency(...);
+  STG.insert(...);
+  // many schema-specific branches and table coordination
+  return true;
+}
 ```
 
-如果修改 schema / ORM，先跑：
+Forbidden inside visitor code:
 
-```bash
-python3 scripts/generate_instantiations.py
-make debug -j 8
-scripts/test_all.sh
-```
+- direct `STG.insert*`
+- direct `DependencyManager` orchestration
+- direct `CacheManager` orchestration
+- complex `dyn_cast` routing trees
+- schema row assembly
+- subsystem controller logic
 
-目标表验收示例：
+## Architecture Drift Signals
 
-```bash
-sqlite3 tests/output/intense-case.db "SELECT name FROM sqlite_master WHERE type='table' AND name='<table_name>';"
-sqlite3 tests/output/intense-case.db "PRAGMA table_info('<table_name>');"
-sqlite3 tests/output/intense-case.db "SELECT COUNT(*) FROM <table_name>;"
-```
+The following signals should trigger ownership review:
 
-## 常见环境问题
+- new `Visit*` methods call multiple processors
+- `Visit*` methods directly use `STG`, `DependencyManager`, or `CacheManager`
+- visitor code adds cache/key/dependency policy
+- repeated branching grows in visitor methods
+- existing orchestration-heavy `Visit*` methods receive more orchestration
+- a patch cannot be verified as an isolated semantic subsystem change
 
-Arborchive 当前要求 LLVM 19。若 `scripts/test_all.sh` 失败并提示 `LLVM_CONFIG` 是 22.x，先指定 LLVM 19：
+Existing orchestration-heavy `Visit*` methods are legacy technical debt. Do not
+expand orchestration inside them.
 
-```bash
-export LLVM19_HOME="/opt/homebrew/opt/llvm@19"
-export PATH="$LLVM19_HOME/bin:$PATH"
-export LLVM_CONFIG="$LLVM19_HOME/bin/llvm-config"
-export CC="$LLVM19_HOME/bin/clang"
-export CXX="$LLVM19_HOME/bin/clang++"
-scripts/test_all.sh
-```
+# Historical Failure
 
-也可以先检查：
+Arborchive previously suffered architecture degradation because template orchestration and schema coordination logic gradually expanded inside:
 
-```bash
-make print-toolchain
-```
+text src/core/ast_visitor.cc
 
-## 代码路径速查
+This caused:
+- visitor bloating
+- subsystem coupling
+- difficult rollback
+- difficult verification
+- uncontrolled branching growth
 
-- AST 分发：`src/core/ast_visitor.cc`
-- Processor：`src/core/processor/`
-- Processor headers：`include/core/processor/`
-- DB models：`include/model/db/`
-- Table definitions：`include/db/table_defs/`
-- ORM table init：`include/db/table_init.h`
-- Storage facade：`include/db/storage_facade.h`, `src/db/storage_facade.cc`
-- Key generators：`include/util/key_generator/`, `src/util/key_generator/`
-- 测试输入：`tests/slight-case.cc`, `tests/moderate-case.cc`, `tests/intense-case.cc`
+The issue was later fixed through:
+- TemplateProcessor orchestration
+- visitor slimming
+- extraction boundary refactoring
+
+This is a known anti-pattern.
+
+Future agents MUST NOT repeat it.
+
+---
+
+# Processor Ownership
+
+Semantic ownership belongs to processors and helper layers.
+
+Examples:
+
+- template semantics → TemplateProcessor
+- type extraction → TypeProcessor
+- inheritance extraction → dedicated hierarchy/layout path
+- attribute extraction → attribute subsystem
+- lambda extraction → lambda subsystem
+- initialization extraction → initialization subsystem
+- expression graph extraction → expression subsystem
+
+ASTVisitor does not own semantic pipelines.
+
+If a subsystem has no clear owner:
+- establish processor/helper boundaries first
+- then implement extraction logic
+
+## Coordinator Layer Guidance
+
+Complex subsystem coordination may live in:
+
+- dedicated coordinator/helper layers
+- dominant processors coordinating internally within their subsystem
+
+`ASTVisitor` must not become the coordination layer. This is a governance rule,
+not an implementation plan; introduce concrete coordinators only when a real
+subsystem boundary needs them.
+
+---
+
+# Refactor Triggers
+
+Refactor boundaries before continuing implementation if:
+
+- a new Visit* cannot stay dispatch-oriented
+- repeated branching accumulates in visitor code
+- multiple schema tables are coordinated inside visitor methods
+- subsystem ownership becomes unclear
+- semantic orchestration starts leaking into AST traversal
+- rollback or isolated verification becomes difficult
+
+Do not continue patching on top of architectural drift. In legacy transitional
+areas, a small compatibility edit may be acceptable only if it does not expand
+or normalize visitor orchestration.
+
+---
+
+# AI-Agent Rules
+
+AI agents MUST:
+- follow subsystem ownership
+- keep ASTVisitor thin
+- prefer processor/helper extraction
+- avoid copying historical bad patterns
+- explain architectural reasoning before changes
+
+AI agents MUST NOT:
+- use visitor code as temporary orchestration space
+- expand bad local patterns because they already exist
+- mix unrelated roadmap phases
+- implement cross-table semantic pipelines directly in Visit*
+
+---
+
+# Required Context Before Changes
+
+Before modifying C++ behavior, agents MUST understand:
+
+- current roadmap phase
+- AST dispatch flow
+- related processor ownership
+- related schema/model definitions
+
+Minimum required files:
+
+- AGENTS.md
+- docs/AGENT_WORKFLOW.md
+- docs/roadmap.md
+- src/core/ast_visitor.cc
+- related processor/model/table files
+
+---
+
+# Schema Constraints
+
+- 不允许新增 docs/datatable-list.txt 之外的新表。
+- 表名必须严格遵循 datatable-list。
+- 字段语义优先参考 docs/semmlecode.cpp.dbscheme。
+- schema patch 必须服务于明确 semantic subsystem。
+- 禁止随机补表式开发。
+
+If schema/ORM changes:
+- update model/table_defs/table_init consistently
+- regenerate ORM instantiations
+- rerun full validation
+
+---
+
+# Roadmap Discipline
+
+Roadmap phases MUST remain isolated.
+
+Examples:
+
+- namespace phases should not mix layout extraction
+- inheritance graph should not mix ABI layout
+- lambda phase should not absorb unrelated CFG work
+- attribute presence and attribute argument systems should remain separated
+
+Do not expand deferred tables into unrelated refactors.
+
+---
+
+# Minimal Validation
+
+Minimum validation after patches:
+
+bash scripts/test_all.sh
+
+If schema/ORM changed:
+
+bash python3 scripts/generate_instantiations.py make debug -j 8 scripts/test_all.sh
+
+Use isolated testcases and DB checks when semantic output changes.
+
+---
+
+# Key Paths
+
+- AST dispatch: src/core/ast_visitor.cc
+- Processors: src/core/processor/
+- DB models: include/model/db/
+- Table definitions: include/db/table_defs/
+- ORM/storage: include/db/, src/db/

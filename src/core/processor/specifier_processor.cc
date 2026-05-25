@@ -1,16 +1,20 @@
 #include "core/processor/specifier_processor.h"
+#include "db/cache_repository.h"
 #include "db/storage_facade.h"
 #include "model/db/specifiers.h"
 #include "util/id_generator.h"
 #include "util/logger/macros.h"
 #include <clang/AST/DeclCXX.h>
+#include <vector>
 
 int SpecifierProcessor::getOrCreateSpecifier(const std::string &str) {
-  // TODO: Implement specifier cache lookup
-  // For now, generate a new ID each time
-  GENID(Specifier);
-  DbModel::Specifier specifier = {
-      IDGenerator::getLastGeneratedId<DbModel::Specifier>(), str};
+  auto &repo = CacheManager::instance()
+                   .getRepository<CacheRepository<DbModel::Specifier>>();
+  if (auto cachedId = repo.find(str))
+    return *cachedId;
+
+  DbModel::Specifier specifier = {GENID(Specifier), str};
+  repo.insert(str, specifier.id);
   STG.insertClassObj(specifier);
   return specifier.id;
 }
@@ -198,6 +202,30 @@ void SpecifierProcessor::processVariableSpecifiers(int var_id,
   default:
     break;
   }
+}
+
+std::vector<int>
+SpecifierProcessor::processBaseSpecifiers(const CXXBaseSpecifier &base) {
+  std::vector<int> specIds;
+
+  switch (base.getAccessSpecifier()) {
+  case AS_public:
+    specIds.push_back(getOrCreateSpecifier("public"));
+    break;
+  case AS_protected:
+    specIds.push_back(getOrCreateSpecifier("protected"));
+    break;
+  case AS_private:
+    specIds.push_back(getOrCreateSpecifier("private"));
+    break;
+  default:
+    break;
+  }
+
+  if (base.isVirtual())
+    specIds.push_back(getOrCreateSpecifier("virtual"));
+
+  return specIds;
 }
 
 void SpecifierProcessor::insertTypeSpecifiers(int type_id, int spec_id) {

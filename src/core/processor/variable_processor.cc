@@ -262,24 +262,27 @@ int VariableProcessor::processFieldDecl(const FieldDecl *FD) {
 
 int VariableProcessor::processMemberVar(const FieldDecl *FD) {
   // For fields, _typeId should be set by the caller before calling this method
-  _name = FD->getNameAsString();
+  return resolveMemberVarId(FD, _typeId);
+}
 
-  // 使用缓存机制：先检查是否已存在
+int VariableProcessor::resolveMemberVarId(const FieldDecl *FD, int type_id) {
+  if (!FD)
+    return -1;
+
+  const std::string name = FD->getNameAsString();
   KeyType fieldKey = KeyGen::Var::makeKey(FD, ast_context_);
 
   if (auto cachedId = SEARCH_MEMBERVAR_CACHE(fieldKey)) {
-    LOG_DEBUG << "MemberVar '" << _name
+    LOG_DEBUG << "MemberVar '" << name
               << "' found in cache with ID: " << *cachedId << std::endl;
     return *cachedId;
   }
 
-  // 缓存未命中，创建新记录
-  DbModel::MemberVar memberVar = {GENID(MemberVar), _typeId, _name};
+  DbModel::MemberVar memberVar = {GENID(MemberVar), type_id, name};
   STG.insertClassObj(memberVar);
-
-  // 插入缓存
   INSERT_MEMBERVAR_CACHE(fieldKey, memberVar.id);
-  LOG_DEBUG << "Created and cached MemberVar '" << _name
+
+  LOG_DEBUG << "Created and cached MemberVar '" << name
             << "' with key: " << fieldKey << " -> ID: " << memberVar.id
             << std::endl;
 
