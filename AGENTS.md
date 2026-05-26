@@ -11,14 +11,34 @@ It is not a general development note or onboarding tutorial.
 
 Priority order:
 
-text AGENTS.md ↓ docs/AGENT_WORKFLOW.md ↓ docs/roadmap.md ↓ existing code patterns
+```text
+AGENTS.md
+↓ docs/AGENT_WORKFLOW.md
+↓ .trellis/workflow.md
+↓ .trellis/spec/
+↓ docs/roadmap.md
+↓ existing code patterns
+```
 
-Canonical workflow file: `docs/AGENT_WORKFLOW.md`.
-Legacy/onboarding encyclopedia: `docs/AGENTS_GUIDE.md`.
+`AGENTS.md` is the top-level constitution / total rule source.
+`docs/AGENT_WORKFLOW.md` is the execution protocol. In this checkout, the file
+is currently stored as `docs/agent_workflow.md`.
+`docs/AGENTS_GUIDE.md` is legacy reference material and has the lowest
+documentation priority.
+
+`.trellis/` is an agent context layer, not a replacement for `docs/`:
+
+- `.trellis/spec/` stores reusable long-term engineering rules for agents.
+- `.trellis/tasks/` stores context for a single task.
+- `.trellis/workspace/` stores session notes and reusable memory.
+- `docs/` remains for human-readable roadmaps, phase summaries, and long-form
+  analysis.
 
 If existing code conflicts with this document:
 
-text AGENTS.md wins.
+```text
+AGENTS.md wins.
+```
 
 If `docs/AGENTS_GUIDE.md` conflicts with this document, `AGENTS.md` wins.
 
@@ -237,7 +257,10 @@ Before modifying C++ behavior, agents MUST understand:
 Minimum required files:
 
 - AGENTS.md
-- docs/AGENT_WORKFLOW.md
+- docs/AGENT_WORKFLOW.md (`docs/agent_workflow.md` in this checkout)
+- .trellis/workflow.md
+- .trellis/spec/README.md
+- relevant .trellis/spec/arborchive/*.md files for the task
 - docs/roadmap.md
 - src/core/ast_visitor.cc
 - related processor/model/table files
