@@ -13,16 +13,19 @@ bool Router::processCompilation(const Configuration &config) {
   // 创建编译记录
   recorder.createCompilation(config.compilation.working_directory);
 
-  // 记录编译参数, 文件名
-  recorder.recordArguments(config.compilation.flags);
+  ClangASTManager &ast_manager = ClangASTManager::getInstance();
+  if (!ast_manager.loadConfig(config))
+    return false;
+
+  // Persist the same full sequence that configures the actual ClangTool run.
+  recorder.recordArguments(ast_manager.getCommandLineArgs());
+  recorder.recordBuildMode(1);
   recorder.recordFile(
       std::filesystem::path(config.general.source_path).filename().string());
+  recorder.recordVersion();
 
   HighResTimer frontend_timer;
   frontend_timer.start();
-
-  // 使用ClangASTManager处理AST
-  ClangASTManager::getInstance().loadConfig(config);
 
   // 记录前端耗时
   recorder.recordTime(CompTimeKind::FrontendCpu, frontend_timer.cpu_time());

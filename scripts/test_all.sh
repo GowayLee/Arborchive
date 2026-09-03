@@ -39,6 +39,7 @@ CASES=(
   "unit-tests/p10/expression_graph_case"
   "unit-tests/p11/casts_conversion_case"
   "unit-tests/p12/allocation_lifetime_case"
+  "unit-tests/p13/metadata_comments_case"
 )
 
 if [[ -z "${LLVM_CONFIG:-}" ]]; then
@@ -125,6 +126,8 @@ for case_name in "${CASES[@]}"; do
 
   if [[ "$case_name" == "unit-tests/p9/constexpr_flow_case" ]]; then
     config="$ROOT_DIR/tests/config.cxx23.toml"
+  elif [[ "$case_name" == "unit-tests/p13/metadata_comments_case" ]]; then
+    config="$ROOT_DIR/tests/unit-tests/p13/config.toml"
   fi
 
   if [[ ! -f "$src" ]]; then

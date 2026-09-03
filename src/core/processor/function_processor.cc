@@ -1,4 +1,5 @@
 #include "core/processor/function_processor.h"
+#include "core/processor/comment_processor.h"
 #include "core/processor/coroutine_helper.h"
 #include "db/dependency_manager.h"
 #include "db/storage_facade.h"
@@ -78,6 +79,8 @@ void FunctionProcessor::handleBaseFunc(const FunctionDecl *decl,
   STG.insertClassObj(function);
   STG.insertClassObj(fun_decl);
   STG.insertClassObj(parameterizedElement);
+  if (comment_processor_)
+    comment_processor_->processFunctionComment(decl, _funcId);
 }
 
 void FunctionProcessor::recordEntryPoint(const FunctionDecl *decl) const {

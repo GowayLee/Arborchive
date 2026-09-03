@@ -4,6 +4,7 @@
 #include "db/table_defs/class.h"
 #include "db/table_defs/variable.h"
 #include "table_defs/attribute.h"
+#include "table_defs/comment.h"
 #include "table_defs/compilation.h"
 #include "table_defs/concept.h"
 #include "table_defs/container.h"
@@ -30,8 +31,13 @@ inline auto initStorage(const std::string &path) {
       CompTableFn::compilations(),
       CompTableFn::compilatio_args(),
       CompTableFn::compilatio_build_mode(),
+      CompTableFn::compilation_compiling_files(),
       CompTableFn::compilatio_time(),
       CompTableFn::compilation_finished(),
+      CompTableFn::extractor_version(),
+      // Comment Tables
+      CommentTableFn::comments(),
+      CommentTableFn::commentbinding(),
       // Location Tables
       LocTableFn::locations(),
       LocTableFn::locations_default(),

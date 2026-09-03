@@ -7,6 +7,8 @@
 
 using namespace clang;
 
+class CommentProcessor;
+
 class FunctionProcessor : public BaseProcessor {
 public:
   // Resolve and, when necessary, materialize a function declaration referenced
@@ -23,8 +25,9 @@ public:
   int processUserDefinedLiteral(const FunctionDecl *decl);
   int processNormalFunc(const FunctionDecl *decl);
 
-  FunctionProcessor(ASTContext *ast_context, const PrintingPolicy pp)
-      : BaseProcessor(ast_context, pp) {};
+  FunctionProcessor(ASTContext *ast_context, const PrintingPolicy pp,
+                    CommentProcessor *comment_processor)
+      : BaseProcessor(ast_context, pp), comment_processor_(comment_processor) {};
   ~FunctionProcessor() = default;
 
 private:
@@ -35,6 +38,7 @@ private:
   int _funcId;
   int _funcDeclId;
   int _typeId;
+  CommentProcessor *comment_processor_ = nullptr;
 
   void handleBaseFunc(const FunctionDecl *decl, const FuncType type);
   void recordBasicInfo(const FunctionDecl *decl) const;

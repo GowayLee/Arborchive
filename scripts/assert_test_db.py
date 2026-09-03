@@ -90,6 +90,178 @@ def check_common(audit: Audit) -> None:
     audit.check("compilation row", "select count(*) from compilations", 1)
     audit.check("finished compilation", "select count(*) from compilation_finished", 1)
     audit.check("source file rows", "select count(*) >= 1 from files", 1)
+    audit.check_columns("compilation_compiling_files", ["id", "num", "file"])
+    audit.check_columns(
+        "extractor_version", ["codeql_version", "frontend_version"]
+    )
+    audit.check(
+        "manual compilation mode", "select mode from compilation_build_mode", 1
+    )
+    audit.check(
+        "single build mode row", "select count(*) from compilation_build_mode", 1
+    )
+    audit.check(
+        "single extractor version row", "select count(*) from extractor_version", 1
+    )
+    audit.check(
+        "dense unique compilation argument indexes",
+        """
+        select count(*)=count(distinct num)
+           and min(num)=0 and max(num)=count(*)-1
+        from compilation_args
+        """,
+        1,
+    )
+    audit.check(
+        "compiling file relation",
+        """
+        select count(*) from compilation_compiling_files relation
+        join compilations compilation on compilation.id=relation.id
+        join files file on file.id=relation.file
+        where relation.num=0 and relation.id >= 0 and relation.file >= 0
+        """,
+        1,
+    )
+    audit.check(
+        "finished compilation identity",
+        """
+        select count(*) from compilation_finished finished
+        join compilations compilation on compilation.id=finished.id
+        where finished.id >= 0
+        """,
+        1,
+    )
+    audit.check(
+        "extractor schema version",
+        "select codeql_version from extractor_version",
+        "arborchive/1.0.0",
+    )
+    audit.check(
+        "LLVM 19 frontend version",
+        "select frontend_version glob '19.*' from extractor_version",
+        1,
+    )
+    audit.check(
+        "compiler executable first",
+        """
+        select arg glob '*/clang*' from compilation_args
+        where num=(select min(num) from compilation_args)
+        """,
+        1,
+    )
+    audit.check(
+        "resource directory second",
+        "select arg like '-resource-dir=%' from compilation_args where num=1",
+        1,
+    )
+    audit.check(
+        "source argument last",
+        """
+        select arg like '%.cc' from compilation_args
+        where num=(select max(num) from compilation_args)
+        """,
+        1,
+    )
+
+
+def check_p13(audit: Audit) -> None:
+    audit.check_columns("comments", ["id", "contents", "location"])
+    audit.check_columns("commentbinding", ["id", "element"])
+    check_count(audit, "comments", 3)
+    check_count(audit, "commentbinding", 3)
+    audit.check(
+        "configured compiler argument order",
+        """
+        select group_concat(arg, '|') from (
+          select arg from compilation_args where num between 2 and 6 order by num
+        )
+        """,
+        "-Itests/unit-tests/p13/include|-DP13_CONFIG_DEFINE=13|-std=c++20|-fexceptions|-O0",
+    )
+    audit.check(
+        "formatted documentation contents",
+        """
+        select count(*) from comments
+        where contents in (
+          'Returns its argument unchanged.',
+          'Adds one to the supplied value.\n\n The block markers are removed from persisted contents.',
+          'Returns the stable member value.'
+        )
+        """,
+        3,
+    )
+    audit.check(
+        "comment delimiter removal",
+        """
+        select count(*) from comments
+        where contents like '%///%' or contents like '%/**%' or contents like '%//!%'
+        """,
+        0,
+    )
+    audit.check(
+        "comment references",
+        """
+        select count(*) from comments comment
+        left join locations_default location on location.id=comment.location
+        left join commentbinding binding on binding.id=comment.id
+        left join functions function on function.id=binding.element
+        where comment.id < 0 or comment.location < 0 or binding.element < 0
+           or location.id is null or binding.id is null or function.id is null
+        """,
+        0,
+    )
+    audit.check(
+        "comment location containers resolve to files",
+        """
+        select count(*) from comments comment
+        join locations_default location on location.id=comment.location
+        left join files file on file.id=location.container
+        where location.container < 0 or file.id is null
+        """,
+        0,
+    )
+    audit.check(
+        "canonical redeclaration dedup",
+        """
+        select count(*) from commentbinding binding
+        join functions function on function.id=binding.element
+        where function.name='p13_documented'
+          and binding.element=(
+            select min(id) from functions where name='p13_documented'
+          )
+        """,
+        1,
+    )
+    audit.check(
+        "macro function comment deferred",
+        """
+        select count(*) from commentbinding binding
+        join functions function on function.id=binding.element
+        where function.name='p13_macro_documented'
+        """,
+        0,
+    )
+    audit.check(
+        "raw comment source ranges",
+        """
+        select count(*) from comments comment
+        join locations_default location on location.id=comment.location
+        where (location.start_line=3 and location.end_line=3)
+           or (location.start_line=8 and location.end_line=12)
+           or (location.start_line=26 and location.end_line=26)
+        """,
+        3,
+    )
+    for table in (
+        "xmlEncoding", "xmlDTDs", "xmlElements", "xmlAttrs", "xmlNs",
+        "xmlHasNs", "xmlComments", "xmlChars", "xmllocations",
+        "fileannotations",
+    ):
+        audit.check(
+            f"{table} remains deferred",
+            f"select count(*) from pragma_table_list where name='{table}'",
+            0,
+        )
 
 
 def check_namespace(audit: Audit) -> None:
@@ -1359,6 +1531,8 @@ def run(case: str, database: Path) -> int:
             check_p11(audit)
         elif case == "unit-tests/p12/allocation_lifetime_case":
             check_p12(audit)
+        elif case == "unit-tests/p13/metadata_comments_case":
+            check_p13(audit)
         else:
             audit.warn_if_positive(
                 "known non-P8 initialiser expression placeholders",

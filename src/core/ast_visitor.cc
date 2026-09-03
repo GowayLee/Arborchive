@@ -61,7 +61,9 @@ bool ASTVisitor::TraverseDecl(clang::Decl *decl) {
 }
 
 void ASTVisitor::initProcessors() {
-  function_processor_ = std::make_unique<FunctionProcessor>(context_, pp_);
+  comment_processor_ = std::make_unique<CommentProcessor>(context_, pp_);
+  function_processor_ = std::make_unique<FunctionProcessor>(
+      context_, pp_, comment_processor_.get());
   namespace_processor_ = std::make_unique<NamespaceProcessor>(context_, pp_);
   variable_processor_ = std::make_unique<VariableProcessor>(context_, pp_);
   type_processor_ = std::make_unique<TypeProcessor>(context_, pp_);

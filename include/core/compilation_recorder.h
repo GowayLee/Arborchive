@@ -11,6 +11,8 @@ public:
   int createCompilation(const std::string &working_directory);
 
   void recordArguments(const std::vector<std::string> &flags);
+  void recordBuildMode(int mode);
+  void recordVersion();
   void recordTime(CompTimeKind kind, double seconds);
   int recordFile(const std::string &file);
   std::optional<int> getSourceFileId() const;
@@ -29,7 +31,7 @@ public:
 
 private:
   CompRecorder() = default;
-  int compilation_id_;
+  int compilation_id_ = -1;
   int source_file_id_ = -1;
   int time_record_seq_ = 0;
 };

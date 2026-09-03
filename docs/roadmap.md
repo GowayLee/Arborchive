@@ -264,9 +264,27 @@ P7 先抽取 attribute presence graph，再处理 argument system。presence 与
 
 ### P13: Metadata & Misc Cleanup
 
-- Focus: XML metadata、annotations、remaining semantic tail tables
+- Focus: compilation metadata and function documentation-comment safe subset
 - Complexity: Low-Medium
+- Status: DONE (metadata/comment safe subset)
 - Boundary: 仅收尾确实无法归入前述 semantic subsystem 的尾部表，避免重新变成无边界的 catch-all phase。
+- P13a: 新增 `compilation_compiling_files` 与 `extractor_version`；单文件关系使用
+  `num=0`，手动模式使用 `mode=1`，`compilation_finished.id` 复用
+  compilation ID。实际 Clang 执行和 `compilation_args` 共享同一完整参数
+  序列；解析失败不写 finished。
+- P13b: `CommentProcessor` 仅持久化主文件中 Clang 稳定绑定到显式
+  function declaration/definition 的 documentation comments；内容使用
+  Clang formatted text，location 使用 raw comment source range，并按 canonical
+  declaration + source range 去重。`FunctionProcessor` 持有绑定协作，
+  `VisitFunctionDecl` 没有新增 comments 跨表编排。
+- Deferred: 普通未绑定注释、宏注释、variable/type/statement 注释绑定、
+  `fileannotations` 以及全部 `xml*` 表。XML 重新进入条件见
+  `docs/analysis/p13_xml_deferred.md`；P7、CFG、VLA、name qualifier、link、
+  diagnostic 等继续归属各自语义子系统。
+- Validation: `tests/unit-tests/p13/metadata_comments_case.cc` 和 SQLite 断言
+  覆盖参数序列、ID/引用完整性、版本、注释文本/位置/绑定/去重及
+  deferred 表缺席。
+- Migration: 新增四张 CodeQL-compatible 表，旧数据库需重建。
 
 ## Verification Flow
 

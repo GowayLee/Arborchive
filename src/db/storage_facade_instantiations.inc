@@ -21,10 +21,13 @@ template void StorageFacade::insertClassObj<DbModel::BuiltinType_&>(DbModel::Bui
 template void StorageFacade::insertClassObj<DbModel::ClassInstantiation&>(DbModel::ClassInstantiation&);
 template void StorageFacade::insertClassObj<DbModel::ClassTemplateArgument&>(DbModel::ClassTemplateArgument&);
 template void StorageFacade::insertClassObj<DbModel::ClassTemplateArgumentValue&>(DbModel::ClassTemplateArgumentValue&);
+template void StorageFacade::insertClassObj<DbModel::Comment&>(DbModel::Comment&);
+template void StorageFacade::insertClassObj<DbModel::CommentBinding&>(DbModel::CommentBinding&);
 template void StorageFacade::insertClassObj<DbModel::CompGenerated&>(DbModel::CompGenerated&);
 template void StorageFacade::insertClassObj<DbModel::Compilation&>(DbModel::Compilation&);
 template void StorageFacade::insertClassObj<DbModel::CompilationArg&>(DbModel::CompilationArg&);
 template void StorageFacade::insertClassObj<DbModel::CompilationBuildMode&>(DbModel::CompilationBuildMode&);
+template void StorageFacade::insertClassObj<DbModel::CompilationCompilingFile&>(DbModel::CompilationCompilingFile&);
 template void StorageFacade::insertClassObj<DbModel::CompilationFinished&>(DbModel::CompilationFinished&);
 template void StorageFacade::insertClassObj<DbModel::CompilationTime&>(DbModel::CompilationTime&);
 template void StorageFacade::insertClassObj<DbModel::ConceptInstantiation&>(DbModel::ConceptInstantiation&);
@@ -57,6 +60,7 @@ template void StorageFacade::insertClassObj<DbModel::ExprDeallocator&>(DbModel::
 template void StorageFacade::insertClassObj<DbModel::ExprIsLoad&>(DbModel::ExprIsLoad&);
 template void StorageFacade::insertClassObj<DbModel::ExprParent&>(DbModel::ExprParent&);
 template void StorageFacade::insertClassObj<DbModel::ExprType&>(DbModel::ExprType&);
+template void StorageFacade::insertClassObj<DbModel::ExtractorVersion&>(DbModel::ExtractorVersion&);
 template void StorageFacade::insertClassObj<DbModel::FieldOffset&>(DbModel::FieldOffset&);
 template void StorageFacade::insertClassObj<DbModel::File&>(DbModel::File&);
 template void StorageFacade::insertClassObj<DbModel::Folder&>(DbModel::Folder&);

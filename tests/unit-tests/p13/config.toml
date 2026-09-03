@@ -1,0 +1,23 @@
+[general]
+source_path = "tests/unit-tests/p13/metadata_comments_case.cc"
+output_path = "tests/output/unit-tests-p13-metadata_comments_case.db"
+
+[compilation]
+include_paths = ["tests/unit-tests/p13/include"]
+defines = ["P13_CONFIG_DEFINE=13"]
+cxx_standard = "c++20"
+flags = ["-fexceptions", "-O0"]
+
+[database]
+path = "tests/output/unit-tests-p13-metadata_comments_case.db"
+batch_size = 10
+cache_size_mb = 64
+journal_mode = "WAL"
+synchronous = "NORMAL"
+
+[logging]
+level = "DEBUG"
+file = ""
+is_to_console = true
+batch_size = 5
+enable_perf_logging = false

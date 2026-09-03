@@ -6,6 +6,7 @@
 #include <clang/Tooling/ArgumentsAdjusters.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
+#include <filesystem>
 #include <memory>
 
 #ifndef ARBORCHIVE_CLANG_EXECUTABLE
@@ -93,38 +94,30 @@ const std::vector<std::string> &ClangASTManager::getCommandLineArgs() const {
 bool ClangASTManager::processAST(
     const std::string &source_path,
     std::function<void(clang::ASTContext &)> callback) {
-  // 使用Clang的Tooling功能创建编译数据库
-  int argc = args.size();
-  std::vector<const char *> argv;
-
-  // 转换参数为C风格字符串数组
-  for (const auto &arg : args)
-    argv.push_back(arg.c_str());
-
-  // 创建编译数据库
-  std::string errorMsg;
-  std::unique_ptr<clang::tooling::FixedCompilationDatabase> compdbPtr =
-      clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
-          argc, argv.data(), errorMsg);
-
-  if (!errorMsg.empty())
-    LOG_DEBUG << "Compilation database message: " << errorMsg << std::endl;
-
-  if (!compdbPtr) {
-    LOG_ERROR << "Failed to create compilation database: " << errorMsg
+  if (args.size() < 3 || args.front().empty() || args.back() != source_path) {
+    LOG_ERROR << "Invalid compiler command line for: " << source_path
               << std::endl;
     return false;
   }
-  clang::tooling::ClangTool tool(*compdbPtr, {source_path});
+
+  // FixedCompilationDatabase supplies argv[0] and the positional source path.
+  // Feed it the middle of the same complete sequence exposed to the recorder.
+  std::vector<std::string> compiler_options(args.begin() + 1, args.end() - 1);
+  clang::tooling::FixedCompilationDatabase compilation_database(
+      std::filesystem::current_path().string(), compiler_options);
+  clang::tooling::ClangTool tool(compilation_database, {source_path});
+
+  // ClangTool installs ClangSyntaxOnlyAdjuster by default, which would append
+  // an unrecorded -fsyntax-only argument. Keep execution and compilation_args
+  // on the same sequence before applying the argv[0] restoration below.
+  tool.clearArgumentsAdjusters();
 
   // FixedCompilationDatabase hard-codes argv[0] to "clang-tool". Restore the
   // LLVM 19 driver used to build Arborchive so Clang can discover its C++
   // standard library, platform SDK, and builtin resource headers.
-  const std::string clang_executable = ARBORCHIVE_CLANG_EXECUTABLE;
-  const std::string resource_dir =
-      clang::driver::Driver::GetResourcesPath(clang_executable);
+  const std::string clang_executable = args.front();
   tool.appendArgumentsAdjuster(
-      [clang_executable, resource_dir](
+      [clang_executable](
           const clang::tooling::CommandLineArguments &arguments,
           llvm::StringRef) {
         auto adjusted = arguments;
@@ -132,8 +125,6 @@ bool ClangASTManager::processAST(
           return adjusted;
 
         adjusted[0] = clang_executable;
-        adjusted.insert(adjusted.begin() + 1,
-                        "-resource-dir=" + resource_dir);
         return adjusted;
       });
 
@@ -151,11 +142,10 @@ bool ClangASTManager::processAST(
 std::vector<std::string> ClangASTManager::convertToCommandLineArgs() const {
   std::vector<std::string> args;
 
-  // clang++ by default
-  args.push_back("clang++");
-
-  // FixedCompilationDatabase::loadFromCommandLine所需的
-  args.push_back("--");
+  const std::string clang_executable = ARBORCHIVE_CLANG_EXECUTABLE;
+  args.push_back(clang_executable);
+  args.push_back("-resource-dir=" +
+                 clang::driver::Driver::GetResourcesPath(clang_executable));
 
   // inlude PATH
   for (const auto &path : includePaths)
@@ -171,6 +161,9 @@ std::vector<std::string> ClangASTManager::convertToCommandLineArgs() const {
 
   // Other compilation flags
   args.insert(args.end(), flags.begin(), flags.end());
+
+  // Arborchive currently accepts exactly one C++ source per invocation.
+  args.push_back(sourcePath);
 
   // 显示已转换的参数
   LOG_DEBUG << "Command line arguments:" << std::endl;

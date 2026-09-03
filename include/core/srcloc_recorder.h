@@ -24,6 +24,9 @@ public:
   static LocIdPair *processDefault(const SourceLocation beginLoc,
                                    const SourceLocation endLoc,
                                    ASTContext *context);
+  static LocIdPair *processDefault(const SourceLocation beginLoc,
+                                   const SourceLocation endLoc,
+                                   ASTContext *context, int container_id);
   static LocIdPair *processStmt(const SourceLocation beginLoc,
                                 const SourceLocation endLoc,
                                 ASTContext *context);
@@ -34,7 +37,8 @@ public:
 private:
   static LocIdPair *process(const SourceLocation beginLoc,
                             const SourceLocation endLoc,
-                            const LocationType type, ASTContext *context);
+                            const LocationType type, ASTContext *context,
+                            int container_id = 0);
 };
 
 #define PROC_DEFT SrcLocRecorder::processDefault

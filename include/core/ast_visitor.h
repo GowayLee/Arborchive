@@ -2,6 +2,7 @@
 #define _AST_VISITOR_H_
 
 #include "core/processor/attribute_processor.h"
+#include "core/processor/comment_processor.h"
 #include "core/processor/expr_processor.h"
 #include "core/processor/inheritance_processor.h"
 #include "core/processor/initialization_processor.h"
@@ -32,6 +33,7 @@ private:
   clang::PrintingPolicy pp_;
 
   ////// Processors /////////
+  std::unique_ptr<CommentProcessor> comment_processor_ = nullptr;
   std::unique_ptr<FunctionProcessor> function_processor_ = nullptr;
   std::unique_ptr<NamespaceProcessor> namespace_processor_ = nullptr;
   std::unique_ptr<VariableProcessor> variable_processor_ = nullptr;

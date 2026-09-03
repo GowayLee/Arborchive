@@ -16,6 +16,14 @@ LocIdPair *SrcLocRecorder::processDefault(const SourceLocation beginLoc,
   return process(beginLoc, endLoc, LocationType::DEFAULT, context);
 }
 
+LocIdPair *SrcLocRecorder::processDefault(const SourceLocation beginLoc,
+                                          const SourceLocation endLoc,
+                                          ASTContext *context,
+                                          int container_id) {
+  return process(beginLoc, endLoc, LocationType::DEFAULT, context,
+                 container_id);
+}
+
 LocIdPair *SrcLocRecorder::processStmt(const SourceLocation beginLoc,
                                        const SourceLocation endLoc,
                                        ASTContext *context) {
@@ -66,7 +74,7 @@ LocIdPair *SrcLocRecorder::processExpr(const Decl *decl, ASTContext *context) {
 LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
                                    const SourceLocation endLoc,
                                    const LocationType type,
-                                   ASTContext *context) {
+                                   ASTContext *context, int container_id) {
   const auto &sourceManager = context->getSourceManager();
 
   // if (beginLoc.isInvalid() || endLoc.isInvalid()) {
@@ -95,16 +103,15 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
     LOG_WARNING << "Could not determine file for statement, use default value"
                 << std::endl;
 
-  // 创建位置模型
-  // FIXME: Currently, only one source file will be parsed, so container_id here
-  // is always 0. Update: Can use variable `filename`
+  // 创建位置模型. Legacy callers retain container 0; subsystem-specific
+  // callers may provide a resolvable @container identity.
   Location locModel;
   LocIdPair *result = nullptr;
 
   switch (type) {
   case LocationType::DEFAULT: {
     LocationDefault locDefaultModel = {
-        GENID(LocationDefault),       0,
+        GENID(LocationDefault),       container_id,
         static_cast<int>(start_line), static_cast<int>(start_column),
         static_cast<int>(end_line),   static_cast<int>(end_column)};
     locModel = {GENID(Location), locDefaultModel.id};
@@ -116,7 +123,7 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
   }
   case LocationType::STMT: {
     LocationStmt locStmtModel = {
-        GENID(LocationStmt),          0,
+        GENID(LocationStmt),          container_id,
         static_cast<int>(start_line), static_cast<int>(start_column),
         static_cast<int>(end_line),   static_cast<int>(end_column)};
     locModel = {GENID(Location), locStmtModel.id};
@@ -128,7 +135,7 @@ LocIdPair *SrcLocRecorder::process(const SourceLocation beginLoc,
   }
   case LocationType::EXPR: {
     LocationExpr locExprModel = {
-        GENID(LocationExpr),          0,
+        GENID(LocationExpr),          container_id,
         static_cast<int>(start_line), static_cast<int>(start_column),
         static_cast<int>(end_line),   static_cast<int>(end_column)};
     locModel = {GENID(Location), locExprModel.id};

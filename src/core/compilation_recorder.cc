@@ -1,4 +1,5 @@
 #include "core/compilation_recorder.h"
+#include "core/version.h"
 #include "db/storage_facade.h"
 #include "model/db/compilation.h"
 #include "model/db/container.h"
@@ -20,6 +21,17 @@ void CompRecorder::recordArguments(const std::vector<std::string> &flags) {
   }
 }
 
+void CompRecorder::recordBuildMode(int mode) {
+  CompilationBuildMode build_mode = {compilation_id_, mode};
+  STG.insertClassObj(build_mode);
+}
+
+void CompRecorder::recordVersion() {
+  ExtractorVersion version = {ArborchiveVersion::codeql_version,
+                              ArborchiveVersion::frontend_version};
+  STG.insertClassObj(version);
+}
+
 void CompRecorder::recordTime(CompTimeKind kind, double seconds) {
   CompilationTime comp_time = {compilation_id_, time_record_seq_,
                                static_cast<int>(kind), seconds};
@@ -33,6 +45,9 @@ int CompRecorder::recordFile(const std::string &file) {
   STG.insertClassObj(file_model);
   STG.insertClassObj(container_model);
   source_file_id_ = file_model.id;
+  CompilationCompilingFile compiling_file = {compilation_id_, 0,
+                                             source_file_id_};
+  STG.insertClassObj(compiling_file);
   return source_file_id_;
 }
 
@@ -44,7 +59,7 @@ std::optional<int> CompRecorder::getSourceFileId() const {
 }
 
 void CompRecorder::finalize(double total_cpu, double total_elapsed) {
-  CompilationFinished finshed_model = {GENID(CompilationFinished), total_cpu,
-                                       total_elapsed};
-  STG.insertClassObj(finshed_model);
+  CompilationFinished finished_model = {compilation_id_, total_cpu,
+                                        total_elapsed};
+  STG.insertClassObj(finished_model);
 }

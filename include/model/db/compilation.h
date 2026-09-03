@@ -28,6 +28,12 @@ struct CompilationBuildMode {
   int mode;
 };
 
+struct CompilationCompilingFile {
+  int id;
+  int num;
+  int file;
+};
+
 struct CompilationTime {
   int id;
   int num;
@@ -39,6 +45,11 @@ struct CompilationFinished {
   int id;
   double cpu_seconds;
   double elapsed_seconds;
+};
+
+struct ExtractorVersion {
+  std::string codeql_version;
+  std::string frontend_version;
 };
 
 } // namespace DbModel

@@ -4,7 +4,7 @@ Canonical CodeQL-Compatible Tables
 DONE     1. compilations
 DONE     2. compilation_args
 DONE     3. compilation_build_mode
-    4. compilation_compiling_files
+DONE     4. compilation_compiling_files
 DONE     5. compilation_time
     6. diagnostic_for
 DONE     7. compilation_finished
@@ -16,7 +16,7 @@ DONE     7. compilation_finished
    13. svnaffectedfiles
    14. svnentrymsg
    15. svnchurn
-   16. extractor_version
+DONE    16. extractor_version
 DONE    17. locations_default
 DONE    18. locations_stmt
 DONE    19. locations_expr
@@ -145,8 +145,8 @@ DONE   141. derspecifiers
 DONE   142. direct_base_offsets
 DONE   143. virtual_base_offsets
 DONE  144. frienddecls
-  145. comments
-  146. commentbinding
+DONE   145. comments
+DONE   146. commentbinding
 DONE   147. exprconv
 DONE   148. compgenerated
   149. synthetic_destructor_call

@@ -25,6 +25,8 @@ public:
                   std::function<void(clang::ASTContext &)> callback);
 
   const std::string &getSourcePath() const;
+  // The exact compiler invocation persisted in compilation_args and used to
+  // configure ClangTool: driver, resource dir, configured options, source.
   const std::vector<std::string> &getCommandLineArgs() const;
 
 private:
@@ -38,7 +40,7 @@ private:
   std::vector<std::string> flags;
   std::vector<std::string> args;
 
-  // 将配置转换为命令行参数
+  // 将配置转换为完整编译器命令行参数
   std::vector<std::string> convertToCommandLineArgs() const;
 };
 
