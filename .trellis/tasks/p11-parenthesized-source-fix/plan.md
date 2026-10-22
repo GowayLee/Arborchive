@@ -36,3 +36,20 @@ sources. Recursion must descend through the AST and use existing expression
 caches. Extra parentheses must preserve routine bindings and member load flags,
 not merely add the expected number of conversion rows. Tests discover runtime
 IDs from source locations; no database IDs are fixed in the assertions.
+
+## Review-driven bound-method correction
+
+The parenthesized-source repair also reached non-static CXXMethodDecl member
+expressions. These are bound methods owned by the real call, not field reads;
+materializing them added a second main-tree parent to the receiver.
+
+- Guard only non-static CXXMethodDecl in conversion-source lookup, before the
+  existing member-read path. Keep FieldDecl sources, including callback fields.
+- Add point/arrow method calls with no, one, and two parentheses, plus callback
+  field positive controls. Assert the exact real call, receiver binding and
+  single receiver-parent edge rather than merely count conversion nodes.
+- Strengthen scalar/field source identities through parameter owner/index/name,
+  exact field read kinds and base edges. Reject same-name cross-function binds,
+  missing base edges and additional receiver parents in corrupt-copy controls.
+- Do not expand static member, enum, dependent or general member-call modeling;
+  these remain outside this narrowly scoped correction.

@@ -397,6 +397,12 @@ int ExprProcessor::getOrProcessConversionSourceId(const Expr *expr) {
     return exprId;
 
   if (const auto *memberExpr = llvm::dyn_cast<MemberExpr>(expr)) {
+    // A bound method is owned by its real call, not by a field-read source.
+    // Preserve FieldDecl sources, including fields containing function pointers.
+    const auto *method =
+        llvm::dyn_cast<CXXMethodDecl>(memberExpr->getMemberDecl());
+    if (method && !method->isStatic())
+      return -1;
     processMemberExpr(memberExpr);
     return findCachedExprId(memberExpr);
   }

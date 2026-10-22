@@ -28,6 +28,15 @@ CASES = {
     "address_plain": (2, 0, "address"),
     "address_outer": (2, 1, "address"),
     "address_inner": (97, 2, "address"),
+    "method_dot_plain": (74, 0, "method"),
+    "method_dot_paren": (74, 0, "method"),
+    "method_dot_nested": (74, 0, "method"),
+    "method_arrow_plain": (74, 0, "method"),
+    "method_arrow_paren": (74, 0, "method"),
+    "method_arrow_nested": (74, 0, "method"),
+    "callback_dot_plain": (74, 0, "callback"),
+    "callback_dot_nested": (74, 2, "callback"),
+    "callback_arrow_nested": (74, 2, "callback"),
 }
 
 
@@ -53,6 +62,15 @@ def verify(connection: sqlite3.Connection) -> list[str]:
 
     def rows(sql, params=()):
         return connection.execute(sql, params).fetchall()
+
+    def check_parameter(name, identity, parameter_name):
+        check(name + " parameter identity", rows("""
+            select f.name,p."index",d.name from varbind b
+            join params p on p.id=b.var
+            join functions f on f.id=p.function
+            join var_decls d on d.variable=b.var
+            where b.expr=?
+            """, (identity,)), [(name, 0, parameter_name)])
 
     check("integrity", rows("pragma integrity_check"), [("ok",)])
     check("finished", rows("select count(*) from compilation_finished"), [(1,)])
@@ -84,6 +102,9 @@ def verify(connection: sqlite3.Connection) -> list[str]:
         select l.expr_id from expr_isload l left join exprs e on e.id=l.expr_id
         where e.id is null or e.kind in (8,12,210,211,212,213,214,217)
         """), [])
+    check("one main parent per expression", rows("""
+        select expr_id from exprparents group by expr_id having count(*)>1
+        """), [])
 
     for name, line in source_lines().items():
         source_kind, parentheses, category = CASES[name]
@@ -95,13 +116,49 @@ def verify(connection: sqlite3.Connection) -> list[str]:
         by_kind = {}
         for identity, kind, column in expressions:
             by_kind.setdefault(kind, []).append(identity)
+        is_arrow = name.startswith("arrow_") or "_arrow_" in name
+        if category == "method":
+            # A bound method is not a field read or a conversion source.
+            # Retain only the real call and its receiver, even with parentheses.
+            check(name + " exact nodes",
+                  {kind: len(ids) for kind, ids in by_kind.items()}, {74: 1, 84: 1})
+            calls = rows("""
+                select e.id from exprs e join iscall i on i.caller=e.id
+                join locations_expr l on l.id=e.location
+                where l.start_line=? and i.kind=1
+                """, (line,))
+            check(name + " real call count", len(calls), 1)
+            if len(calls) != 1 or len(by_kind.get(84, [])) != 1:
+                continue
+            call, receiver = calls[0][0], by_kind[84][0]
+            check(name + " method binding", rows("""
+                select f.name from funbind b join functions f on f.id=b.fun
+                where b.expr=?
+                """, (call,)), [("method",)])
+            check_parameter(name, receiver, "box")
+            check(name + " receiver exact parent", rows("""
+                select child_index,parent_id from exprparents where expr_id=?
+                """, (receiver,)), [(-1, call)])
+            check(name + " call type/category", rows("""
+                select b.name,t.value_category from expr_types t
+                join builtintypes b on b.id=t.typeid where t.id=?
+                """, (call,)), [("int", 1)])
+            check(name + " exact loads", rows("""
+                select x.expr_id from expr_isload x join exprs e on e.id=x.expr_id
+                join locations_expr l on l.id=e.location where l.start_line=?
+                """, (line,)), [(receiver,)] if is_arrow else [])
+            continue
         kinds = [source_kind] + [12] * parentheses
         if category in ("numeric", "decay"):
             kinds += [214]
         if category == "numeric":
             kinds += [210]
+        if source_kind == 74:
+            kinds += [84]  # The field's receiver is part of the same source line.
+        if name == "address_inner":
+            kinds += [2]
         expected_counts = {kind: kinds.count(kind) for kind in set(kinds)}
-        actual_counts = {kind: len(by_kind.get(kind, [])) for kind in expected_counts}
+        actual_counts = {kind: len(ids) for kind, ids in by_kind.items()}
         check(name + " nodes", actual_counts, expected_counts)
         if actual_counts != expected_counts:
             continue
@@ -116,6 +173,21 @@ def verify(connection: sqlite3.Connection) -> list[str]:
             """, (line,))
         check(name + " exact chain", set(actual_edges), expected_edges)
         check(name + " unique chain", len(actual_edges), len(expected_edges))
+
+        if source_kind == 84:
+            check_parameter(name, nodes[0], "value")
+        if source_kind == 74:
+            receiver = by_kind[84][0]
+            check_parameter(name, receiver, "box")
+            check(name + " member read kind", rows(
+                "select kind from iscall where caller=?", (nodes[0],)),
+                [(6 if is_arrow else 5,)])
+            check(name + " member exact base", rows("""
+                select expr_id,child_index from exprparents where parent_id=?
+                """, (nodes[0],)), [(receiver, -1)])
+            check(name + " base exact parent", rows("""
+                select child_index,parent_id from exprparents where expr_id=?
+                """, (receiver,)), [(-1, nodes[0])])
 
         source_type = rows("select typeid,value_category from expr_types where id=?", (nodes[0],))
         source_category = 1 if source_kind == 2 else 3
@@ -162,13 +234,18 @@ def verify(connection: sqlite3.Connection) -> list[str]:
                 select d.kind,d.name,t.value_category from expr_types t
                 join derivedtypes d on d.id=t.typeid where t.id=?
                 """, (by_kind[214][0],)), [(6, "int (*)(int)", 1)])
+        elif category == "callback":
+            check(name + " callback pointer/category", rows("""
+                select d.kind,d.name,t.value_category from expr_types t
+                join derivedtypes d on d.id=t.typeid where t.id=?
+                """, (nodes[0],)), [(6, "int (*)(int)", 3)])
         if source_kind == 97:
             check(name + " routine identity", rows("""
                 select f.name from funbind b join functions f on f.id=b.fun
                 where b.expr=?
                 """, (nodes[0],)), [("target",)])
-        expected_loads = {nodes[0]} if category == "numeric" else set()
-        if name.startswith("arrow_"):
+        expected_loads = {nodes[0]} if category in ("numeric", "callback") else set()
+        if is_arrow:
             check(name + " pointer base", len(by_kind.get(84, [])), 1)
             expected_loads.update(by_kind.get(84, []))
         actual_loads = rows("""
@@ -199,6 +276,21 @@ def mutations(database: Path) -> int:
     routine_types = f"""select t.typeid from expr_types t join exprs e on e.id=t.id
         join locations_expr l on l.id=e.location
         where l.start_line={routine_line} and e.kind in (97,12)"""
+
+    def case_exprs(name, kind):
+        return f"""select e.id from exprs e join locations_expr l on l.id=e.location
+            where l.start_line={source_lines()[name]} and e.kind={kind}"""
+
+    scalar = case_exprs("scalar_nested", 84)
+    other_scalar = case_exprs("scalar_plain", 84)
+    member_base = case_exprs("member_nested", 84)
+    other_member_base = case_exprs("member_plain", 84)
+    member = case_exprs("member_nested", 74)
+    method = case_exprs("method_dot_nested", 74)
+    method_base = case_exprs("method_dot_nested", 84)
+    other_method = case_exprs("method_dot_plain", 74)
+    callback = case_exprs("callback_dot_nested", 74)
+    callback_parens = case_exprs("callback_dot_nested", 12)
     corruptions = {
         "missing_chain": f"delete from exprconv where conversion in ({predicate})",
         "reversed_chain": f"update exprconv set converted=conversion,conversion=converted where conversion in ({predicate})",
@@ -213,13 +305,31 @@ def mutations(database: Path) -> int:
         "wrong_generated_wrapper": "insert into compgenerated select min(id) from exprs where kind=12",
         "wrapper_in_main_tree": "insert into exprparents select min(id),0,max(id) from exprs where kind=12",
         "duplicate_type_row": "insert into expr_types select * from expr_types where id=(select min(id) from exprs)",
+        "missing_scalar_binding": f"delete from varbind where expr in ({scalar})",
+        "wrong_scalar_binding": f"update varbind set var=(select var from varbind where expr in ({other_scalar})) where expr in ({scalar})",
+        "missing_member_binding": f"delete from varbind where expr in ({member_base})",
+        "wrong_member_binding": f"update varbind set var=(select var from varbind where expr in ({other_member_base})) where expr in ({member_base})",
+        "missing_member_read_kind": f"delete from iscall where caller in ({member})",
+        "wrong_member_read_kind": f"update iscall set kind=1 where caller in ({member})",
+        "missing_member_base": f"delete from exprparents where parent_id in ({member})",
+        "extra_member_parent": f"insert into exprparents select id,-1,({other_method}) from exprs where id in ({member_base})",
+        "method_as_field_read": f"update iscall set kind=5 where caller in ({method})",
+        "wrong_method_binding": f"update funbind set fun=(select id from functions where name='target') where expr in ({method})",
+        "missing_method_receiver_parent": f"delete from exprparents where expr_id in ({method_base})",
+        "extra_method_receiver_parent": f"insert into exprparents select id,-1,({other_method}) from exprs where id in ({method_base})",
+        "missing_callback_chain": f"delete from exprconv where conversion in ({callback_parens})",
+        "wrong_callback_read_kind": f"update iscall set kind=6 where caller in ({callback})",
+        "missing_callback_load": f"delete from expr_isload where expr_id in ({callback})",
     }
     with tempfile.TemporaryDirectory(prefix="arborchive-p11-mutations-") as temporary:
         with sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True) as source:
             for name, sql in corruptions.items():
                 with sqlite3.connect(Path(temporary) / (name + ".db")) as copy:
                     source.backup(copy)
+                    previous_changes = copy.total_changes
                     copy.executescript(sql)
+                    if copy.total_changes == previous_changes:
+                        raise AssertionError("mutation changed no rows: " + name)
                     if not verify(copy):
                         raise AssertionError("mutation accepted: " + name)
                     print("[p11_mutation] " + name + ": REJECTED")

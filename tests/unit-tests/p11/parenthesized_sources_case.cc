@@ -16,3 +16,14 @@ Callback routine_nested() { return ((target)); } // CHECK: routine_nested
 Callback address_plain() { return &target; } // CHECK: address_plain
 Callback address_outer() { return (&target); } // CHECK: address_outer
 Callback address_inner() { return &((target)); } // CHECK: address_inner
+
+struct MethodBox { int method(); int (*callback)(int); };
+int method_dot_plain(MethodBox &box) { return box.method(); } // CHECK: method_dot_plain
+int method_dot_paren(MethodBox &box) { return (box.method)(); } // CHECK: method_dot_paren
+int method_dot_nested(MethodBox &box) { return ((box.method))(); } // CHECK: method_dot_nested
+int method_arrow_plain(MethodBox *box) { return box->method(); } // CHECK: method_arrow_plain
+int method_arrow_paren(MethodBox *box) { return (box->method)(); } // CHECK: method_arrow_paren
+int method_arrow_nested(MethodBox *box) { return ((box->method))(); } // CHECK: method_arrow_nested
+Callback callback_dot_plain(MethodBox &box) { return box.callback; } // CHECK: callback_dot_plain
+Callback callback_dot_nested(MethodBox &box) { return ((box.callback)); } // CHECK: callback_dot_nested
+Callback callback_arrow_nested(MethodBox *box) { return ((box->callback)); } // CHECK: callback_arrow_nested
