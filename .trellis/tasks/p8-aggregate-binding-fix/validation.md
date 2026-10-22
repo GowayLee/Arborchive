@@ -53,3 +53,11 @@ modified probes confirm that debt; this patch does not claim complete aggregate
 initialization support. Constructor/default-member initializers and other
 previously deferred families are not expanded. Old DBs must be regenerated;
 there is no schema migration. The 10 existing DB warnings remain visible.
+
+## Follow-up review correction
+
+The display-name suffix above was insufficient for shadowed record declarations.
+See [revision-f04.md](revision-f04.md) for canonical USR plus physical declaration
+identity, exact shadow/template regressions, 34-fixture full-suite verification,
+separate-copy rollback and the subsequent independent review. Its explicit-brace
+generic-template-root and source-less-type limits remain documented separately.

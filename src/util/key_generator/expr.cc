@@ -5,6 +5,7 @@
 #include <clang/AST/ExprCXX.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/Basic/Specifiers.h>
+#include <clang/Index/USRGeneration.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Support/raw_ostream.h>
@@ -137,8 +138,34 @@ KeyType makeKey(const Expr *expr, ASTContext *ctx) {
   if (const auto *list = llvm::dyn_cast<InitListExpr>(expr)) {
     for (const Expr *child : list->inits()) {
       if (child && child->getSourceRange() == list->getSourceRange()) {
+        const QualType canonicalType = list->getType().getCanonicalType();
         locStr += "-aggregate-type-" +
-                  list->getType().getCanonicalType().getAsString();
+                  canonicalType.getAsString();
+        // A printed type name is not an identity: distinct local/global
+        // records can both print as "struct S". USRs include declaration
+        // context and recursively preserve array element types and extents.
+        llvm::SmallString<128> typeUSR;
+        if (!clang::index::generateUSRForType(canonicalType, *ctx, typeUSR)) {
+          locStr += "-usr-" + typeUSR.str().str();
+        }
+        if (const auto *record =
+                ctx->getBaseElementType(canonicalType)->getAs<RecordType>()) {
+          // Instantiated function-local records can share a USR despite
+          // shadowing different declarations. Source identity distinguishes
+          // them and also serves as a fallback for unsupported USR families.
+          const auto *decl = record->getDecl()->getCanonicalDecl();
+          const SourceLocation loc = decl->getLocation();
+          if (loc.isValid()) {
+            const SourceLocation spelling = SM.getSpellingLoc(loc);
+            const SourceLocation expansion = SM.getExpansionLoc(loc);
+            // Physical offsets, not presumed #line coordinates, identify the
+            // declaration even when generated code reuses a displayed line.
+            locStr += "-decl-" + SM.getFilename(spelling).str() + ":" +
+                      std::to_string(SM.getFileOffset(spelling));
+            locStr += "-expansion-" + SM.getFilename(expansion).str() + ":" +
+                      std::to_string(SM.getFileOffset(expansion));
+          }
+        }
         break;
       }
     }

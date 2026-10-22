@@ -36,6 +36,8 @@ CASES=(
   "unit-tests/p7/attribute_extra_value_args_case"
   "unit-tests/p8/initialization_case"
   "unit-tests/p8/aggregate_binding_case"
+  "unit-tests/p8/aggregate_identity_case"
+  "unit-tests/p8/aggregate_template_identity_case"
   "unit-tests/p9/constexpr_flow_case"
   "unit-tests/p10/expression_graph_case"
   "unit-tests/p11/casts_conversion_case"
@@ -160,6 +162,12 @@ for case_name in "${CASES[@]}"; do
 
   if [[ "$case_name" == "unit-tests/p8/aggregate_binding_case" ]]; then
     python3 "$ROOT_DIR/scripts/assert_p8_aggregate_db.py" "$db" --mutation-tests
+  fi
+  if [[ "$case_name" == "unit-tests/p8/aggregate_identity_case" ]]; then
+    python3 "$ROOT_DIR/scripts/assert_p8_identity_db.py" "$db" --mutation-tests
+  fi
+  if [[ "$case_name" == "unit-tests/p8/aggregate_template_identity_case" ]]; then
+    python3 "$ROOT_DIR/scripts/assert_p8_template_identity_db.py" "$db" --mutation-tests
   fi
   "$ROOT_DIR/scripts/assert_test_db.py" "$case_name" "$db"
 
