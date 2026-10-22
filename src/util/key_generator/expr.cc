@@ -131,6 +131,19 @@ KeyType makeKey(const Expr *expr, ASTContext *ctx) {
                            .concat(std::to_string(endCol))
                            .str();
 
+  // Brace-elided single-subobject lists can share their complete source range
+  // with a child (or another nested list). Distinguish only those aggregates;
+  // keep ordinary expression keys and explicit-brace aggregate keys unchanged.
+  if (const auto *list = llvm::dyn_cast<InitListExpr>(expr)) {
+    for (const Expr *child : list->inits()) {
+      if (child && child->getSourceRange() == list->getSourceRange()) {
+        locStr += "-aggregate-type-" +
+                  list->getType().getCanonicalType().getAsString();
+        break;
+      }
+    }
+  }
+
   // P11: only conversion wrappers extend the established source-location
   // identity. Clang commonly emits several wrappers with the same range, and
   // collapsing them would lose conversion-chain levels.
