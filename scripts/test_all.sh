@@ -42,6 +42,7 @@ CASES=(
   "unit-tests/p9/constexpr_flow_case"
   "unit-tests/p10/expression_graph_case"
   "unit-tests/p11/casts_conversion_case"
+  "unit-tests/p11/parenthesized_sources_case"
   "unit-tests/p12/allocation_lifetime_case"
   "unit-tests/p13/metadata_comments_case"
 )
@@ -177,6 +178,9 @@ for case_name in "${CASES[@]}"; do
 
   echo "[test_all] Summary for $case_name"
   "$ROOT_DIR/scripts/db_summary.py" "$db"
+  if [[ "$case_name" == "unit-tests/p11/parenthesized_sources_case" ]]; then
+    python3 "$ROOT_DIR/scripts/assert_p11_parenthesized.py" "$db" --mutations
+  fi
 done
 
 echo "[test_all] All checks passed."
