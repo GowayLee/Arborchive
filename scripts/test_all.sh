@@ -22,6 +22,7 @@ CASES=(
   "unit-tests/function/throw-exceptions"
   "unit-tests/function/typedef"
   "unit-tests/namespace"
+  "unit-tests/p1/friend_semantics_case"
   "unit-tests/p5/hierarchy_case"
   "unit-tests/p5/layout_case"
   "unit-tests/p5/semantic_gaps_case"
@@ -158,6 +159,9 @@ for case_name in "${CASES[@]}"; do
   fi
 
   "$ROOT_DIR/scripts/assert_test_db.py" "$case_name" "$db"
+  if [[ "$case_name" == "unit-tests/p1/friend_semantics_case" ]]; then
+    python3 "$ROOT_DIR/scripts/assert_p1_friend_db.py" "$db" --mutation-tests
+  fi
 
   echo "[test_all] Summary for $case_name"
   "$ROOT_DIR/scripts/db_summary.py" "$db"

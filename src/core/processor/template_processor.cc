@@ -27,6 +27,7 @@
 #include <clang/AST/TypeLoc.h>
 #include <clang/Basic/SourceManager.h>
 #include <cstdint>
+#include <memory>
 #include <llvm/Support/raw_ostream.h>
 
 #ifdef __clang__
@@ -921,72 +922,65 @@ void TemplateProcessor::processClassTemplateSpecialization(
 }
 
 void TemplateProcessor::processFriendDecl(const clang::FriendDecl *decl) {
-  if (!decl)
+  if (!decl || !type_processor_ || decl->isUnsupportedFriend() ||
+      decl->getBeginLoc().isInvalid() || decl->getEndLoc().isInvalid())
     return;
 
-  LocIdPair *locIdPair = SrcLocRecorder::processDefault(decl, ast_context_);
-  const int friendDeclId = GENID(FriendDecl);
-  int typeId = -1;
-  int declId = -1;
+  const auto *owner =
+      llvm::dyn_cast<clang::CXXRecordDecl>(decl->getDeclContext());
+  if (!owner)
+    return;
 
-  auto resolveRecordType = [&](const clang::RecordType *recordType) -> int {
-    if (!recordType || !recordType->getDecl())
-      return -1;
+  // CodeQL: type_id is the befriending class, never the friend type.
+  const int ownerId = type_processor_->processRecordDeclType(owner);
+  if (ownerId < 0)
+    return;
 
-    type_processor_->processRecordType(recordType);
-    KeyType typeKey = KeyGen::Type::makeKey(recordType->getDecl(),
-                                            ast_context_);
-    if (auto cachedId = SEARCH_TYPE_CACHE(typeKey))
-      return *cachedId;
-
-    return -1;
-  };
-
-  auto resolveFriendType = [&](clang::QualType friendType) -> int {
-    if (friendType.isNull())
-      return -1;
-
-    if (const auto *recordType = friendType->getAs<clang::RecordType>())
-      return resolveRecordType(recordType);
-
-    return type_processor_->processType(friendType.getTypePtr());
-  };
-
-  if (clang::TypeSourceInfo *friendTypeInfo = decl->getFriendType()) {
-    typeId = resolveFriendType(friendTypeInfo->getType());
-  } else if (clang::NamedDecl *friendNamedDecl = decl->getFriendDecl()) {
-    if (const auto *functionDecl =
-            llvm::dyn_cast<clang::FunctionDecl>(friendNamedDecl)) {
-      KeyType functionKey = KeyGen::Function::makeKey(functionDecl,
-                                                      ast_context_);
-      if (auto cachedId = SEARCH_FUNCTION_CACHE(functionKey)) {
-        declId = *cachedId;
-      } else {
-        PendingUpdate update{
-            functionKey, CacheType::FUNCTION,
-            [friendDeclId, typeId, location = locIdPair->spec_id](
-                int resolvedId) {
-              DbModel::FriendDecl updatedRecord = {friendDeclId, typeId,
-                                                   resolvedId, location};
-              STG.insertClassObj(updatedRecord);
-            }};
-        DependencyManager::instance().addDependency(update);
-      }
-    } else if (const auto *typeDecl =
-                   llvm::dyn_cast<clang::TypeDecl>(friendNamedDecl)) {
-      if (const auto *recordDecl =
-              llvm::dyn_cast<clang::RecordDecl>(typeDecl)) {
-        if (const auto *recordType =
-                llvm::dyn_cast_or_null<clang::RecordType>(
-                    recordDecl->getTypeForDecl()))
-          typeId = resolveRecordType(recordType);
-      }
+  int targetId = -1;
+  const clang::FunctionDecl *functionTarget = nullptr;
+  if (const clang::TypeSourceInfo *typeInfo = decl->getFriendType()) {
+    // Desugar class aliases, but do not turn ignored `friend int` or an
+    // unresolved dependent type into a declaration endpoint.
+    if (const auto *recordType =
+            typeInfo->getType()->getAs<clang::RecordType>()) {
+      // Alias TypeLoc traversal need not revisit the underlying record (for
+      // example, a target defined in a skipped system header). Preserve its
+      // completeness/POD/layout facts as well as its declaration identity.
+      type_processor_->processRecordType(recordType);
+      targetId = type_processor_->processRecordDeclType(recordType->getDecl());
     }
+  } else if (const clang::NamedDecl *target = decl->getFriendDecl()) {
+    functionTarget = llvm::dyn_cast<clang::FunctionDecl>(target);
+    if (const auto *record = llvm::dyn_cast<clang::RecordDecl>(target))
+      targetId = type_processor_->processRecordDeclType(record);
   }
 
-  DbModel::FriendDecl friendDeclModel = {friendDeclId, typeId, declId,
-                                         locIdPair->spec_id};
-  STG.insertClassObj(friendDeclModel);
+  if (targetId < 0 && !functionTarget)
+    return;
+
+  std::unique_ptr<LocIdPair> location(
+      SrcLocRecorder::processDefault(decl, ast_context_));
+  if (!location)
+    return;
+  const int friendId = GENID(FriendDecl);
+  if (functionTarget) {
+    // RAV visits the inner function after its FriendDecl. Reuse the canonical
+    // function-key dependency rather than eagerly duplicating function facts.
+    // Persist only after resolution, never an initial row with decl_id = -1.
+    const KeyType key = KeyGen::Function::makeKey(functionTarget, ast_context_);
+    DependencyManager::instance().addDependency(
+        {key, CacheType::FUNCTION,
+         [friendId, ownerId, locationId = location->spec_id](int resolvedId) {
+           if (resolvedId < 0)
+             return;
+           DbModel::FriendDecl row = {friendId, ownerId, resolvedId, locationId};
+           STG.insertClassObj(row);
+         }});
+    return;
+  }
+
+  DbModel::FriendDecl row = {friendId, ownerId, targetId, location->spec_id};
+  STG.insertClassObj(row);
 }
 
 void TemplateProcessor::processConceptSpecialization(
