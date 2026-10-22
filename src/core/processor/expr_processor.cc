@@ -1028,7 +1028,10 @@ int ExprProcessor::processCastExpr(const CastExpr *castExpr) {
 
   const auto *implicitCast = llvm::dyn_cast<ImplicitCastExpr>(castExpr);
   if (implicitCast && implicitCast->getCastKind() == CK_LValueToRValue) {
-    int loadExprId = getOrProcessMainTreeExprId(implicitCast->getSubExpr());
+    // Loads belong to the underlying main expression, including the narrow
+    // field-read conversion source, never to a parenthesis wrapper.
+    int loadExprId = getOrProcessConversionSourceId(
+        normalizeMainTreeExpr(implicitCast->getSubExpr()));
     if (loadExprId < 0)
       loadExprId = convertedId;
     if (loadExprId < 0)
@@ -1068,7 +1071,10 @@ int ExprProcessor::processParenExpr(const ParenExpr *parenExpr) {
   if (const int cachedId = findCachedExprId(parenExpr); cachedId != -1)
     return cachedId;
 
-  const int convertedId = getOrProcessExprId(parenExpr->getSubExpr());
+  // Use the same source contract as casts: routine and field-read sources
+  // are intentionally not part of the general expression dispatch whitelist.
+  const int convertedId =
+      getOrProcessConversionSourceId(parenExpr->getSubExpr());
   if (convertedId < 0)
     return -1;
 
