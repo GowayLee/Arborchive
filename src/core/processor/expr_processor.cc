@@ -1089,6 +1089,8 @@ void ExprProcessor::processArraySubscriptExpr(const ArraySubscriptExpr *expr) {
 }
 
 void ExprProcessor::processInitListExpr(const InitListExpr *expr) {
+  if (const auto *semantic = expr->getSemanticForm())
+    expr = semantic;
   if (findCachedExprId(expr) != -1)
     return;
 
@@ -1152,18 +1154,26 @@ void ExprProcessor::recordAggregateFieldInit(int initListExprId,
   }
 
   const RecordDecl *recordDecl = recordType->getDecl();
-  unsigned numInits = expr->getNumInits();
-
-  int fieldIndex = 0;
-  for (auto *field : recordDecl->fields()) {
-    if (fieldIndex >= static_cast<int>(numInits))
+  const unsigned numInits = expr->getNumInits();
+  // Semantic initializer slots start with direct bases, which are not fields.
+  // Unnamed bit-fields consume no slot, and a union has only its active field.
+  unsigned initIndex = 0;
+  if (const auto *cxxRecord = llvm::dyn_cast<CXXRecordDecl>(recordDecl))
+    initIndex = cxxRecord->getNumBases();
+  const FieldDecl *unionField = recordDecl->isUnion()
+                                   ? expr->getInitializedFieldInUnion()
+                                   : nullptr;
+  for (const auto *field : recordDecl->fields()) {
+    if (field->isUnnamedBitField() ||
+        (recordDecl->isUnion() && field != unionField))
+      continue;
+    if (initIndex >= numInits)
       break;
 
-    const Expr *init = expr->getInit(fieldIndex);
-    if (!init) {
-      fieldIndex++;
+    const unsigned position = initIndex++;
+    const Expr *init = expr->getInit(position);
+    if (!init)
       continue;
-    }
 
     // 获取初始化表达式 ID
     KeyType initKey = KeyGen::Expr_::makeKey(init, ast_context_);
@@ -1179,7 +1189,7 @@ void ExprProcessor::recordAggregateFieldInit(int initListExprId,
                 initListExprId, // aggregate (@aggregateliteral ref)
                 initExprId,     // initializer (@expr ref)
                 fieldId,        // field (@membervariable ref)
-                fieldIndex      // position (int ref)
+                static_cast<int>(position) // semantic initializer position
             });
     STG.insertClassObj(*initModel);
 
@@ -1205,8 +1215,6 @@ void ExprProcessor::recordAggregateFieldInit(int initListExprId,
       LOG_DEBUG << "Added dependency for MemberVar '" << fieldName
                 << "' in '" << recordName << "'" << std::endl;
     }
-
-    fieldIndex++;
   }
 }
 
