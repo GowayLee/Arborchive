@@ -52,3 +52,35 @@ Existing type/function identity behavior is not globally refactored. This is not
 complete dependent/template friend support. Regenerate old databases to replace
 incorrect facts; there is no schema migration. Compiler/linker warnings and the
 10 existing DB warnings remain visible rather than suppressed.
+
+## Review correction: preserve system-header alias target traits
+
+A later review found that the direct declaration-ID lookup dropped record traits
+for alias-only targets defined in skipped system-header subtrees. The correction
+restores `TypeProcessor::processRecordType` on the desugared record path before
+looking up the stable target ID. No visitor, schema or TypeProcessor edit.
+
+The existing fixture now has 20 exact friend relationships and six independent
+system-header alias/direct targets. POD, virtual non-POD/non-standard-layout and
+forward-only classes have exact positive/negative completeness/POD/layout facts.
+Owner/target kinds and full source ranges are now checked as well.
+
+| Correction gate | Observed result |
+|---|---|
+| Pre-correction PR binary + expanded fixture | extraction 0; checker 1; alias POD loses 3 traits and alias non-POD loses completeness |
+| Corrected binary | `P1_FRIEND_OK relations=20 exact_owner_target=yes kinds=yes source_ranges=yes trait_targets=6`; exit 0 |
+| Mutation tests | `P1_MUTATIONS_OK cases=25 source_unchanged=yes`; exit 0 |
+| Full suite | 32 fixtures PASS; 10 existing DB warnings; exit 0 |
+| Isolated rollback | restore pre-correction source SHA, rebuild/extract 0; same 4 trait errors and checker exit 1 |
+
+The baseline/direct-class/forward controls use distinct target declarations, so a
+successful direct type visit cannot mask the alias-only regression. Expanded
+negative controls reject missing, misbound and fabricated traits as well as wrong
+entity kinds and source columns. The working branch stays corrected after rollback.
+
+Independent post-correction review found no blocking issue in the bounded scope.
+It freshly re-extracted the official fixture and checked 15 additional cases:
+using/typedef chains, cv alias, decltype, alias templates, forward-then-defined,
+non-POD but standard-layout, virtual, union and repeated aliases. All corrected
+contracts passed; 11 alias regression cases failed with the pre-correction binary,
+while four direct/incomplete controls stayed correct on both versions.

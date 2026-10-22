@@ -1,3 +1,5 @@
+#include "friend_traits_system.h"
+
 class Host;
 class Secret;
 using SecretAlias = Secret;
@@ -45,3 +47,12 @@ void MemberTarget::access(Host &) {}
 void overloaded(int) {}
 void overloaded(double) {}
 void unrelated() {}
+
+struct TraitsHost {
+  friend p1_system::PodAlias;  // P1:system_alias_pod
+  friend p1_system::NonPodAlias;  // P1:system_alias_nonpod
+  friend p1_system::ForwardAlias;  // P1:system_alias_forward
+  friend class p1_system::DirectPodTarget;  // P1:system_direct_pod
+  friend class p1_system::DirectNonPodTarget;  // P1:system_direct_nonpod
+  friend class p1_system::DirectForwardTarget;  // P1:system_direct_forward
+};

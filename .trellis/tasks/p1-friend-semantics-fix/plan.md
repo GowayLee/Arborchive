@@ -49,3 +49,15 @@ their global key/cache policy here. Dependency callbacks must not enqueue more
 dependencies, retain mutable processor state, or insert unresolved placeholders.
 Old databases need regeneration to replace incorrect facts; no schema migration
 is needed.
+
+## Review correction: alias target metadata
+
+Keep the record-type semantic processing when resolving desugared class targets;
+TypeProcessor still owns completeness/POD/standard-layout facts. No visitor or
+TypeProcessor implementation change is required. Add independent system-header
+alias/direct targets for POD, non-POD/non-standard-layout and incomplete classes.
+Check target identity, exact source coordinates and positive/negative trait facts;
+mutate copies to demonstrate that missing, wrong-owner and invented facts fail.
+Run the pre-correction binary against the new fixture, then build/full suite and
+independent review. Reverse only this correction in a disposable source/build copy
+and require the same trait regression to reappear, leaving the fixed branch intact.

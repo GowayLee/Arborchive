@@ -943,6 +943,10 @@ void TemplateProcessor::processFriendDecl(const clang::FriendDecl *decl) {
     // unresolved dependent type into a declaration endpoint.
     if (const auto *recordType =
             typeInfo->getType()->getAs<clang::RecordType>()) {
+      // Alias TypeLoc traversal need not revisit the underlying record (for
+      // example, a target defined in a skipped system header). Preserve its
+      // completeness/POD/layout facts as well as its declaration identity.
+      type_processor_->processRecordType(recordType);
       targetId = type_processor_->processRecordDeclType(recordType->getDecl());
     }
   } else if (const clang::NamedDecl *target = decl->getFriendDecl()) {
